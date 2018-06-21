@@ -1,13 +1,85 @@
 ; -*-mode: Emacs-Lisp; auto-recompile:t; outline-minor-mode:t-*-
 
-; Modern Emacs (for Jeff) uses package.el.  It is interactively invoked
-; as:
-;
-;     ???
+;;; Modern Emacs (for Jeff) uses package.el but then I apply the Pallet package
+;;; to 'Caskify' my ~/.emacs.d directory and use modern ELPA and such package
+;;; repositories.
+;;;
+;;; To install a new package, do the following:
+;;;
+;;;   M-x list-packages
+;;;
+;;; My Directory Structure:  (I SHOULD PUT IT AT github.com/xanalogica/emacs.d)
+;;;                           https://github.com/redguardtoo/emacs.d
+;;;                           https://github.com/purcell/emacs.d/blob/master/README.md
+;;;
+;;;   ~/.emacs.d/
+;;;      README.org	;; documentation about my setup
+;;;      init.el	;; my init file for Emacs (versus ~/.emacs)
+;;;      backups/	;; backup copies of ANY edited files
+;;;      elpa/		;; Package.el packages installed from public repos
+;;;      lisp/		;; individual .el files I create or work on
+;;;      snippets/	;;
+;;;      ARCHIVE	;; items that are retired and someday can be deleted
+;;;      dict/		;; definitions for use by auto-complete.el
+;;;
+;;; (consider a "presentation" settings file)
+;;; (consider a "credentials" settings file)
+;;;
+;;; *** PACKAGE REPOSITORIES ***
+;;;
+;;;    - http://melpa.org/
+;;;
+;;; *** KEY ADD-ON PACKAGES ***
+;;;
+;;;    - Org
+;;;    - yasnippet
+;;;    - flymake
+;;;
+;;;    - smartparens (auto-insert matched parens)
+;;;    - web-mode    (for editing HTML)
+;;;    - magit       (everything about Git)
+;;;    - git-gutter.el  (mark the VGS diff)
+;;;
+;;;    - add the Keysnail addon to Firefox to get Emacs keybindings
+;;;
+;;; *** Emacs Startup Sequence ***
+;;;
+;;; When Emacs is started, it tries to load a Lisp program from an init file,
+;;; looking in the following places in order:
+;;;
+;;;    - ~/.emacs              (I don't use this file)
+;;;    - ~/.emacs.el           (I don't use this file)
+;;;    - ~/.emacs.d/init.el    (This is the start of my Emacs configuration)
+;;;
+;;; It is NOT recommendeed to byte-compile your init file as it does not speed up
+;;; startup very much and often leads to problems when you forget to recompile the
+;;; file.
+;;;
+;;; You can use the command-line switch '-q' to prevent loading your init file.
+;;;
+;;; There may also be the following special init files, along the load-path:
+;;;
+;;;    - default.el    if found in load-path (it does not exist, it is loaded -after- your init file)
+;;;    - site-start.el if found in load-path it is always loaded
+;;;
+;;; *** WHERE TO FIND EMACS COMMUNITY RESOURCES ***
+;;;
+;;;    - http://emacs.stackexchange.com/
+;;;    - http://planet.emacsen.org/			Best collection of Emacs-related blogs
+;;;    - https://github.com/languages/Emacs%20Lisp	Search for latest Elisp code
+;;;       (and then click "Watch" to get notified of bugs and fixes automatically!)
+;;;    - http://www.emacswiki.org/emacs/		Community Wiki
 
 ; **********************************************************************
 ;   Define Various Emacs Policies re Debugging and Analysis of Issues
 ; **********************************************************************
+
+
+;; Added by Package.el.  This must come before configurations of
+;; installed packages.  Don't delete this line.  If you don't want it,
+;; just comment it out by adding a semicolon to the start of the line.
+;; You may delete these explanatory comments.
+(package-initialize)
 
 (setq inhibit-startup-message t)
 
@@ -22,15 +94,6 @@
 
 (add-to-list 'load-path
     "~/.emacs.d/lisp/")
-(add-to-list 'load-path
-    "~/.emacs.d/plugins/")
-
-; **********************************************************************
-;                  Load the org-mode Support Structure
-; **********************************************************************
-
-(require 'org-install)
-(require 'org)
 
 ; **********************************************************************
 ;       Insure I Can Always Reload my ~/.emacs File with a Hotkey
@@ -41,86 +104,20 @@
 
   ;;(persistent-session-save-alist-to-file)
 
-  (if (file-exists-p "~/.emacs")
-      (load-file "~/.emacs"))
+  (if (file-exists-p "~/.emacs.d/init.el")
+      (load-file "~/.emacs.d/init.el"))
 )
 (global-set-key [f6] 'reload)
+
+; **********************************************************************
+;                  Load the org-mode Support Structure
+; **********************************************************************
+
+(require 'org-install)
+(require 'org)
 
 ; **********************************************************************
 ;      Load My Neatly Organized (via org-mode) Emacs Configuration
 ; **********************************************************************
 
-(org-babel-load-file "~/notes/emacs-config.org")
-
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(canlock-password "3c1e3f7f6c9bbd7ee8e34162eea3ccb8ae58429f")
- '(case-fold-search t)
- '(current-language-environment "English")
- '(dired-dwim-target t)
- '(evernote-developer-token
-   "S=s526:U=5256ba1:E=15778ae1715:C=15020fce8a8:P=1cd:A=en-devtoken:V=2:H=c6f6fd9d9ef16a43ed79a1a6fd79f153")
- '(evernote-ruby-command "/usr/bin/ruby20")
- '(evernote-username "jrush110")
- '(global-font-lock-mode t nil (font-lock))
- '(org-agenda-diary-file "~/notes/journal.org")
- '(org-agenda-files (quote ("~/Dropbox/Documents/Org-Mode/NotesOnline.org")))
- '(org-clock-idle-time 15)
- '(org-clock-into-drawer t)
- '(org-clock-mode-line-total (quote today))
- '(org-clock-persist t)
- '(org-deadline-warning-days 30)
- '(org-default-priority 67)
- '(org-drawers (quote ("PROPERTIES" "CLOCK" "FEEDSTATUS" "LOGBOOK")))
- '(org-file-apps
-   (quote
-    ((auto-mode . emacs)
-     ("\\.mm\\'" . default)
-     ("\\.x?html?\\'" . default)
-     ("\\.pdf\\'" . "evince %s")
-     ("\\.doc\\'" . "libreoffice %s"))))
- '(org-highest-priority 65)
- '(org-insert-mode-line-in-empty-file t)
- '(org-log-into-drawer t)
- '(org-log-refile (quote time))
- '(org-lowest-priority 69)
- '(org-outline-path-complete-in-steps nil)
- '(org-refile-use-outline-path (quote file))
- '(org-time-stamp-rounding-minutes (quote (15 15)))
- '(safe-local-variable-values
-   (quote
-    ((cryptkey . "jrush@taupro.com")
-     (auto-recompile . t)
-     (outline-minor-mode . t)
-     (folded-file . t))))
- '(save-place t nil (saveplace))
- '(send-mail-function (quote smtpmail-send-it))
- '(transient-mark-mode t)
- '(uniquify-buffer-name-style (quote forward) nil (uniquify))
- '(yas-use-menu (quote abbreviate)))
-
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(flymake-errline ((((class color)) (:underline "red"))))
- '(flymake-warnline ((((class color)) (:underline "yellow"))))
- '(mode-line ((((class color) (min-colors 88)) (:background "deep sky blue" :foreground "black" :box (:line-width -1 :style released-button) :height 1.3))))
- '(mode-line-inactive ((default (:inherit mode-line)) (((class color) (min-colors 88) (background light)) (:background "navajo white" :foreground "grey20" :box (:line-width -1 :color "grey75") :weight light)))))
-
-;;; **********************************************************************
-;;;                Define Various Emacs Behavior Policies
-;;; **********************************************************************
-
-;;;(setq special-display-buffer-names
-;;;    '(
-;;;      "*Completions*"
-;;;      "*grep*"
-;;;      "*tex-shell*"
-;;;      "*Faces*")
-;;;    )
+(org-babel-load-file "~/.emacs.d/config.org")
