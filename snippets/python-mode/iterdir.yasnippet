@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: Iterate over a Single Directory
+# key: idir
+# expand-env: ((yas/indent-line nil) (yas/wrap-around-region 'cua))
+# group: codefrags
+# --
+import os.path
+
+from fnmatch import fnmatch
+
+dirname = '.'
+for filename in os.listdir(dirname):
+    fullname = os.path.join(dirname, filename)
+
+    if fnmatch(filename, '*.pdb'):
+        break
+
+    if os.path.isfile(fullname):
+        break

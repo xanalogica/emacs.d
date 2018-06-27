@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: Modifying Files In-Place
+# expand-env: ((yas/indent-line nil) (yas/wrap-around-region 'cua))
+# group: codefrags
+# --
+import sys
+import fileinput
+
+for line in fileinput.input(sys.argv[1:], inplace=1):
+
+    line = line.expandtabs()  # Expand Tabs
+    line = line.rstrip('\r\n \t')  # Remove Trailing Whitespace
+    print line  # Convert Line-Endings into Native for the OS Platform

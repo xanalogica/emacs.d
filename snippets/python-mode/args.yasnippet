@@ -1,0 +1,30 @@
+# -*- mode: snippet -*-
+# name: Args Parsing
+# key: args
+# expand-env: ((yas/indent-line nil) (yas/wrap-around-region 'cua))
+# group: codefrags
+# --
+import os
+
+from optparse import OptionParser, Option, OptionValueError
+
+def main():
+    usage = "usage: %prog [options]"
+    parser = OptionParser(usage=usage)
+
+    parser.add_option("-n", "--dry-run",
+                      action="store_true", dest="dry_run", default=False,
+                      help="skip any changes to files, just report results")
+
+    parser.add_option("-v", "--verbose",
+                      action="store_true", dest="verbose", default=False,
+                      help="show details of problems, not just summary counts")
+
+    parser.add_option("-s", "--suffix",
+                      action="store", dest="suffix", default=".py",
+                      help="suffix of files to locate and process")
+
+    global options
+    options, args = parser.parse_args()
+
+    topdir = os.getcwd()

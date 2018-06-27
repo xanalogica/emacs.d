@@ -1,5 +1,5 @@
 This is my personal config, showing how to use a .org file to
 organize all of my Emacs configuration, with embedded documentation.
 
-My ~/.emacs.d/init.el is a minimal file, with most configuration
-in the ~/.emacs.d/config.org file.
+My =~/.emacs.d/init.el= is a very minimal file, with most configuration
+in the =~/.emacs.d/config.org= file.

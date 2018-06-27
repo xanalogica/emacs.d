@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: try ... except ...
+# binding: C-c C-t
+# expand-env: ((yas/indent-line 'auto) (yas/wrap-around-region t))
+# group: statements
+# --
+try:
+    XXX`yas/selected-text`XXX$0
+except (${1:Exception}, ) as exc:
+    pass
+except:
+    pass
+finally:
+    pass
