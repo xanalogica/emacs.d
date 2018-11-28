@@ -51,7 +51,7 @@
 ; **********************************************************************
 
 ; Useful for debugging problems with Emacs on occasion.
-(setq debug-on-error t)
+;;; (setq debug-on-error t)
 (setq stack-trace-on-error t)
 ; (debug-on-entry 'integerp)
 
@@ -72,7 +72,7 @@
 (cask-initialize)
 
 (add-to-list 'load-path
-    "~/.emacs.d/lisp/")  ;; Define Where My Personal Emacs Macros Are Kept
+    "~/.emacs.d/lisp/")  ;; Define Where My Personal Emacs Work is Kept
 
 (require 'org)
 (org-babel-load-file
