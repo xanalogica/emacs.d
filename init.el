@@ -15,8 +15,8 @@
 ;;; first error encountered.
 ;;;
 ;;; TIP: It is NOT recommendeed to byte-compile your init file as it does not
-;;; speed up startup very much and often leads to problems when you forget to
-;;; recompile the file.
+;;;      speed up startup very much and often leads to problems when you forget
+;;;      to recompile the file.
 
 ;;; From the init.el file, I enable the Cask package manager and the Org-Mode
 ;;; library and the rest of my configuration is specified in an .org file
@@ -55,14 +55,22 @@
 (setq stack-trace-on-error t)
 ; (debug-on-entry 'integerp)
 
+; Get 'package' set up with paths to public repositories
+(require 'package)
+(setq package-enable-at-startup nil)
+(add-to-list 'package-archives
+  '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives
+  '("marmalade" . "http://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives
+  '("gnu" . "http://elpa.gnu.org/packages/"))
 
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
+;; This sets up the load path so that we can override it next.
 (package-initialize)
 
-(setq inhibit-startup-message t)
+;; Define where various packages I wish to use, that come in
+;; form of Git checkouts, or that I've written, is kept.
+(add-to-list 'load-path "~/.emacs.d/lisp/")
 
 ; **********************************************************************
 ;  Minimum Setup Necessary Before Loading Configuration from .org File
@@ -71,9 +79,5 @@
 (require 'cask "~/.cask/cask.el")
 (cask-initialize)
 
-(add-to-list 'load-path
-    "~/.emacs.d/lisp/")  ;; Define Where My Personal Emacs Work is Kept
-
 (require 'org)
-(org-babel-load-file
-    "~/.emacs.d/config.org" nil)  ;; Tangle into .el and load
+(org-babel-load-file "~/.emacs.d/config.org" nil)  ;; Tangle into .el and load
