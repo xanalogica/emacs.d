@@ -19,3 +19,14 @@ network-security.data
 org-clock-save.el
 ac-comphist.dat
 ido.last
+.dap-breakpoints
+.lsp-session-v1
+info/
+michael.org
+places
+quelpa/
+recentf
+templates/
+tramp
+transient/
+
