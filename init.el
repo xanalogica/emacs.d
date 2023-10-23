@@ -102,6 +102,49 @@
 ;      Load the Rest of My Configuration from My config.org File
 ; **********************************************************************
 
+;; (defface org-block-begin-line
+;;   '((t (:underline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+;;   "Face used for the line delimiting the begin of source blocks.")
+
+;; (defface org-block-background
+;;   '((t (:background "lightgrey")))
+;;   "Face used for the source block background.")
+
+;; (defface org-block-end-line
+;;   '((t (:overline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+;;   "Face used for the line delimiting the end of source blocks.")
+
 (use-package org)
-(org-babel-load-file "~/.emacs.d/config.org" nil)  ;; Tangle into .el and load
-(put 'upcase-region 'disabled nil)
+(setq org-export-backends '(ascii html icalendar latex odt org))
+
+;;; (with-current-buffer (find-file-noselect "~/.emacs.d/config.org")
+;;;   (org-export-to-file 'org "/tmp/config-exported.org")
+;;; )
+
+; (with-current-buffer ??
+;   )
+
+(let ()
+ (find-file-read-only "~/.emacs.d/config.org")
+ (org-export-to-file 'org "/tmp/config-exported.org")
+ (kill-buffer)
+)
+
+(org-babel-load-file "/tmp/config-exported.org" nil)  ;; Tangle into .el and load
+;; (org-babel-load-file "~/.emacs.d/config.org" nil)  ;; Tangle into .el and load
+
+
+
+
+
+;;;   (setq current_buffer (current-buffer))
+;;;   (setq current_filename (buffer-file-name))
+;;;   (with-temp-buffer
+;;;     (shell-command (concat "code_to_org " current_filename) (current-buffer))
+;;;     (org-open-file (org-export-to-file 'html (concat current_filename ".html")))
+;;;     )
+;;;   )
+
+;;; (with-current-buffer (find-file-noselect export-file)
+;;;   (org-babel-tangle))))))
+
