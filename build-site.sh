@@ -1,4 +1,4 @@
-#! /home/jrush/Projects/emacs-29/src/emacs -x
+#! emacs -x
 ;; -*- mode: elisp; -*-
 
 ;; Publish org-mode files on GitLab pages
