@@ -1,7 +1,4 @@
-#! emacs -x
-;; -*- mode: elisp; -*-
-
-;; Publish org-mode files on GitLab pages
+;; Publish org-mode files into GitHub pages
 
 ;; This is a customized script for the Emacs editor that compiles into HTML my
 ;; notes in the org-mode (.org files) markup.  It is invoked by a CI pipeline
