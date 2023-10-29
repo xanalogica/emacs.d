@@ -1,5 +1,22 @@
-This is my personal config, showing how to use a .org file to
-organize all of my Emacs configuration, with embedded documentation.
+#+TITLE: My Literate Emacs Configuration
+#+AUTHOR: Jeffrey Rush
+
+#+BEGIN_HTML
+<a href="https://raw.githubusercontent.com/xanalogica/.emacs.d/master/LICENSE.md">
+<img alt="GPLv3" src="https://img.shields.io/github/license/xanalogica/.emacs.d" />
+</a>
+
+<a href="https://github.com/xanalogica/.emacs.d/actions/workflows/publish.yml">
+<img alt="Build status" src="https://github.com/xanalogica/.emacs.d/actions/workflows/publish.yml/badge.svg" />
+</a>
+#+END_HTML
+
+This ia my Emacs configuration, expressed in a [[https://en.wikipedia.org/wiki/Literate_programming][literate]] document form so I can
+explain how and why I did each configuration setting.  Since Emacs v29.1 came
+out, I've reworked everything to load Emacs packages using =use-package, for a
+more reproducible configuration.
+
+Inside the content/config.org file I explain much more.
 
 My =~/.emacs.d/init.el= is a very minimal file, with most configuration
 in the =~/.emacs.d/config.org= file.
