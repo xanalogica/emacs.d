@@ -71,10 +71,10 @@
 
      :include                     '("config.org")
 
-     :with-author                 t
-     :with-creator                nil
+     ;; :with-author                 t
+     ;; :with-creator                nil
      :with-toc                    t
-     :section-numbers             nil
+     ;; :section-numbers             nil
 
      :time-stamp-file             nil
 
