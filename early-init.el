@@ -9,7 +9,6 @@
 
 ;;; Code:
 
-
 ;;;; configure emacs internal processes
 
 ; **********************************************************************
@@ -19,6 +18,7 @@
 ; Useful for debugging problems with Emacs on occasion.
 (setq debug-on-error t)
 (setq stack-trace-on-error t)
+; (debug-on-entry 'integerp)
 
 ;; this makes garbage collection less frequent, which speeds up init by about 2 seconds.
 (setq gc-cons-threshold 80000000)     ;; JEFF
@@ -32,12 +32,6 @@
   message-log-max                 16384
   package-enable-at-startup       nil
   load-prefer-newer               noninteractive)
-
-(pixel-scroll-precision-mode 1)
-(setq pixel-scroll-precision-interpolate-page t)  ;; so PgUp PgDn give a visual slide too.
-;;; (native-comp-available-p)
-
-
 
 ;;;; gc
 
@@ -72,27 +66,28 @@
 
 
 
-(unless (or (daemonp) noninteractive)
-  (let ((restore-file-name-handler-alist file-name-handler-alist))
-    (setq-default file-name-handler-alist nil)
-    (defun restore-file-handler-alist ()
-      (setq file-name-handler-alist
-            (delete-dups (append file-name-handler-alist
-                                 restore-file-name-handler-alist)))))
+;;; (unless (or (daemonp) noninteractive)
+;;;   (let ((restore-file-name-handler-alist file-name-handler-alist))
+;;;     (setq-default file-name-handler-alist nil)
+;;;     (defun restore-file-handler-alist ()
+;;;       (setq file-name-handler-alist
+;;;             (delete-dups (append file-name-handler-alist
+;;;                                  restore-file-name-handler-alist)))))
 
-  (add-hook 'emacs-startup-hook #'restore-file-handler-alist 101)
 
-  (when (fboundp #'tool-bar-mode)
-    (tool-bar-mode -1))
+;;;   (add-hook 'emacs-startup-hook #'restore-file-handler-alist 101)
 
-  (when (fboundp #'scroll-bar-mode)
-    (scroll-bar-mode -1)))
+  ;;;;;;;;;; (when (fboundp #'tool-bar-mode)
+  ;;;;;;;;;;   (tool-bar-mode -1))
+
+  ;;;;;;;;;; (when (fboundp #'scroll-bar-mode)
+  ;;;;;;;;;;   (scroll-bar-mode -1)))
 
 (when (featurep 'native-compile)
   (defvar inhibit-automatic-native-compilation)
-  (setq inhibit-automatic-native-compilation nil)
+  (setq   inhibit-automatic-native-compilation nil)
   (defvar native-comp-async-report-warnings-errors)
-  (setq native-comp-async-report-warnings-errors 'silent))
+  (setq   native-comp-async-report-warnings-errors 'silent))
 
 ;;; (defun edit-init-file ()
 ;;;   "Edit `user-init-file'.
@@ -176,13 +171,15 @@
 ; interfaces with package managers to work.
 ; **********************************************************************
 
-;;;;;;;;;; (quelpa ;; install the quelpa extension to use-package
-;;;;;;;;;;   '(quelpa-use-package
-;;;;;;;;;;      :fetcher git
-;;;;;;;;;;      :url "https://github.com/quelpa/quelpa-use-package.git"
-;;;;;;;;;;    )
-;;;;;;;;;; )
-;;;;;;;;;; (require 'quelpa-use-package)
+; adds support for the :quelpa keyword in use-package clauses.
+
+(quelpa ;; install the quelpa extension to use-package
+  '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"
+   )
+)
+(require 'quelpa-use-package)
 
 ;; Install the "use-package-ensure" which pulls in the rest of "use-package",
 ;; and then default the :ensure flag to always require a package if it is
@@ -191,10 +188,16 @@
 ;;;;;;;;;; (require 'use-package-ensure)
 ;;;;;;;;;; (setq use-package-always-ensure t)
 
+;;;;;;;;;; ???  (require 'cask "~/.cask/cask.el")
+;;;;;;;;;; ???  (cask-initialize)
 
 
 
 
+
+
+
+(message "early-init.el finishing up")
 
 
 
