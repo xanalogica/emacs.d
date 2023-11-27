@@ -2,12 +2,12 @@
 #+SUBTITLE:	Structured Using Org-Babel
 #+AUTHOR:	Jeffrey Rush
 #+EMAIL:	mailto:xanalogica@gmail.com
-#+OPTIONS:	author:nil toc:t title:nil tasks:nil tags:nil prop:nil num:t broken-links:mark
+#+OPTIONS:	author:t creator:t email:t title:t
+#+OPTIONS:	toc:t title:nil tasks:nil tags:nil prop:nil num:t broken-links:mark
 #+CATEGORY:     emacs
 #+SETUPFILE:	webstyling/theme-readtheorg-local.setup
 #+OPTIONS:	^:{}
 
-OPTIONS:	author:t creator:t email:t title:t
 OPTIONS:	toc:4 h:4 num:3
 
 #+BEGIN_ABSTRACT
