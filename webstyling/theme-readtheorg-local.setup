@@ -1,0 +1,23 @@
+# -*- mode: org; -*-
+
+#+OPTIONS:	author:nil toc:nil title:nil tasks:t tags:t prop:nil num:t broken-links:mark \n:nil
+
+#+PROPERTY:	header-args        :eval never-export
+#+PROPERTY:     header-args:shell+ :exports both
+#+PROPERTY:     header-args:shell+ :results output
+#+PROPERTY:	header-args:shell+ :cmdline "-e"
+#+PROPERTY:	header-args:shell+ :prologue "set $@"
+
+#+HTML_HEAD:	<link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/htmlize.css"/>
+#+HTML_HEAD:	<link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/readtheorg.css"/>
+#+HTML_HEAD:	<link rel="stylesheet" type="text/css" href="webstyling/src/zeomega/css/default.css"/>
+
+#+HTML_HEAD:	<script type="text/javascript" src="webstyling/src/lib/js/jquery.min.js"></script>
+#+HTML_HEAD:	<script type="text/javascript" src="webstyling/src/lib/js/bootstrap.min.js"></script>
+#+HTML_HEAD:	<script type="text/javascript" src="webstyling/src/lib/js/jquery.stickytableheaders.min.js"></script>
+#+HTML_HEAD:	<script type="text/javascript" src="webstyling/src/readtheorg_theme/js/readtheorg.js"></script>
+#+HTML_HEAD:	<script> var HS_STARTUP_FOLDED = true; </script>
+
+#+ODT_STYLES_FILE: ("/home/jrush/Dropbox/Documents/techdocs/zeostyles.ott" ("styles.xml" "Pictures/100002010000040F000000E7D286CE685E0B31BF.png"))
+#+LATEX_HEADER:	\usepackage{parskip}
+#+LATEX:	\setlength\parindent{0pt}
