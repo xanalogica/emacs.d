@@ -1,0 +1,663 @@
+* Screen Decoration Zones
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+** Top Bar of Emacs Screen
+
+#+BEGIN_SRC emacs-lisp
+  (menu-bar-mode
+    -1)	; Whether to show the menu bar along the top.
+
+  ;;;; (defun new-frame-setup (frame)
+  ;;;;   (if (display-graphic-p frame)
+  ;;;;       (progn
+  ;;;;          (message "This is a windowing system.")
+
+  ;;;;          ;; Don't want a toolbar in GUI mode (errs in invoke in text mode)
+  ;;;;          (tool-bar-mode -1)
+
+  ;;;;          ;; Set the default size of the new frame
+  ;;;;          (set-frame-size (selected-frame) 150 50)
+  ;;;;       )
+  ;;;;       (message "This is a non-windowing system.")
+  ;;;;   )
+  ;;;; )
+
+  ;;;; ;; Run across all already-existing frames, to catch 1st frame
+  ;;;; (mapc 'new-frame-setup (frame-list))
+
+  ;;;; ;; But also run when a new frame is created
+  ;;;; (add-hook 'after-make-frame-functions 'new-frame-setup)
+
+  ;--(tool-bar-mode
+  ;--    nil)
+
+  (setq frame-title-format
+    "Emacs: %b")	; Displays the name of the file being edited in the title bar along the top.
+#+END_SRC
+
+** Along the Left/Right Sides of the Emacs Screen
+
+#+BEGIN_SRC emacs-lisp
+  ;;  (setq-default scroll-bar-mode
+  ;;    nil)	; Whether to show the scroll bar at all.
+  (set-scroll-bar-mode nil)
+
+  ;;  (setq-default set-scroll-bar-mode
+  ;;    'right)	; Where to show the scroll bar, left or right side.
+#+END_SRC
+
+** Along the Bottom, in the Mode Line
+#+BEGIN_SRC emacs-lisp
+  (setq-default line-number-mode
+    t)	; Enable the display, in the mode line along the bottom, of the current line number.
+  (setq-default column-number-mode
+    t)	; Enable the display, in the mode line along the bottom , of the current column number.
+#+END_SRC
+
+The Emacs modeline is a complex beast.
+
+Define the Elements to Be Part of the Modeline
+
+*** Defining My Own Face and a Property Clause to Conditionally Display It
+
+#+BEGIN_SRC emacs-lispER
+  (defface jeff-mode-line-client-face
+    `( ;; spec
+      (t (:background "red"))
+    )
+    "Used for displaying the region." ;; doc
+  )
+
+  (defface jeff-mode-line-client-face-inactive
+    `( ;; spec
+      (t (:background "gray"))
+    )
+    "Used for displaying the region." ;; doc
+  )
+#+END_SRC
+
+;;  (set-face-attribute 'org-list-dt
+;;    nil :foreground "Orange" :box "White" :inverse-video t)
+
+#+BEGIN_SRC emacs-lispER
+  (defun jeff-window-active-p ()
+    (eq (frame-selected-window) (selected-window))
+  )
+
+  (setq jeff2-mode-line-client
+    `(""
+      (:propertize
+        (""
+          (:eval
+            (if (frame-parameter nil 'client)
+              (
+                "🠵x"
+                'face (if (jeff-window-active-p)
+                  'jeff-mode-line-client-face
+                  'jeff-mode-line-client-face-inactive)
+              )
+
+              "")
+          )
+        )
+        help-echo ,(purecopy "emacsclient frame"))
+     )
+  )
+#+END_SRC
+
+*** Define My Custom Set of Widgets to Display on the Modeline
+
+#+BEGIN_SRC emacs-lispER
+
+  (setq-default mode-line-format
+    (list
+      "%e"                         ;; print error msg about full memory
+       mode-line-front-space       ;; (:eval (if (display-graphic-p) " " "-"))
+       ;; mode-line-mule-info
+
+       jeff2-mode-line-client
+       mode-line-modified
+       mode-line-remote                ;; indicate a remote buffer
+;;;🔒 🔓
+       ;; mode-line-frame-identification  ;; (:eval (mode-line-frame-control))
+       mode-line-buffer-identification
+       " "
+       mode-line-position              ;; (very long expr)
+       ;; (vc-mode vc-mode)
+       " "
+       mode-line-modes             ;; (very long expr)
+       mode-line-misc-info         ;; ((global-mode-string ("" global-mode-string " ")))
+       mode-line-end-spaces        ;; (:eval (unless (display-graphic-p) "-%-"))
+    )
+  )
+;;              (list
+;;
+;;               '(:eval (propertize (if (eq 'emacs evil-state) "  " "  ")
+;;                                   'face (cogent/evil-state-face)))
+;;
+;;               " "
+;;               mode-line-misc-info ; for eyebrowse
+;;
+;;               '(:eval (when-let (vc vc-mode)
+;;                         (list " "
+;;                               (propertize (substring vc 5)
+;;                                           'face 'font-lock-comment-face)
+;;                               " ")))
+;;
+;;               '(:eval (list
+;;                        ;; the buffer name; the file name as a tool tip
+;;                        (propertize " %b" 'face 'font-lock-type-face
+;;                                    'help-echo (buffer-file-name))
+;;                        (when (buffer-modified-p)
+;;                          (propertize
+;;                           " "
+;;                           'face (if (cogent-line-selected-window-active-p)
+;;                                     'cogent-line-modified-face
+;;                                   'cogent-line-modified-face-inactive)))
+;;                        (when buffer-read-only
+;;                          (propertize
+;;                           ""
+;;                           'face (if (cogent-line-selected-window-active-p)
+;;                                     'cogent-line-read-only-face
+;;                                   'cogent-line-read-only-face-inactive)))
+;;                        " "))
+;;
+;;               ;; relative position in file
+;;               '(:eval (list (nyan-create))) ;; from the nyan-mode package
+;;               (propertize "%p" 'face 'font-lock-constant-face)
+;;
+;;               ;; spaces to align right
+;;               '(:eval (propertize
+;;                        " " 'display
+;;                        `((space :align-to (- (+ right right-fringe right-margin)
+;;                                              ,(+ 3 (string-width mode-name)))))))
+;;
+;;               ;; the current major mode
+;;               (propertize " %m " 'face 'font-lock-string-face)))
+#+END_SRC
+
+*** Define My Desired Appearance of Selected Modeline Widgets
+**** Defining the Appearance of the "Org-Mode Clock"
+
+#+BEGIN_SRC emacs-lisp
+
+  (set-face-attribute 'org-mode-line-clock
+    nil :foreground "green2" :weight 'bold)
+
+  (set-face-attribute 'org-mode-line-clock-overrun
+    nil :foreground "red2" :background "black" :weight 'bold)
+
+#+END_SRC
+
+
+** Along the Bottom, inside the Minibuffer
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'minibuffer-setup-hook 'my-minibuffer-setup)
+
+  (defun my-minibuffer-setup ()
+    (set (make-local-variable 'face-remapping-alist)
+        '((default :height 1.8)) ;; use a larger font for my presentations
+    )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-clock-mode-line-total
+      'today) ;; show on modeline all time clocked into this task today
+
+  (setq org-clock-clocked-in-display
+      'mode-line) ;; show task name and clocked time on modeline but NOT frame title
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (require 'org-element)
+  (require 'org-clock)
+
+  (defvar org-clock-running-ol nil
+    "Overlay for the running clock.")
+
+  (defface org-clock-running-face
+    '((t :foreground "Red" :weight bold))
+    "Face for highlighting the running clock.")
+
+  (defun org-clock-add-running-ol ()
+    "Highlight the running clock."
+    (save-excursion
+      (when (org-clock-is-active)
+        (org-clock-remove-running-ol)
+        (goto-char org-clock-marker)
+        (setq org-clock-running-ol (make-overlay (point) (scan-sexps (point) -1)))
+        (overlay-put org-clock-running-ol 'face 'org-clock-running-face)
+        )))
+
+  (defun org-clock-remove-running-ol ()
+    (when (overlayp org-clock-running-ol)
+      (delete-overlay org-clock-running-ol)
+      (setq org-clock-running-ol nil)))
+#+END_SRC
+
+
+* Preferred UI Behavior
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+** Make the "Active Region" Visible
+
+There are two controls over whether the region is highlighted or not:
+
+- transient-mark-mode (variable)
+- transient-mark-mode (function)   a global minor mode
+
+By default the =transient-mark-mode= variable is non-nil, so the region *is*
+highlighted, using the =region= face.
+
+** Make Trailing Whitespace Visible
+
+I like to highlight trailing whitespace as it bothers me when it exists
+invisibly, although sometimes I use this highlighting to mark important TODO
+headlines in ~org-mode~.
+
+The face used to indicate trailing whitespace is ‘trailing-whitespace’.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default show-trailing-whitespace
+    t)	; Visually indicate presence of whitespace at end-of-lines.
+
+  (global-set-key		[f2]
+    'delete-trailing-whitespace)	; Remove all trailing whitespace
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default default-indicate-empty-lines
+    t)	; Visually indicate presence of blank lines at EOBs.
+#+END_SRC
+
+** Highlight the Entire Current Line
+
+I like to highlight the entire current line, for better visibility while
+navigating.  The face =hl-line-face= is used to do the highlight, and I just
+change the background to my choice of color.
+
+#+BEGIN_SRC emacs-lisp
+  (global-hl-line-mode +1)
+
+  (set-face-attribute 'hl-line  ; of hl-line-face
+    nil :inherit nil :background "darkred")
+#+END_SRC
+
+
+* Bell Indicator
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+https://www.emacswiki.org/emacs/AlarmBell
+
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell
+    nil		; play the bell sound
+    ;; t		; quietly flash the top and bottom lines of the Emacs frame
+  )
+#+END_SRC
+
+** Lowest Level of Control
+
+At the *lowest level* of Emacs there is a variable defining a custom function
+to ring the bell, or (usually) left nil to allow the ring to occur naturally.
+To *globally* disable the bell do the following:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ring-bell-function 'ignore)
+#+END_SRC
+
+or provide a function that uses your choice of sound playing mechanism:
+
+#+BEGIN_SRC ZZZemacs-lisp :tangle no
+  (setq ring-bell-function (lambda ()
+    (play-sound-file "/this/is/my/errorsound.au")))
+#+END_SRC
+
+** High Level of Control
+- https://emacs.stackexchange.com/questions/34746/how-to-get-an-audible-feedback-when-the-current-task-is-overrun
+- https://emacs.stackexchange.com/questions/17796/emacs-tea-time-is-supposed-to-be-integrated-in-org-mode-but-apparently-its-no/17849#17849
+
+At a high level of beep decision making, there is in the file =org-clock.el= a
+variable indicating which sound to use when ~org-mode~ wants to notify you of
+overrunning the time estimate for a task you are working on.
+
+  #+BEGIN_SRC ZZZemacs-lisp :tangle no
+    (setq org-clock-sound nil) ;; no sound
+    (setq org-clock-sound t) ;; Standard Emacs beep
+    (setq org-clock-sound "/path/to/my/sound") ;; Play this sound file, fall back to beep
+  #+END_SRC
+
+  #+BEGIN_SRC emacs-lisp
+    (setq org-clock-sound "~/bell-meditation-75335.mp3")
+
+    (defun org-clock-play-sound (&optional clock-sound)
+      "Play sound as configured by `org-clock-sound'.
+    Use mpg123 tool if available.
+    If CLOCK-SOUND is non-nil, it overrides `org-clock-sound'."
+      (let
+        (
+          (org-clock-sound (or clock-sound org-clock-sound))
+        )
+        (cond
+          ( (not org-clock-sound)
+                                   )
+          ( (eq org-clock-sound t)
+              (beep t) (beep t)    )
+
+          ( (stringp org-clock-sound)
+            (let
+              (
+                (file (expand-file-name org-clock-sound))
+              )
+              (if (file-exists-p file)
+                (if (executable-find "mpg123")
+                  (start-process "org-clock-play-notification" nil "mpg123" file)
+                    (condition-case nil
+                      (play-sound-file file)
+                      (error (beep t) (beep t))
+                    )
+                ) ; end of if
+              ) ; end of if
+            ) ; end of let
+          )
+        )
+      )
+    )
+  #+END_SRC
+
+  ; (defun org-notify (notification &optional play-sound)
+  ;   "Send a NOTIFICATION and maybe PLAY-SOUND.
+  ; If PLAY-SOUND is non-nil, it overrides `org-clock-sound'."
+  ;   (org-show-notification notification)
+  ;   (if play-sound (org-clock-play-sound play-sound)))
+
+  ; (defun my/play-sound (orgin-fn sound)
+  ;   (cl-destructuring-bind (_ _ file) sound
+  ;     (make-process :name (concat "play-sound-" file)
+  ;                   :connection-type 'pipe
+  ;                   :command `("mpg123" ,file))))
+  ; (advice-add 'play-sound :around 'my/play-sound)
+
+In org-mode when a task is overrun - when the clocked time is bigger than the
+effort, there is a visual feedback in the mode-line.  This variable can be
+used to get an audible one as well.
+
+
+* Choice of Font for the Emacs Work Area
+
+I purchased a nice font from https://fsd.it/shop/fonts/pragmatapro/ and then
+told Emacs to use it by doing the following.
+
+To install the new font into Ubuntu Linux, I downloaded the .zip file and
+unpacked it under the directory /usr/share/fonts/truetype/PragmataPro0.829/.
+I then rebuild the font cache usng =fc-cache -f -v=.  Note that the =fc-cache=
+executable is available using =apt-get install fontconfig=.
+
+I can confirm they are installed correctly by running =fc-list | grep
+Pragmata=.  I can view them by using the "Font Manager" program on my Linux
+desktop or the "Font Matrix" program which is better.
+
+In my case, the PragmataPro fonts are divided up into:
+
+ - Family: PragmataPro
+   - Style: Regular      PragmataPro
+   - Style: Italic       PragmataPro Italic
+   - Style: Bold         PragmataPro Bold
+   - Style: Bold Italic  PragmagaPro Bold Italic
+ - Family: PragmataPro Liga
+   - Style: Regular      PragmataPro Liga
+   - Style: Italic       PragmataPro Liga Italic
+   - Style: Bold         PragmataPro Liga Bold
+   - Style: Bold Italic  PragmagaPro Liga Bold Italic
+ - Family: PragmataPro Mono
+   - Style: Regular      PragmataPro Mono
+   - Style: Italic       PragmataPro Mono Italic
+   - Style: Bold         PragmataPro Mono Bold
+   - Style: Bold Italic  PragmagaPro Mono Bold Italic
+ - Family: PragmataPro Mono Liga
+   - Style: Regular      PragmataPro Mono Liga
+   - Style: Italic       PragmataPro Mono Liga Italic
+   - Style: Bold         PragmataPro Mono Liga Bold
+   - Style: Bold Italic  PragmagaPro Mono Liga Bold Italic
+
+#+BEGIN_SRC emacs-lisp
+  (set-frame-font
+    "PragmataPro Mono Liga 14"    ;; FONT (namestring, object, entity or spec)
+    nil                      ;; KEEP-SIZE
+    t                        ;; FRAMES (t means to all frames)
+  )
+;;  (set-frame-font "PragmataPro Liga 14" nil t)
+#+END_SRC
+
+In Emacs Lisp, fonts are represented using three different Lisp object types:
+
+  - font object :: a Lisp object that represents a font that Emacs has
+    opened.  Font objects cannot be modified in Lisp, but they can be
+    inspected.
+
+  - font spec  :: a font spec creating using font specifications args
+
+  - font entity :: a reference to a font that need not be open.  Its
+    properties are intermediate between a font object and a font spec: like a
+    font object, and unlike a font spec, it refers to a single, specific font.
+
+or just simply a string:
+
+  - font name :: a string in the *fontconfig* format
+
+To display the complete list of available fonts, execute the following in the
+*Scratch Buffer*.
+
+#+BEGIN_SRC emacs-lispER
+  (dolist (font (x-list-fonts "*"))
+    (insert (format "%s\n" font)))-GOOG-Noto Sans CJK KR-normal-normal-normal-*-*-*-*-*
+#+END_SRC
+
+https://github.com/lumiknit/emacs-pragmatapro-ligatures
+
+#+BEGIN_SRC emacs-lispER
+  (use-package pragmatapro-lig
+    :quelpa
+      (pragmatapro-lig
+        :fetcher url
+        :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
+      )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; (quelpa
+  ;;   '(pragmatapro-lig
+  ;;      :fetcher url
+  ;;      :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
+  ;;    )
+  ;; )
+
+  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/pragmatapro-lig")
+  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/")
+  ;;; (use-package pragmatapro-lig)
+  (require 'pragmatapro-lig)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (load-file "~/.emacs.d/lisp/pragmatapro-prettify-symbols-v0.829.el")
+#+END_SRC
+
+* Colors
+
+- M-x list-colors-display RET  :: display an annotated rainbox of colors
+
+To see the set of possible color names for X:
+    /usr/lib/X11/rgb.txt
+
+(distinguish btw colors for Emacs in X and colors for Emacs in an xterm)
+
+#+BEGIN_SRC emacs-lisp
+;;;NEEDED?  (set-background-color "White")
+;;;NEEDED?  (set-foreground-color "Black")  ;; don't these duplicate the below?
+;;;NEEDED?  (set-cursor-color     "Red")
+;;;NEEDED?  (set-mouse-color      "Black")
+;;;NEEDED?  (set-border-color     "Blue")
+#+END_SRC
+
+* Faces for Emacs Text            =faces vs colors vs themes=
+
+To see the various faces:
+    M-x list-faces-display
+
+??? are the following needed to use faces or themes ???
+
+#+BEGIN_SRC emacs-lisp
+  (global-font-lock-mode
+    t)	; Enable colorized text everywhere.
+
+  (setq font-lock-maximum-decoration
+    t)	; Enable colorized text everywhere.
+#+END_SRC
+
+** Default Face for Specific Kinds of Text
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Standard-Faces.html
+
+- default :: This face is used for ordinary text that doesn’t specify any
+  face. Its background color is used as the frame’s background color.
+
+M-x customize-face mode-line RET
+#+BEGIN_SRC emacs-lisp :results none
+  (custom-set-faces
+    '(default
+      (
+        (t
+          (:stipple nil
+;;           :background "white"
+;;           :foreground "black"
+           :inverse-video nil
+           :box nil
+           :strike-through nil
+           :overline nil
+           :underline nil
+           :slant normal
+           :weight normal
+           :height 130
+           :width normal
+           :family "PragmataPro"
+          )
+        )
+      )
+    )
+  )
+#+END_SRC
+
+** org-mode face elements
+
+*** Visual Test of Typefaces in Org-Mode
+
+- *Testing*   boldface
+- /Testing/   italics
+- ~Testing~   verbatim
+- -Testing-
+- +Testing+   strikethru
+- =Testing=   code
+ - Testing :: description list
+
+??? (add-to-list 'custom-theme-load-path "<themefolder>")
+
+#+BEGIN_SRC emacs-lisp
+  ; Text surrounded by =TEXT=
+  ;;; (set-face-attribute 'org-verbatim nil :foreground "LightGrey" :box "Orange" :inverse-video t)
+
+  ; Text surrounded by ~TEXT~
+  (set-face-attribute 'org-code nil :foreground "Purple")
+
+  ; Text representing the definition term in a description list   - TERM  :: DEFINITION
+  (set-face-attribute 'org-list-dt nil :foreground "Orange" :box "White" :inverse-video t)
+
+  ;font-lock-builtin-face (dark blue on grey)
+  ;font-lock-comment-face (red on grey)
+  ;font-lock-constant-face (pink on grey)
+  ;font-lock-doc-face (black on green)
+  ;font-lock-function-name-face (bright blue on grey)
+  ;font-lock-keyword-face (bright cyan on grey)
+  ;font-lock-string-face (black on green)
+  ;font-lock-type-face (FAINT green on grey)
+  ;font-lock-variable-name-face (orange on grey HARD TO READ)
+  ;font-lock-warning-face red on grey)
+
+  ;(set-face-foreground 'font-lock-builtin-face "White")
+  ;(set-face-foreground 'font-lock-comment-face "White")
+  ;(set-face-foreground 'font-lock-function-name-face "White")
+  ;(set-face-foreground 'font-lock-string-face "White")
+  ;(set-face-foreground 'font-lock-variable-name-face "White")
+
+  ;bold (black on grey)
+  ;bold-italic (black on grey)
+  ;border (black on black UNREADABLE)
+  ;cursor (black on black UNREADABLE)
+  ;default (black on grey)
+  ;fixed-pitch (black on grey)
+  ;fringe (black on grey)
+  ;header-line (underlined black on grey)
+  ;highlight (black-on-green)
+  ;isearch (UNREADABLE cyan-on-purple)
+  ;isearch-lazy-highlight-face (black-on-cyan)
+  ;italic (black-on-grey)
+  ;menu  (grey-on-black)
+  ;mode-line  (grey-on-black)
+  ;mouse
+  ;region
+  ;scroll-bar
+  ;secondary-selection
+  ;show-paren-match-face
+  ;tool-bar
+  ;tooltip
+  ;underline
+  ;variable-pitch
+#+END_SRC
+
+** Themes
+
+A popular way of customizing Emacs colors is the use the #color-theme#
+package, of which a number of those these are aware of Org-mode.
+
+For my Gentoo Linux distribution I run, I had to emerge (install):
+
+   $ emerge app-emacs/color-theme
+
+There is also a newer approach called *custom themes* but custom themes do not
+replace color themes, as each approach has its advantages.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package grandshell-theme)
+  (setq custom-enabled-themes '(grandshell))
+  (load-theme 'grandshell t)
+#+END_SRC
+
+#+RESULTS:
+: t
+
+#+BEGIN_SRC DISABLEDemacs-lisp
+;;;  (use-package color-theme)
+;;  (setq color-theme-is-global t)
+;;  (color-theme-initialize)
+
+;;  (load "org-beautify-theme")
+;;  (load "color-theme-github")
+;;  (load "color-theme-cobalt")  ;; looks normal
+;;  (load "color-theme-sanityinc-solarized")  ;; looks normal
+;;  (load "color-theme-sanityinc-tomorrow")  ;; looks normal
+
+;;  (load "grandshell-theme")  ;; on black but not bad
+
+;; cyberpunk          ;; on black but not bad
+;; grandshell-theme   ;; on black but not bad
+;; deeper-blue        ;; on black but not bad
+;; leuven             ;; on white but NICE!
+;; manoj-dark         ;; on black but VERY CLEAR
+
+#+END_SRC
