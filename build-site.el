@@ -37,6 +37,9 @@
 (require 'ox-publish)
 (require 'font-lock)
 
+(setq user-full-name "Xanalogica")
+(setq user-mail-address "xanalogica@gmail.com")
+
 ;; Using this library is a work-around to get color in HTML exports.
 ;; Otherwise Emacs in batch mode cannot get the correct faces
 
@@ -51,23 +54,46 @@
       org-html-include-default-style nil
       org-src-fontify-natively t)
 
+(defvar site-attachments (regexp-opt '("jpg" "jpeg" "gif" "png" "svg"
+                                       "ico" "cur" "css" "js" "woff" "html" "pdf")))
+
 ;; Define the project to be published
 
 (setq org-publish-project-alist
-      (list
-       (list "config.org"
-	     :recursive nil
-	     :base-directory "."
-	     :publishing-directory "./public"
-	     :base-extension "org"
-	     :include '("config.org")
-	     :publishing-function 'org-html-publish-to-html
-	     :with-author t
-	     :with-creator nil
-	     :with-toc t
-	     :section-numbers nil
-	     :time-stamp-file nil)
-      )
+  (list
+
+    (list "config.org"
+     :base-directory              "."
+     :publishing-directory        "./public"
+     :recursive                   nil
+
+     :base-extension              "org"
+
+     :include                     '("config.org")
+
+     ;; :with-author                 t
+     ;; :with-creator                nil
+     ;; :with-toc                    t
+     ;; :section-numbers             nil
+     :time-stamp-file             nil
+
+     :publishing-function 'org-html-publish-to-html
+    )
+
+    ;; ----------------------------------------------------------------------
+    ;; Copy Diagrams (and Folders) into Publishing Directory
+    ;; ----------------------------------------------------------------------
+    (list "webstyling"
+      :base-directory             "webstyling"
+      :publishing-directory       "./public/webstyling"
+      :recursive                  t
+
+      :base-extension             site-attachments
+
+      :publishing-function        'org-publish-attachment
+    )
+
+  )
 )
 
 ;; Generate site
