@@ -57,7 +57,7 @@
       (list
        (list "config.org"
 	     :recursive nil
-	     :base-directory "."
+	     :base-directory "main"
 	     :publishing-directory "./public"
 	     :base-extension "org"
 	     :include '("config.org")
