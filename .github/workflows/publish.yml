@@ -11,14 +11,12 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v4
-        with:
-          path: main
 
       - name: Install Emacs
         run: sudo apt install emacs-nox --yes
 
       - name: Build the site
-        run: main/publi.sh
+        run: ./publi.sh
 
       - name: Publish generated content to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
