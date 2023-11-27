@@ -71,10 +71,11 @@
 
      :include                     '("config.org")
 
-     ;; :with-author                 t
-     ;; :with-creator                nil
-     ;; :with-toc                    t
-     ;; :section-numbers             nil
+     :with-author                 t
+     :with-creator                nil
+     :with-toc                    t
+     :section-numbers             nil
+
      :time-stamp-file             nil
 
      :publishing-function 'org-html-publish-to-html
