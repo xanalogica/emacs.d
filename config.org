@@ -1,15 +1,36 @@
 #+TITLE:	My Emacs Configuration
 #+SUBTITLE:	Structured Using Org-Babel
 #+AUTHOR:	Jeffrey Rush
-#+OPTIONS:	author:t creator:t email:t title:t
-#+OPTIONS:	toc:4 h:4 num:3
+#+EMAIL:	mailto:xanalogica@gmail.com
+#+OPTIONS:	author:nil toc:t title:nil tasks:nil tags:nil prop:nil num:t broken-links:mark
 #+CATEGORY:     emacs
 #+SETUPFILE:	webstyling/theme-readtheorg-local.setup
 #+OPTIONS:	^:{}
 
-### STARTUP:	overview hideblocks align inlineimages
+OPTIONS:	author:t creator:t email:t title:t
+OPTIONS:	toc:4 h:4 num:3
 
-### PROPERTY:	header-args  :results silent
+#+BEGIN_ABSTRACT
+
+*Abstract*
+
+TO BE WRITTEN
+
+#+END_ABSTRACT
+#+TOC: headlines 2
+
+* Introduction
+
+This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
+explain how and why I did each configuration setting, and yet automatically
+export it into emacs-lisp format for loading into Emacs at start-up time.
+This style of documenting is called [[https://en.wikipedia.org/wiki/Literate_programming][Literate Programming]].
+
+I maintain my Emacs configuration https://github.com/xanalogica/.emacs.d/ and
+automatically publish the polished documentation at ??? using a CI pipeline.
+
+
+
 
 https://github.com/xanalogica/.emacs.d/  (not on gitlab.com/xanalogica)
 
@@ -43,15 +64,7 @@ http://www.thoughtamps.info/.emacs.d/
 
 https://{userid}.github.io/{reponame}
 
-* Introduction
 
-This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
-explain how and why I did each configuration setting, and yet automatically
-export it into emacs-lisp format for loading into Emacs at start-up time.
-This style of documenting is called [[https://en.wikipedia.org/wiki/Literate_programming][Literate Programming]].
-
-I maintain my Emacs configuration https://github.com/xanalogica/.emacs.d/ and
-automatically publish the polished documentation at ??? using a CI pipeline.
 
 * My CI Pipeline to Publish
 
