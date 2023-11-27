@@ -1,0 +1,907 @@
+#+TITLE:	My Emacs Configuration
+#+SUBTITLE:	Structured Using Org-Babel
+#+AUTHOR:	Jeffrey Rush
+#+OPTIONS:	author:t creator:t email:t title:t
+#+OPTIONS:	toc:4 h:4 num:3
+#+CATEGORY:     emacs
+#+SETUPFILE:	webstyling/theme-readtheorg-local.setup
+#+OPTIONS:	^:{}
+
+### STARTUP:	overview hideblocks align inlineimages
+
+### PROPERTY:	header-args  :results silent
+
+https://github.com/xanalogica/.emacs.d/  (not on gitlab.com/xanalogica)
+
+
+one site can be published to https://xanalogica.github.io by publishing to the
+master branch of a repository named "xanalogica.github.io".
+
+You can have an additional site per GitHub project published to https://xanalogica.github.io/.emacs.d.
+
+I use a GitHub Actions workflow to publish my site, so that I can use a build
+process other an Jekyll.
+
+https://github.com/JamesIves/github-pages-deploy-action
+
+
+
+  https://xanalogica.github.io/.emacs.d/
+    README.html                            -> index.html
+    config.html
+    assets/css/style.css
+
+1. put it into the form of ReadTheDocs with index along left-side
+2. redirect index.html -> config.html
+?? Run ./publi.sh
+
+
+
+
+
+http://www.thoughtamps.info/.emacs.d/
+
+https://{userid}.github.io/{reponame}
+
+* Introduction
+
+This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
+explain how and why I did each configuration setting, and yet automatically
+export it into emacs-lisp format for loading into Emacs at start-up time.
+This style of documenting is called [[https://en.wikipedia.org/wiki/Literate_programming][Literate Programming]].
+
+I maintain my Emacs configuration https://github.com/xanalogica/.emacs.d/ and
+automatically publish the polished documentation at ??? using a CI pipeline.
+
+* My CI Pipeline to Publish
+
+.emacs.d/.github/workflows/publish.yml
+
+.emacs.d/publi.sh
+
+
+
+
+* The Big Picture
+:PROPERTIES:
+:ID:       87baf222-7172-4202-ac71-f36b30dafc9a
+:END:
+
+My Emacs configuration is spread out across several files, for ease of
+understanding, sharing and using a feature without dragging everything else
+in.  I try to fully configuration and document each feature I make use of in
+*one* place and avoid sprinkling it around.
+
+- ~/.emacs.d/early-init.el
+- ~/.emacs.d/init.el
+- ~/.emacs.d/config.org -> ???
+- ~/.emacs.d/config/config-content-publishing.org
+- ~/.emacs.d/config/config-emacs-display-presentation.org
+- ~/.emacs.d/config/config-emacs-email-usage.org
+- ~/.emacs.d/config/config-emacs-global-keyboard-setup.org
+- ~/.emacs.d/config/config-emacs-new-links-for-org-mode.org
+- ~/.emacs.d/config/config-emacs-to-be-merged.org
+- ~/.emacs.d/config/config-emacs-use-of-ai.org
+- ~/.emacs.d/config/config-emacs-use-of-cloning.org
+- ~/.emacs.d/config/config-emacs-work-protection.org
+- ~/.emacs.d/config/config-global-syntax-checking.org
+- ~/.emacs.d/config/config-helpful-notes.org
+- ~/.emacs.d/config/config-install-of-org-mode.org
+- ~/.emacs.d/config/config-note-archiving-using-org-mode.org
+- ~/.emacs.d/config/config-note-capture-using-org-mode.org
+- ~/.emacs.d/config/config-note-refiling-using-org-mode.org
+- ~/.emacs.d/config/config-printing-from-emacs.org
+- ~/.emacs.d/config/config-python-development.org
+- ~/.emacs.d/config/config-research.org
+- ~/.emacs.d/config/config-scripting-via-org-babel.org
+- ~/.emacs.d/config/config-task-planning.org
+- ~/.emacs.d/config/config-task-reporting.org
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+tags:
+ - :babel:python:rust:git:undo:finance:slides:org:
+
+
+
+git@github.com:xanalogica/.emacs.d.git
+https://github.com/xanalogica/.emacs.d
+
+LICENSE.md         LICENSE.md
+.gitignore         .gitignore
+README.org         README.org
+build-site.sh      build-site.el
+                   content/index.org
+n/a                publi.sh
+                   .github/workflows/
+snippets/
+config.org
+init.el
+
+M-x org-babel-tangle
+
+* About ~/.emacs.d/early-init.el
+
+Most customizations for Emacs should be put in the normal init file.  See The
+Emacs Initialization File.  However, it is sometimes necessary to have
+customizations take effect during Emacs startup earlier than the normal init
+file is processed.  Such customizations can be put in the early init file,
+~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el.  This file is loaded
+before the package system and GUI is initialized, so in it you can customize
+variables that affect the package initialization process, such as
+package-enable-at-startup, package-load-list, and package-user-dir.  Note that
+variables like package-archives which only affect the installation of new
+packages, and not the process of making already-installed packages available,
+may be customized in the regular init file. See Package Installation.
+
+We do not recommend that you move into early-init.el customizations that can
+be left in the normal init files.  That is because the early init file is read
+before the GUI is initialized, so customizations related to GUI features will
+not work reliably in early-init.el.  By contrast, the normal init files are
+read after the GUI is initialized.  If you must have customizations in the
+early init file that rely on GUI features, make them run off hooks provided by
+the Emacs startup, such as window-setup-hook or tty-setup-hook. See Hooks.
+
+For more information on the early init file, see Init File in The Emacs Lisp
+Reference Manual.
+
+#+INCLUDE: "early-init.el" example emacs-lisp
+
+* About ~/.emacs.d/init.el
+
+#+INCLUDE: "init.el" example emacs-lisp
+
+The purpose of (provide 'some-library) is to tell Emacs that a named feature
+has been loaded and that the file a feature is associated with, does not have
+to be loaded again, when you require it.
+
+* About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
+
+There are many ways to provide package settings, from raw Elisp to tidy macros.
+The github:[[https://github.com/jwiegley/use-package][use-package]] Elisp macro allows one to isolate package configuration
+in your Emacs configuration files in a way that is both performance-oriented
+and tidy.
+
+- [[https://www.masteringemacs.org/article/spotlight-use-package-a-declarative-configuration-tool][Spotlight: use-package, a declarative configuration tool - Mastering Emacs]]
+- [[http://cachestocaches.com/2015/8/getting-started-use-package/][Getting Started with Use-Package]]
+
+#+BEGIN_SRC emacs-lisp
+  ;;;;; ;; Make sure I have 'use-package' installed in my Emacs
+  ;;;;; (unless (package-installed-p 'use-package)
+  ;;;;;   (package-refresh-contents)       ;; refresh catalog of remote registry
+  ;;;;;   (package-install 'use-package)   ;;   and install 'use-package' module
+  ;;;;; )
+  ;;;;; (eval-when-compile
+  ;;;;;   ;;; (add-to-list 'load-path "~/.emacs.d/lisp/use-package")
+  ;;;;;   (require 'use-package)
+  ;;;;; )
+  (setq use-package-verbose t)  ;; to assist debugging configuration
+  (setq use-package-compute-statistics t)  ;; M-x use-package-report
+#+END_SRC
+
+** Add the ~diminish~ Plugin to ~use-package~ to Hide Selected Minor Modes
+
+Loading github:[[https://github.com/myrjola/diminish.el][diminish]] Elisp package causes ~use-package~ to enable a
+configuration keyword =:diminish <SYMBOL>= in your ~use-package~ invocation.
+This keyword empowers you to remove or change minor mode strings in your
+mode-line.  Such diminished modes are minor modes with no modeline display,
+because we don't want to be reminded of it.
+
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package diminish)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (diminish 'auto-fill-function)
+#+END_SRC
+
+** Add ~bind-key~ Plugin to ~use-package~ to Enhance Key Binding
+https://www.masteringemacs.org/article/mastering-key-bindings-emacs
+
+This plugin enables additional configuration keywords:
+
+- :bind
+- :bind*
+- :bind-keymap
+- :bind-keymap*
+
+The ~bind-key~ Elisp package is *part of* of the ~use-package~ code
+distribution.  In particular, the logic of the new ~use-package~ configuration
+symbols is in
+[[https://github.com/jwiegley/use-package/blob/master/use-package-bind-key.el]]
+
+  ;; (use-package bind-key)    ALREADY LOADED
+
+** Add ~general~ Plugin to ~use-package~ to Enhance Key Binding Further
+https://www.masteringemacs.org/article/mastering-key-bindings-emacs
+
+The github:[[https://github.com/noctuid/general.el Elisp package is
+primarily for making key definition more clear and concise.  It adds the
+=:general= keyword to the ~use-package~ macro.
+
+  ;; (use-package general)   ALREADY LOADED
+
+* Reporting About Loading and Configuration Details
+
+When reporting about loading and configuration details, you should require the
+‘use-package’ feature in files that use ‘use-package’, even if these files
+only contain compiled expansions of the macros. If you don’t do so, then the
+expanded macros do their job silently.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'use-package)
+#+END_SRC
+
+#+INCLUDE: "config/config-emacs-display-presentation.org"
+
+#+BEGIN_SRC emacs-lisp :results none
+  (pixel-scroll-mode 1)
+  (pixel-scroll-precision-mode 1)
+  (setq pixel-scroll-precision-interpolate-page t)  ;; so PgUp PgDn give a visual slide too.
+  (native-comp-available-p)
+#+END_SRC
+
+
+hook <wheel-up> <wheel-down> to the correct good-scroll-up
+
+
+
+#+BEGIN_SRC emacs-lisp :results none
+  (use-package mwheel
+    :ensure nil
+    :custom
+    (mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+    (mouse-wheel-progressive-speed nil)
+    (mouse-wheel-follow-mouse 't)
+    :config
+    (setq scroll-step 1)
+    (setq scroll-conservatively 1000)
+    )
+#+END_SRC
+
+
+
+https://github.com/io12/good-scroll.el
+
+#+BEGIN_SRC emacs-lisp :results none
+(global-set-key [next] #'good-scroll-up-full-screen)
+(global-set-key [prior] #'good-scroll-down-full-screen)
+#+END_SRC
+
+must build emacs with XInput 2
+--with-xwidgets                     adds a built-in web browser based on webkit
+
+(setq mouse-wheel-tilt-scroll t)  - enables horizontal scrolling
+
+C-h C-n (M-x view-emacs-news)
+
+
+
+
+
+#+RESULTS:
+: good-scroll-down-full-screen
+
+
+#+BEGIN_SRC emacs-lisp
+  (setq mouse-wheel-scroll-amount
+    '(
+       2                  ;; #lines to normally scroll by
+       ((shift) . 1)      ;; #lines when shift key pressed
+       ((control) . nil)  ;; full-screen when control key pressed
+     )
+  )
+  (setq mouse-wheel-progressive-speed
+    nil) ;; t adjusts faster, nil keeps it the same
+#+END_SRC
+
+??#+INCLUDE: "config/config-emacs-global-keyboard-setup.org"
+??#+INCLUDE: "config/config-emacs-work-protection.org"
+??#+INCLUDE: "config/config-printing-from-emacs.org"
+??#+INCLUDE: "config/config-install-of-org-mode.org"
+  - (agendapath???)  (tags???)
+
+The Lifecycle of Information (Capture, File, Archive)
+(some things are places, others are tags)
+
+??#+INCLUDE: "config/config-note-capture-using-org-mode.org"
+??#+INCLUDE: "config/config-note-refiling-using-org-mode.org"
+??#+INCLUDE: "config/config-note-archiving-using-org-mode.org"
+
+??#+INCLUDE: "config/config-scripting-via-org-babel.org"
+
+syntax coloring ?  (or put it in each mode?)
+org-babel ?
+org-query ?
+org-tramp ?
+databases ?
+
+??#+INCLUDE: "config/config-global-syntax-checking.org"
+??#+INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
+
+* tags and places ???
+tags
+refiling places
+
+??#+INCLUDE: "config/config-python-development.org"
+??#+INCLUDE: "config/config-research.org"
+??#+INCLUDE: "config/config-emacs-use-of-ai.org"
+
+
+
+
+* Emacs Configuration for Planning My Tasks (change to planning policy)
+??#+INCLUDE: "config/config-task-planning.org"
+
+* Emacs Configuration for Reporting About My Tasks
+- ad-hoc reports
+??#+INCLUDE: "config/config-task-reporting.org"
+
+* Emacs Configuration for Content Publishing
+- publish
+- export
+- slide present
+??#+INCLUDE: "config/config-content-publishing.org"
+
+* Emacs Configuration To Be Merged
+??#+INCLUDE: "config/config-emacs-to-be-merged.org"
+
+* Additional Small Configuration File
+** Place for Small Automatic Configuration Settings
+
+Emacs likes to write small tidbits of manual configuration into an .el file so
+I use a small file that I never look into, to keep it separate from my
+=config.org=.  It also contains my private information like passwords.
+
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file "~/.emacs.d/custom-settings.el")
+  (load custom-file t)
+#+END_SRC
+
+
+
+
+M-x auto-complete of functions and variable names  ???
+
+
+
+* What Is This File?
+
+follows in tradition
+
+[[https://orgmode.org/worg/org-contrib/babel/][Babel]] is [[https://orgmode.org/][Org]]'s ability to execute source code within Org documents. If you are not familiar with Org please take a moment to read the Org homepage before continuing. 
+
+[[https://orgmode.org/worg/][Worg or World of Org]]
+
+
+https://github.com/andreyorst/dotfiles/tree/master/.config/emacs
+
+https://panadestein.github.io/emacsd/  .html  very literate
+https://github.com/Panadestein/emacsd  .org
+
+(tangle .org into init.el instead of org-babel-load-file)
+https://github.com/eliaskanelis/.emacs.d
+
+There is an option to put back-references to the org file when
+tangling: #+PROPERTY: header-args+ :tangle :comments link
+
+take a look at gcmh package instead
+
+use :bind or :general in use-package sections instead of keybindings
+
+(use-package exec-path-from-shell
+  :custom
+  (exec-path-from-shell-check-startup-files nil)
+  :config
+  (exec-path-from-shell-initialize))
+
+use :hook not :config/:init (add-hook
+
+each mode introduced should enable the mode inside that use-package clause, not elsewhere
+
+turn on flycheck linters to catch bad stuff
+
+
+GNU ELPA is primary package repository
+
+what is this file?
+  - uses Babel for org-mode to better structure and explain my configuration
+  - embeds emacs lisp fragments that are tangled into one file and loaded
+  - allows org-mode TODO usage for planning work on my Emacs configuration
+
+** Brief Intro to Babel
+
+Babel is org-mode's ability to execute or extract source code within Org-mode
+documents.  The source can be different programming languages, all in the same
+=.org= file.
+
+Babel has special support for embedding your Emacs initialization code into
+~org-mode files, so that you can make use of the nice features of org-mode such
+as outline folding, tags, notes, HTML export, etc.  The /org-babel-load-file/
+function can be used to load the Emacs Lisp code blocks embedded in a literate
+Org-mode file in the same way that you might load a regular Emacs Lisp file.
+
+To use org-mode for organizing your Emacs configuration, a very minimum amount
+of configuration goes into the user's =~/.emacs.d/init.el= file.
+
+#+NAME: ~/.emacs.d/init.el
+#+BEGIN_EXAMPLE
+#+END_EXAMPLE
+
+
+
+
+
+
+where is this file published?
+others I have learned from
+which version of Emacs and which features of Emacs do I depend upon?
+directory structure
+what is my configuration philosophy?
+  - break configuration out properly
+    (avoid declaring zero day and starting all over)
+    (make it easy to disable/enable sections w/o breaking dependencies)
+    (make it easy for others to adopt sections without dragging everything else in)
+    (prefer public packages)
+    (prefer .el files on public git repos)  using quelpa for fetch them
+    (use local packages)
+    (use local .el files)            (add-to-list 'load-path "~/.emacs.d/lisp/")
+
+(is Cask and Pallet still used?)
+
+packaging choice
+packages are:
+  explicitly loaded in this file
+  internatively loaded using load-packages-load and listed in /package-selected-packages/ from package.el
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* colorizing sources, in Emacs and in exported formats.
+
+* Building Emacs from Source on Ubuntu
+
+https://practical.li/blog/posts/build-emacs-from-source-on-ubuntu-linux/
+
+$ git clone --branch emacs-29 git://git.savannah.gnu.org/emacs.git emacs-29 && cd emacs-29
+$ export CC=/usr/bin/gcc-10 && export CXX=/usr/bin/gcc-10
+$ ./autogen.sh
+$ ./configure --with-native-compilation=aot --with-x --with-json --with-tree-sitter
+$ make -j$(nproc)
+$ ./src/emacs -Q                -- test it runs WITHOUT any of my emacs configuration
+$ sudo make install --prefix /usr/local
+
+--with-json
+--with-tree-sitter
+--with-pgtk      (use GTK instead of X windows)
+--with-xwidgets  (requires gtk3)
+--with-x
+
+
+frame
+text presentation
+  fonts
+  highlighting
+menu mechanism
+
+DONE disable ob-ledger
+WHY? Buffer directions.org modified, kill anyway?
+
+minimize use of customize.el
+minimize use of lisp/*.el files
+  quelpa.el
+  git-auto-commit-mode.el
+  ob-http-mode.el
+  ht.el
+  spinner.el
+  lsp-mode.el
+  diminish.el
+  unbound.el
+  hydra.el
+
+ '(package-selected-packages
+   '(greader whisper ob-chatgpt-shell ob-dall-e-shell ob-graphql ob-html-chrome orca org-ai org-anki org-auto-expand org-clock-today org-dropbox org-make-toc ob-sql-mode ob-redis k8s-mode just-mode gptel gitlab-ci-mode-flycheck goggles code-review blacken chatgpt-shell dall-e-shell alda-mode ob-mermaid ejira highlight-indent-guides ob-browser ox-jira python-black ox-twbs ox-publish counsel-tramp counsel smart-mode-line org-ql org-mru-clock unbound window pragmatapro-lig origami org-super-agenda cal-iso org-notmuch rustic project projectile dap-mode lsp-ui lsp-mode flycheck-pycheckers flycheck-rust flycheck-yamllint ob-rust rust-auto-use ox-ssh ox-reveal ox-rfc language-detection jiralib2 org-agenda-property ob-restclient org-download pretty-hydra ob-http anki-editor terraform-mode hcl-mode py-autopep8 py-import-check pip-requirements org-special-block-extras org-sidebar gitlab gitlab-ci-mode ts hydra scimax-org-babel-python beacon magit-todos pyenv-mode eshell-prompt-extras jq-format jq-mode docker-tramp 0blayout indent-tools json-mode json-navigator json-reformat diminish use-package use-package-ensure-system-package use-package-hydra yaml-imenu yaml-mode yafolding magit-annex nginx-mode org-magit orgit ox-json timonier gitconfig git-timemachine git-annex git-lens git-link copy-as-format magit org-noter undo-tree ivy-hydra all-the-icons-ivy imenu-anywhere ivy ivy-dired-history ivy-gitlab swiper notmuch-labeler org-mime pdf-tools atomic-chrome ob-async simple-httpd git-auto-commit-mode stan-mode stan-snippets yasnippet elisp-lint org-elisp-help ox-epub ox-gfm ox-pandoc helm color-theme-cobalt color-theme-github color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow cyberpunk-theme org-time-budgets org-beautify-theme docker-compose-mode dockerfile-mode package-build shut-up epl git commander f dash s))
+
+
+
+
+⛔ Warning (comp): quelpa.el:237:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:241:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:245:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:516:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:669:2: Warning: defvar `quelpa-build--wiki-min-request-interval' docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:1403:31: Warning: Empty let body
+⛔ Warning (comp): quelpa.el:1493:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:1811:2: Warning: docstring has wrong usage of unescaped single quotes (use \= or different quoting)
+⛔ Warning (comp): quelpa.el:2014:2: Warning: docstring wider than 80 characters
+
+
+** DONE support for the WebP image format, if the libwebp library is found
+** DONE Emacs on X now uses XInput 2 for input events, for better mousewheel support
+** DONE [[https://www.masteringemacs.org/article/speed-up-emacs-libjansson-native-elisp-compilation][Speed up Emacs with libjansson and native elisp compilation - Mastering Emacs]]
+
+I build Emacs with native compilation of elisp files upfront, so I don't have
+to pay the price later as each file is compiled as needed.
+
+enable-local-variables 
+file-local-variables-alist
+safe-local-variable-values
+
+
+- LibraryThing (Android)
+- Libib (Android, PC, Tablet)
+    books, etc.
+- MyLibrary (Android)
+    simple
+- Book Catalogue (Android, free)
+- Goodreads
+    no ISBN
+
+
+- Book Track (only Apple)
+
+- Leto (only Apple)
+- Book Buddy (only Apple)
+- Bookshelf (Android $1.49/mo)
+
+  batch scan option?
+  cover scan?
+
+
+** TODO Study tree-sitter and insure I have the grammar libraries I want
+
+libtree-sitter-<LANG>.so
+
+Emacs provides a user command, 'treesit-install-language-grammar',
+that automates the download and build process of a grammar library.
+It prompts for the language, the URL of the language grammar's VCS
+repository, and then uses the installed C/C++ compiler to build the
+library and install it.
+
+- [[https://www.masteringemacs.org/article/how-to-get-started-tree-sitter][How to Get Started with Tree-Sitter - Mastering Emacs]]
+- https://github.com/tree-sitter
+
+** TODO EGlot, the Language Server Client
+
+EGlot, the leaner complement to the fully-featured LSP-mode, is now built into
+Emacs. It should work out of the box. Just type M-x eglot in a buffer to get
+started.
+
+** TODO Use-package -- test all my uses of it in config.org
+
+Now included in Emacs.
+
+It’s an easier and more expressive way of sharing Emacs configuration
+snippets, and knowing it’s built in just makes everything much easier.
+
+** TODO Pixel Scroll Precision Mode
+
+
+
+** TODO specify location of user-emacs-directory
+
+$ emacs --init-directory ~/.emacs.d/
+
+
+
+;; (defface org-block-begin-line
+;;   '((t (:underline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+;;   "Face used for the line delimiting the begin of source blocks.")
+
+;; (defface org-block-background
+;;   '((t (:background "lightgrey")))
+;;   "Face used for the source block background.")
+
+;; (defface org-block-end-line
+;;   '((t (:overline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+;;   "Face used for the line delimiting the end of source blocks.")
+
+
+
+* MISC
+
+#+BEGIN_SRC emacs-lispER
+  (setq case-fold-search t)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lispEr
+  ;;; https://github.com/Malabarba/smart-mode-line
+  ;;; (sml/setup)
+  (setq sml/shorten-directory nil)
+  (setq sml/shorten-modes nil)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lispER
+  (use-package git-auto-commit-mode)
+  (use-package ob-http)
+  (use-package lsp-mode)
+  (use-package peg)
+#+END_SRC
+
+* About This File
+
+This is a current copy of my Emacs configuration, annotated with explanations.
+I've learned a lot by studying other people's Emacs configurations and I
+wanted to share what I've ended up with.
+
+Other Emacs files I've studied:
+
+  - https://github.com/redguardtoo/emacs.d
+  - https://github.com/purcell/emacs.d/blob/master/README.md
+  - This is a VERY good example of a custom org-mode .emacs.d file.
+    https://github.com/mwfogleman/.emacs.d/
+  - ~/.emacs.d/michael.org]] (local copy)
+
+  - https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org
+  - https://github.com/bbatsov/emacs.d/blob/master/init.el
+  - https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el
+
+My Emacs configuration is divided into two files:
+
+  - ~/.emacs.d/init.el
+  - ~/.emacs.d/config.org (automatically tangled into config.el)
+
+The =init.el= file is the first one executed by Emacs, and in it I do initial
+set up of my choice of package management, and then if =config.org= has been
+modified, tangle it into =config.el=, which is then loaded into Emacs by
+=init.el= to make those configuration settings take effect.
+
+* My Emacs Directory Layout
+
+When Emacs is started, it tries to load a ELisp program from an init file,
+looking in the following places in this order:
+
+    - ~/.emacs              -- I don't use this file
+    - ~/.emacs.el           -- I don't use this file
+    - ~/.emacs.d/init.el    -- This is the *start of my Emacs configuration*
+
+In case of problems with =init.el=, you can use the command-line switch '-q'
+to prevent it being loaded or '--debug-init' to get a traceback of the first
+error encountered.
+
+TIP: It is NOT recommendeed to byte-compile your init file as it does not
+     speed up startup very much and often leads to problems when you forget
+     to recompile the file.
+
+#+BEGIN_EXAMPLE
+~/.emacs.d/
+.
+├── README.org	;; light introduction to my setup
+├── init.el		;; my init file for Emacs (versus ~/.emacs)
+├── agenda-files.py     ????????????????????????????????????????
+├── org-clock-save.el   ????????????????????????????????????????
+├── ARCHIVE/		;; modules that I retired using and will someday delete
+├── auto-save-list      ????????????????????????????????????????
+├── %backup%~           ????????????????????????????????????????
+├── backups/		;; backup copies of ANY edited files
+├── bookmarks           ????????????????????????????????????????
+├── Cask		;; installed modules list read by Cask and maintained by Pallet
+├── config.el		;; auto-built from my config.org each time Emacs starts
+├── config.org	;; my Emacs configuration in org-mode 'literate' format
+├── config.org~
+├── config-XXX.org
+├── custom-settings.el	;; tiny custom settings auto-edited by Emacs itself
+├── elpa
+│   ├── PACKAGE-A-YYYYMMDD.HHMM/
+│   ├── PACKAGE-B-YYYYMMDD.HHMM/
+│   ├── archives/
+│   │   ├── gnu/
+│   │   │   ├── archive-contents
+│   │   │   └── archive-contents.signed
+│   │   ├── melpa/
+│   │   │   └── archive-contents
+│   │   └── melpa-stable/
+│   │       └── archive-contents
+├── eshell/
+│   ├── alias
+│   ├── history
+│   └── lastdir
+├── quelpa/
+│   ├── build/
+│   │   └── PACKAGE-A/
+├── ido.last
+├── library.org
+├── LICENSE
+├── lisp/			;; individual .el files I create or work on
+├── jeff-light-theme.el
+├── michael.org
+├── network-security.data
+├── places
+├── pymd5-1c2b62349aded4d3a40a729148cbd68c.py
+├── recentf
+├── request
+│   └── curl-cookie-jar
+├── session.1012cc9dcd52891180156817838919458300000018020070
+├── session.106f8e8df9fad6f21c156806759412428700000015480070
+├── snippets		;; my library of text fragments for use by the snippet library
+├── templates 	;; my library of text fragments for use by org-capture
+│   ├── PACKAGE-A/
+│   ├── PACKAGE-B/
+├── tramp
+├── transient
+│   └── history.el
+└── url
+    └── cookies
+
+;;      .cask/
+;;         25.3/		;; cache/collection of modules pulled down by package manager
+;;      ac-dict/		;; auto-complete dictionary for various modes/languages
+;;   ~/.cask/
+;;      Cask			;; specification file of dependencies of the Cask pgm
+;;      bin/
+;;         cask			;; command-line tool for invoking Cask outside of Emacs
+;;      cask.el			;; ELisp source of the Cask library
+#+END_EXAMPLE
+
+* orientation -- overall file flow
+** ~/.emacs.d/init.el                                                          :FILE:
+
+CAPTION: ~/.emacs.d/init.el
+NAME: init.el
+BEGIN_SRC shell :results output replace :exports none :eval never-export
+cat ~/.emacs.d/init.el
+END_SRC
+
+** packages and libraries
+*** ~/emacs.d/backups
+** ~/emacs.d/elpa
+
+
+* Emacs Configuration for Mobile Syncing
+??? #+INCLUDE: "config/config-content-mobile-sync.org"
+
+** mobile
+  On my Android, I have the Orgzly app installed and always watching my Dropbox
+  collection of .org files.  And I have defined a named search in Orgzly titled
+  "Things to Study" so I can at any time pull up and study something when I
+  have spare time.  The query string is:
+
+  #+NAME: Orgzly: Things to Study
+  #+BEGIN_SRC text
+    tn.study i.TODO o.scheduled o.priority o.notebook
+  #+END_SRC
+
+* Emacs Configuration for Email Usage Inside of Emacs
+INCLUDE: "config/config-emacs-email-usage.org"               =NOT USED=
+
+* Emacs Configuration for Personal Memory Retention
+??? #+INCLUDE: "config/config-???"                           =NOT USED=
+** Export Org-Mode Outlines as an Anki Knowledgebase
+
+url = git@github.com:louietan/anki-editor.git
+    :load-path "~/.emacs.d/lisp/anki-editor/" ;; use my Git checkout
+
+#+BEGIN_SRC emacs-lisper
+  (use-package anki-editor
+    :config
+    (setq anki-editor-create-decks t)
+    (setq anki-editor-ignored-org-tags
+      '("export" "noexport" "REFILING" "HEALTHZZZ")
+    )
+  )
+#+END_SRC
+
+
+* searching content
+* music composition
+
+** Music Notation Editting and Playing
+
+#+BEGIN_SRC emacs-lispER
+  (add-to-list 'load-path "~/.emacs.d/lisp/alda-mode/")
+  (require 'alda-mode)
+#+END_SRC
+
+* clone mode
+INCLUDE: "config/config-emacs-use-of-cloning.org"
+
+* Emacs Explanatory Notes
+INCLUDE: "config/config-helpful-notes.org"
+
+* Footer of the Emacs package
+<<sec:foot>>
+
+You've journeyed to the finale or perhaps, you've taken a particular interest in the art of closing an Emacs package.
+If my configuration intrigues you and you'd like to experiment with it, I warmly invite you to [[https://github.com/Panadestein/emacsd/fork][fork it]] on GitHub.
+Your support and feedback will surely fuel its continuous development. Thank you for your time and interest!
+So, without further ado, let's elegantly wrap up the tangling process:
+
+#+begin_src emacs-lisp
+
+  (provide 'init.el)
+  ;;; init.el ends here
+#+end_src
+
+
+
