@@ -1,0 +1,50 @@
+.slide-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  font-size: 0.5em;
+  z-index: 10;
+  # background-color: #f5f5f5;
+}
+html {
+    position: relative;
+    min-height: 100%;
+}
+body {
+    margin-bottom: 60px /* Height of the footer */
+}
+
+/**********************************************************************
+ *               Presentation of Footnotes in Org-Mode
+ **********************************************************************/
+
+a.footref { text-decoration: none; line-height: 80%; }
+
+#footnotes { display: none; }
+.margin-note { font-size: 80%; line-height: 1.2; color: #555; }
+.margin-note > p:first-child { display: inline; }
+.rss-only { display: none; }
+
+@media screen and (max-width: 650px) {
+    .margin-note { margin: .5em; font-size: 100%; }
+    .margin-note:before { content: "["; }
+    .margin-note:after { content: "]"; }
+}
+
+@media screen and (min-width: 651px) {
+    body { max-width: 45em; }
+    body > div { margin-right: 10em; }
+    .margin-note {
+        display: block; float: right; clear: right;
+        margin: 0 -12.5em 1.5em 0; width: 11em;
+        text-align: left;
+    }
+}
+
+@media print {
+    .margin-note { display: none !important; }
+    #footnotes { display: block; margin-top: 4.5em; }
+    #footnotes p { font-size: 80%; line-height: 1.142; }
+    .footdef sup {float: left; margin: 0 1em;}
+}

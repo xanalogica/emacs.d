@@ -1,0 +1,2827 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Emacs Configuration</title>
+<meta name="generator" content="Org mode" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/readtheorg.css"/>
+<link rel="stylesheet" type="text/css" href="webstyling/src/zeomega/css/default.css"/>
+<script type="text/javascript" src="webstyling/src/lib/js/jquery.min.js"></script>
+<script type="text/javascript" src="webstyling/src/lib/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="webstyling/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="webstyling/src/readtheorg_theme/js/readtheorg.js"></script>
+<script> var HS_STARTUP_FOLDED = true; </script>
+</head>
+<body>
+<div id="content">
+<p>
+OPTIONS:	toc:4 h:4 num:3
+</p>
+
+<div class="ABSTRACT">
+<p>
+
+</p>
+
+<p>
+<b>Abstract</b>
+</p>
+
+<p>
+TO BE WRITTEN
+</p>
+
+</div>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org001f0c8">1. Introduction</a></li>
+<li><a href="#org97b495d">2. My CI Pipeline to Publish</a></li>
+<li><a href="#orge7091ef">3. The Big Picture</a></li>
+<li><a href="#org83689f1">4. About ~/.emacs.d/early-init.el</a></li>
+<li><a href="#orgd1bb7f6">5. About ~/.emacs.d/init.el</a></li>
+<li><a href="#org02d4258">6. About <code>use-package</code> Emacs Lisp Macro To More Efficiently Organize Package Settings</a>
+<ul>
+<li><a href="#org6c1698e">6.1. Add the <code>diminish</code> Plugin to <code>use-package</code> to Hide Selected Minor Modes</a></li>
+<li><a href="#org3ef9de0">6.2. Add <code>bind-key</code> Plugin to <code>use-package</code> to Enhance Key Binding</a></li>
+<li><a href="#org99d6ff3">6.3. Add <code>general</code> Plugin to <code>use-package</code> to Enhance Key Binding Further</a></li>
+</ul>
+</li>
+<li><a href="#orgcf80cd9">7. Reporting About Loading and Configuration Details</a>
+<ul>
+<li><a href="#orgb079d7d">7.1. Screen Decoration Zones</a></li>
+<li><a href="#org1ed7974">7.2. Preferred UI Behavior</a></li>
+<li><a href="#orgf9c1751">7.3. Bell Indicator</a></li>
+<li><a href="#orgd2f85f3">7.4. Choice of Font for the Emacs Work Area</a></li>
+<li><a href="#org288a1db">7.5. Colors</a></li>
+<li><a href="#org2dae2c1">7.6. Faces for Emacs Text            <code>faces vs colors vs themes</code></a></li>
+</ul>
+</li>
+<li><a href="#orgd9e20b6">8. tags and places ???</a></li>
+<li><a href="#org8f37e56">9. Emacs Configuration for Planning My Tasks (change to planning policy)</a></li>
+<li><a href="#orgf7ff45c">10. Emacs Configuration for Reporting About My Tasks</a></li>
+<li><a href="#orgf6555a7">11. Emacs Configuration for Content Publishing</a></li>
+<li><a href="#org2827281">12. Emacs Configuration To Be Merged</a></li>
+<li><a href="#org32776a2">13. Additional Small Configuration File</a>
+<ul>
+<li><a href="#org2eebbe5">13.1. Place for Small Automatic Configuration Settings</a></li>
+</ul>
+</li>
+<li><a href="#org17935cd">14. What Is This File?</a>
+<ul>
+<li><a href="#org5de6047">14.1. Brief Intro to Babel</a></li>
+</ul>
+</li>
+<li><a href="#orgb76240a">15. colorizing sources, in Emacs and in exported formats.</a></li>
+<li><a href="#orgcfbc7d4">16. Building Emacs from Source on Ubuntu</a>
+<ul>
+<li><a href="#org945b496">16.1. <span class="done DONE">DONE</span> support for the WebP image format, if the libwebp library is found</a></li>
+<li><a href="#orgfa0a562">16.2. <span class="done DONE">DONE</span> Emacs on X now uses XInput 2 for input events, for better mousewheel support</a></li>
+<li><a href="#org3e7ef8a">16.3. <span class="done DONE">DONE</span> Speed up Emacs with libjansson and native elisp compilation - Mastering Emacs</a></li>
+<li><a href="#orge21e190">16.4. <span class="todo TODO">TODO</span> Study tree-sitter and insure I have the grammar libraries I want</a></li>
+<li><a href="#org0b29749">16.5. <span class="todo TODO">TODO</span> EGlot, the Language Server Client</a></li>
+<li><a href="#org444cc3d">16.6. <span class="todo TODO">TODO</span> Use-package &#x2013; test all my uses of it in config.org</a></li>
+<li><a href="#orgefc314f">16.7. <span class="todo TODO">TODO</span> Pixel Scroll Precision Mode</a></li>
+<li><a href="#org89acf3d">16.8. <span class="todo TODO">TODO</span> specify location of user-emacs-directory</a></li>
+</ul>
+</li>
+<li><a href="#org9016770">17. MISC</a></li>
+<li><a href="#org540d9a6">18. About This File</a></li>
+<li><a href="#org152dea2">19. My Emacs Directory Layout</a></li>
+<li><a href="#org4602b94">20. orientation &#x2013; overall file flow</a>
+<ul>
+<li><a href="#orga31f9c9">20.1. ~/.emacs.d/init.el&#xa0;&#xa0;&#xa0;<span class="tag"><span class="FILE">FILE</span></span></a></li>
+<li><a href="#org2bc77c6">20.2. packages and libraries</a></li>
+<li><a href="#orgb375b28">20.3. ~/emacs.d/elpa</a></li>
+</ul>
+</li>
+<li><a href="#org13029a8">21. Emacs Configuration for Mobile Syncing</a>
+<ul>
+<li><a href="#orgf94ae6b">21.1. mobile</a></li>
+</ul>
+</li>
+<li><a href="#org7b303ff">22. Emacs Configuration for Email Usage Inside of Emacs</a></li>
+<li><a href="#orgadb04a2">23. Emacs Configuration for Personal Memory Retention</a>
+<ul>
+<li><a href="#org9800deb">23.1. Export Org-Mode Outlines as an Anki Knowledgebase</a></li>
+</ul>
+</li>
+<li><a href="#org634e066">24. searching content</a></li>
+<li><a href="#org165cb26">25. music composition</a>
+<ul>
+<li><a href="#org22063d1">25.1. Music Notation Editting and Playing</a></li>
+</ul>
+</li>
+<li><a href="#org83b917d">26. clone mode</a></li>
+<li><a href="#org2d2e1b6">27. Emacs Explanatory Notes</a></li>
+<li><a href="#org3030c71">28. Footer of the Emacs package</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org001f0c8" class="outline-2">
+<h2 id="org001f0c8"><span class="section-number-2">1</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This is my Emacs configuration, expressed in the <a href="https://orgmode.org/">org-mode markup</a> so I can
+explain how and why I did each configuration setting, and yet automatically
+export it into emacs-lisp format for loading into Emacs at start-up time.
+This style of documenting is called <a href="https://en.wikipedia.org/wiki/Literate_programming">Literate Programming</a>.
+</p>
+
+<p>
+I maintain my Emacs configuration <a href="https://github.com/xanalogica/.emacs.d/">https://github.com/xanalogica/.emacs.d/</a> and
+automatically publish the polished documentation at ??? using a CI pipeline.
+</p>
+
+
+
+
+<p>
+<a href="https://github.com/xanalogica/.emacs.d/">https://github.com/xanalogica/.emacs.d/</a>  (not on gitlab.com/xanalogica)
+</p>
+
+
+<p>
+one site can be published to <a href="https://xanalogica.github.io">https://xanalogica.github.io</a> by publishing to the
+master branch of a repository named "xanalogica.github.io".
+</p>
+
+<p>
+You can have an additional site per GitHub project published to <a href="https://xanalogica.github.io/.emacs.d">https://xanalogica.github.io/.emacs.d</a>.
+</p>
+
+<p>
+I use a GitHub Actions workflow to publish my site, so that I can use a build
+process other an Jekyll.
+</p>
+
+<p>
+<a href="https://github.com/JamesIves/github-pages-deploy-action">https://github.com/JamesIves/github-pages-deploy-action</a>
+</p>
+
+
+
+<p>
+<a href="https://xanalogica.github.io/.emacs.d/">https://xanalogica.github.io/.emacs.d/</a>
+  README.html                            -&gt; index.html
+  config.html
+  assets/css/style.css
+</p>
+
+<ol class="org-ol">
+<li>put it into the form of ReadTheDocs with index along left-side</li>
+<li>redirect index.html -&gt; config.html</li>
+</ol>
+<p>
+?? Run ./publi.sh
+</p>
+
+
+
+
+
+<p>
+<a href="http://www.thoughtamps.info/.emacs.d/">http://www.thoughtamps.info/.emacs.d/</a>
+</p>
+
+<p>
+<a href="https://{userid}.github.io/%7Breponame">https://{userid}.github.io/%7Breponame</a>}
+</p>
+</div>
+</div>
+
+
+
+<div id="outline-container-org97b495d" class="outline-2">
+<h2 id="org97b495d"><span class="section-number-2">2</span> My CI Pipeline to Publish</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+.emacs.d/.github/workflows/publish.yml
+</p>
+
+<p>
+.emacs.d/publi.sh
+</p>
+</div>
+</div>
+
+
+
+
+<div id="outline-container-orge7091ef" class="outline-2">
+<h2 id="orge7091ef"><span class="section-number-2">3</span> The Big Picture</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+My Emacs configuration is spread out across several files, for ease of
+understanding, sharing and using a feature without dragging everything else
+in.  I try to fully configuration and document each feature I make use of in
+<b>one</b> place and avoid sprinkling it around.
+</p>
+
+<ul class="org-ul">
+<li>~/.emacs.d/early-init.el</li>
+<li>~/.emacs.d/init.el</li>
+<li>~/.emacs.d/config.org -&gt; ???</li>
+<li>~/.emacs.d/config/config-content-publishing.org</li>
+<li>~/.emacs.d/config/config-emacs-display-presentation.org</li>
+<li>~/.emacs.d/config/config-emacs-email-usage.org</li>
+<li>~/.emacs.d/config/config-emacs-global-keyboard-setup.org</li>
+<li>~/.emacs.d/config/config-emacs-new-links-for-org-mode.org</li>
+<li>~/.emacs.d/config/config-emacs-to-be-merged.org</li>
+<li>~/.emacs.d/config/config-emacs-use-of-ai.org</li>
+<li>~/.emacs.d/config/config-emacs-use-of-cloning.org</li>
+<li>~/.emacs.d/config/config-emacs-work-protection.org</li>
+<li>~/.emacs.d/config/config-global-syntax-checking.org</li>
+<li>~/.emacs.d/config/config-helpful-notes.org</li>
+<li>~/.emacs.d/config/config-install-of-org-mode.org</li>
+<li>~/.emacs.d/config/config-note-archiving-using-org-mode.org</li>
+<li>~/.emacs.d/config/config-note-capture-using-org-mode.org</li>
+<li>~/.emacs.d/config/config-note-refiling-using-org-mode.org</li>
+<li>~/.emacs.d/config/config-printing-from-emacs.org</li>
+<li>~/.emacs.d/config/config-python-development.org</li>
+<li>~/.emacs.d/config/config-research.org</li>
+<li>~/.emacs.d/config/config-scripting-via-org-babel.org</li>
+<li>~/.emacs.d/config/config-task-planning.org</li>
+<li>~/.emacs.d/config/config-task-reporting.org</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p>
+tags:
+</p>
+<ul class="org-ul">
+<li>:babel:python:rust:git:undo:finance:slides:org:</li>
+</ul>
+
+
+
+<p>
+git@github.com:xanalogica/.emacs.d.git
+<a href="https://github.com/xanalogica/.emacs.d">https://github.com/xanalogica/.emacs.d</a>
+</p>
+
+<p>
+LICENSE.md         LICENSE.md
+.gitignore         .gitignore
+README.org         README.org
+build-site.sh      build-site.el
+                   content/index.org
+n/a                publi.sh
+                   .github/workflows/
+snippets/
+config.org
+init.el
+</p>
+
+<p>
+M-x org-babel-tangle
+</p>
+</div>
+</div>
+
+<div id="outline-container-org83689f1" class="outline-2">
+<h2 id="org83689f1"><span class="section-number-2">4</span> About ~/.emacs.d/early-init.el</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Most customizations for Emacs should be put in the normal init file.  See The
+Emacs Initialization File.  However, it is sometimes necessary to have
+customizations take effect during Emacs startup earlier than the normal init
+file is processed.  Such customizations can be put in the early init file,
+~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el.  This file is loaded
+before the package system and GUI is initialized, so in it you can customize
+variables that affect the package initialization process, such as
+package-enable-at-startup, package-load-list, and package-user-dir.  Note that
+variables like package-archives which only affect the installation of new
+packages, and not the process of making already-installed packages available,
+may be customized in the regular init file. See Package Installation.
+</p>
+
+<p>
+We do not recommend that you move into early-init.el customizations that can
+be left in the normal init files.  That is because the early init file is read
+before the GUI is initialized, so customizations related to GUI features will
+not work reliably in early-init.el.  By contrast, the normal init files are
+read after the GUI is initialized.  If you must have customizations in the
+early init file that rely on GUI features, make them run off hooks provided by
+the Emacs startup, such as window-setup-hook or tty-setup-hook. See Hooks.
+</p>
+
+<p>
+For more information on the early init file, see Init File in The Emacs Lisp
+Reference Manual.
+</p>
+
+<pre class="example">
+;;; early-init.el --- Early Initialization -*- lexical-binding: t; no-byte-compile: t-*-
+
+;; Author: Jeffrey Rush
+;; Keywords: Emacs configuration
+;; Homepage: https://github.com/xanalogica/emacs.d.git
+
+;;; Commentary:
+
+;; This early-init.el file was introduced in Emacs 27.1 and is loaded BEFORE
+;; the package system and GUI is initialized.  This is a great place for
+;; *startup optimizing*, because only here can you *prevent* things from
+;; loading, rather than turn them off after-the-fact.
+
+;; WARNING: It is NOT recommended that you move into early-init.el those
+;; customizations that can be left in the normal init files, because
+;; early-init.el is read before the GUI is initialized, so customizations
+;; related to GUI features *will not work reliably* in early-init.el.
+
+;; Emacs 29.1+ configuration.
+
+;;; Code:
+
+(cond ((version&lt; emacs-version "29.1")
+       (warn "My Emacs configuration requires Emacs 29.1 and above!"))
+)
+
+;; **********************************************************************
+;;   Define Various Emacs Policies re Debugging and Analysis of Issues
+;; **********************************************************************
+
+;; Useful for debugging problems with Emacs on occasion.
+; (setq debug-on-error t)
+; (setq stack-trace-on-error t)
+; (debug-on-entry 'integerp)
+
+;; Respect DEBUG envvar as an alternative to --debug-init, and
+;; to make are startup sufficiently verbose from this point on.
+(when (getenv-internal "DEBUG")
+  (setq init-file-debug t
+        debug-on-error t))
+
+;; **********************************************************************
+;;                 Define Garbage Collection Policies
+;;
+;; Garbage collection is a big contributor to startup times.  This fends
+;; it off, but will be reset later by `gcmh-mode'.  Not resetting it later
+;; will cause stuttering/freezes.
+;;
+;; **********************************************************************
+
+(setq
+      ;; Defer garbage collection further back in the startup process, until
+      ;; reset later by `gcmh-mode'.  NOT resetting it later will cause
+      ;; stuttering and freezing during long-term interactive use.
+
+      gc-cons-threshold                  most-positive-fixnum
+
+      ;; Portion of the heap used for allocation.
+      ;;
+      ;; Garbage collection can happen automatically once this portion of the
+      ;; heap has been given out since the last garbage collection.
+      ;;
+      ;; By binding this temporarily to a large number, you can effectively
+      ;; prevent garbage collection during a part of the program.  But be sure
+      ;; to get back to the normal value soon enough, to avoid system-wide
+      ;; memory pressure, and never use a too-high value for prolonged periods
+      ;; of time.
+
+      gc-cons-percentage                 0.6
+
+      ;; In noninteractive sessions only, prioritize non-byte-compiled source
+      ;; files to prevent the use of stale byte-code.  Otherwise, it saves us
+      ;; a little I/O time to skip the mtime checks on every *.elc file.
+
+      load-prefer-newer                  'noninteractive
+)
+
+(setq
+      site-run-file                      nil
+
+      ;; Maximum number of bytes to read from subprocess in a single chunk.
+      ;;
+      ;; Enlarge the value only if the subprocess generates very large (megabytes)
+      ;; amounts of data in one go.
+
+      read-process-output-max            (* 1024 1024 4) ; 4 MB
+
+      ;; Do NOT compact (discard) cached fonts during garbage collection.
+      ;;
+      ;; Some large fonts cause lots of consing and trigger GC.  If they are
+      ;; discarded from the font caches during garbage collection, they will need
+      ;; to be opened AGAIN during redisplay, which slows down redisplay.
+      ;;
+      ;; If you see font-related delays in displaying some special characters, and
+      ;; cannot switch to a smaller font for those characters, set this variable
+      ;; non-nil.  Disabling compaction of font caches might enlarge the Emacs
+      ;; memory footprint in sessions that use lots of different fonts.
+
+      inhibit-compacting-font-caches     t
+)
+
+;; **********************************************************************
+;;    Declare Package Archives From Which I May Pull Add-Ons to Emacs
+;; **********************************************************************
+
+(setq
+
+      ;; Package initialize occurs automatically, BEFORE user-init-file is
+      ;; loaded, but AFTER early-init-file.  We handle package initialization,
+      ;; so we must prevent Emacs from doing it early and let us do it!
+
+      package-enable-at-startup          nil
+
+      ;; `use-package' is built into Emacs since version 29 but not loaded
+      ;; until we say so.  So before we load `use-package', we can enable imenu
+      ;; support so it will see `use-package' declarations.
+
+      use-package-enable-imenu-support   t
+)
+
+(require 'package)  ;; the Emacs package manager
+
+;; For security reasons, use "https" on all archive URLs.  And I
+;; want to try turning on a requirement that all packages are signed
+;; but haven't yet.
+
+(add-to-list 'package-archives
+  '("melpa" . "https://melpa.org/packages/"))
+
+(add-to-list 'package-archives
+  '("melpa-stable" . "https://stable.melpa.org/packages/"))
+
+(setq package-archive-priorities ;; define the order of preference
+  '(("melpa-stable" . 20)  ;; most preferred
+    ("gnu" . 10)
+    ("melpa" . 0))         ;; least preferred
+)
+
+;; Define where various packages I wish to use, that come in
+;; form of Git checkouts, or that I've written, are kept.
+
+;;;;; (add-to-list 'load-path "~/.emacs.d/lisp/")
+
+;; Find all installed packages along the load-path and *activate* them by
+;; executing their &lt;package&gt;-autoloads.el files.  It tries to make sure to
+;; activate only the *latest* version of a package in case there are several
+;; versions found.
+
+(package-initialize)
+
+;;;;;;;;;; (when (not package-archive-contents)   ;; if cache of 'package-archives' sites is empty,
+;;;;;;;;;;   (package-refresh-contents))          ;;   then download latest package descriptions
+
+; **********************************************************************
+;                Bootstrap the "quelpa" Package Manager
+;
+; Quelpa is a tool for building and installing Emacs Lisp packages on-the-fly
+; and directly from source.  I use it only to install packages NOT in one of
+; the above package archives, to install those things that exist only in less
+; well known Git repositories or the odd .el file around the Internet.
+;
+; https://github.com/quelpa/quelpa
+; **********************************************************************
+
+(unless (package-installed-p 'quelpa)  ;; install if NOT already installed
+  (with-temp-buffer
+    (url-insert-file-contents "https://github.com/quelpa/quelpa/raw/master/quelpa.el")
+    (eval-buffer)
+    (quelpa-self-upgrade)
+  )
+)
+
+(setq quelpa-checkout-melpa-p
+  nil)  ;; disable quelpa peeking into MELPA and installing things from source
+
+; **********************************************************************
+;                Bootstrap the "use-package" macro
+;
+; The `use-package' macro provides a tidy, performance-oriented way to isolate
+; the configuration and loading of packages within my Emacs configuration.
+; `use-package' is NOT a package manager itself but it interfaces with package
+; managers to work.
+; **********************************************************************
+
+; adds support for the :quelpa keyword in use-package clauses.
+
+(quelpa  ;; install the `quelpa' extension to `use-package'
+  '(quelpa-use-package
+     :fetcher git
+     :url "https://github.com/quelpa/quelpa-use-package.git"
+   )
+)
+(require 'quelpa-use-package)
+
+;; Install the "use-package-ensure" which pulls in the rest of "use-package",
+;; and then default the :ensure flag to always require a package if it is
+;; referenced by "use-package".
+
+;;;;;;;;;; (require 'use-package-ensure)
+;;;;;;;;;; (setq use-package-always-ensure t)
+
+; **********************************************************************
+;                  Compile .el into .elc Bytecode
+; **********************************************************************
+
+; native-comp-deferred-compilation
+(setq native-comp-jit-compilation nil)
+
+(when (featurep 'native-compile)
+  (defvar inhibit-automatic-native-compilation)
+  (setq   inhibit-automatic-native-compilation nil)
+  (defvar native-comp-async-report-warnings-errors)
+  (setq   native-comp-async-report-warnings-errors 'silent))
+
+; **********************************************************************
+;      Prevent Some Brief UI Annoyances that Flash on the Screen
+; **********************************************************************
+
+;; Prevent the glimpse of un-styled Emacs by disabling these UI elements early.
+;;
+;; Disable unnecessary interfaces
+;;
+;; It will be faster to disable them here before they've been initialized.
+
+;;;;; (setq-default
+;;;;;   x-gtk-resize-child-frames     'resize-mode
+;;;;;   fringe-indicator-alist        (assq-delete-all 'truncation fringe-indicator-alist)
+;;;;; )
+
+(setq
+
+      ;; Avoid displaying the start screen.
+
+      inhibit-startup-message            t
+
+      ;; Disable built-in mode-line because we have own config
+
+      mode-line-format                   nil
+
+      ;; ???
+
+      frame-resize-pixelwise             t
+
+      ;; Resizing the Emacs frame can be a terribly expensive part of changing
+      ;; the font.  By inhibiting this, we easily halve startup times with
+      ;; fonts that are larger than the system default.
+
+      frame-inhibit-implied-resize       t
+
+      default-frame-alist '(
+        (fullscreen . maximized)
+
+        ;; You can turn off scroll bars by uncommenting these lines:
+        ;; (vertical-scroll-bars . nil)
+        ;; (horizontal-scroll-bars . nil)
+
+        (menu-bar-lines . 0)
+        (tool-bar-lines . 0)
+        (vertical-scroll-bars . nil)
+
+        (bottom-divider-width . 0)
+        (right-divider-width . 1)
+        ;; Setting the face in here prevents
+        ;; flashes of color as the theme gets activated
+        (background-color . "#000000")
+        (ns-appearance . dark)
+        (ns-transparent-titlebar . t)
+    )
+    ;;; initial-frame-alist           default-frame-alist
+)
+
+(tool-bar-mode -1)  ; All these tools are in the menu-bar anyway
+(menu-bar-mode -1)
+
+; **********************************************************************
+;      Message Log Buffer
+; **********************************************************************
+
+(setq
+
+      ;; Maximum number of lines to keep in the message log buffer.
+
+      message-log-max                    16384
+)
+
+
+;; annoyance supression
+(setq byte-compile-warnings '(not obsolete))
+(setq warning-suppress-log-types '((comp) (bytecomp)))
+(setq native-comp-async-report-warnings-errors 'silent)
+
+;; Silence stupid startup message
+(setq inhibit-startup-echo-area-message (user-login-name))
+
+;; Ignore X resources; its settings would be redundant with the other settings
+;; in this file and can conflict with later config (particularly where the
+;; cursor color is concerned).
+(advice-add #'x-apply-session-resources :override #'ignore)
+
+(message "early-init.el finishing up")
+
+(provide 'early-init)
+;;; early-init.el ends here
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgd1bb7f6" class="outline-2">
+<h2 id="orgd1bb7f6"><span class="section-number-2">5</span> About ~/.emacs.d/init.el</h2>
+<div class="outline-text-2" id="text-5">
+<pre class="example">
+;;; init.el --- Main Configuration File -*- lexical-binding: t; no-byte-compile: t; outline-minor-mode:t -*-
+
+;; Author: Jeffrey Rush
+;; Keywords: Emacs configuration
+;; Homepage: https://github.com/xanalogica/.emacs.d.git
+
+;;; Commentary:
+;; Emacs 29.1+ configuration.
+
+;; and I put some stuff in early-init.el
+
+;; I put a minimal set of configurations here in the init.el file, and
+;; the rest into my config.org file where I can more easily make nodes
+;; abouto settings and organize the various fragments of emacs-lisp.
+
+;;; Code:
+
+; **********************************************************************
+;      Load the Rest of My Configuration from My config.org File
+; **********************************************************************
+
+(use-package org)
+
+;; Insure the export backend ox-org is loaded so we can merge my config/*.org
+;; pieces together and export the result into one common file.
+(setq org-export-backends '(ascii html icalendar latex odt org))
+
+;;; (let ()
+ (find-file-read-only "~/.emacs.d/config.org")
+ (org-export-to-file 'org "/tmp/config-exported.org")
+ (kill-buffer)
+;;; )
+
+(org-babel-load-file "/tmp/config-exported.org" nil)  ;; Tangle into .el and load
+;; (org-babel-load-file "~/.emacs.d/config.org" nil)  ;; Tangle into .el and load
+
+(message "init.el finishing up")
+
+;; Fake the footer to avoid warnings
+;; (provide 'init)
+;;; init.el ends here
+</pre>
+
+<p>
+The purpose of (provide 'some-library) is to tell Emacs that a named feature
+has been loaded and that the file a feature is associated with, does not have
+to be loaded again, when you require it.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org02d4258" class="outline-2">
+<h2 id="org02d4258"><span class="section-number-2">6</span> About <code>use-package</code> Emacs Lisp Macro To More Efficiently Organize Package Settings</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+There are many ways to provide package settings, from raw Elisp to tidy macros.
+The github:<a href="https://github.com/jwiegley/use-package">use-package</a> Elisp macro allows one to isolate package configuration
+in your Emacs configuration files in a way that is both performance-oriented
+and tidy.
+</p>
+
+<ul class="org-ul">
+<li><a href="https://www.masteringemacs.org/article/spotlight-use-package-a-declarative-configuration-tool">Spotlight: use-package, a declarative configuration tool - Mastering Emacs</a></li>
+<li><a href="http://cachestocaches.com/2015/8/getting-started-use-package/">Getting Started with Use-Package</a></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;;;;; </span><span style="color: #b22222;">;; Make sure I have 'use-package' installed in my Emacs</span>
+<span style="color: #b22222;">;;;;; </span><span style="color: #b22222;">(unless (package-installed-p 'use-package)</span>
+<span style="color: #b22222;">;;;;;   </span><span style="color: #b22222;">(package-refresh-contents)       ;; refresh catalog of remote registry</span>
+<span style="color: #b22222;">;;;;;   </span><span style="color: #b22222;">(package-install 'use-package)   ;;   and install 'use-package' module</span>
+<span style="color: #b22222;">;;;;; </span><span style="color: #b22222;">)</span>
+<span style="color: #b22222;">;;;;; </span><span style="color: #b22222;">(eval-when-compile</span>
+<span style="color: #b22222;">;;;;;   </span><span style="color: #b22222;">;;; (add-to-list 'load-path "~/.emacs.d/lisp/use-package")</span>
+<span style="color: #b22222;">;;;;;   </span><span style="color: #b22222;">(require 'use-package)</span>
+<span style="color: #b22222;">;;;;; </span><span style="color: #b22222;">)</span>
+(<span style="color: #4169e1;">setq</span> use-package-verbose t)  <span style="color: #b22222;">;; </span><span style="color: #b22222;">to assist debugging configuration</span>
+(<span style="color: #4169e1;">setq</span> use-package-compute-statistics t)  <span style="color: #b22222;">;; </span><span style="color: #b22222;">M-x use-package-report</span>
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org6c1698e" class="outline-3">
+<h3 id="org6c1698e"><span class="section-number-3">6.1</span> Add the <code>diminish</code> Plugin to <code>use-package</code> to Hide Selected Minor Modes</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+Loading github:<a href="https://github.com/myrjola/diminish.el">diminish</a> Elisp package causes <code>use-package</code> to enable a
+configuration keyword <code>:diminish &lt;SYMBOL&gt;</code> in your <code>use-package</code> invocation.
+This keyword empowers you to remove or change minor mode strings in your
+mode-line.  Such diminished modes are minor modes with no modeline display,
+because we don't want to be reminded of it.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">(use-package diminish)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(diminish 'auto-fill-function)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3ef9de0" class="outline-3">
+<h3 id="org3ef9de0"><span class="section-number-3">6.2</span> Add <code>bind-key</code> Plugin to <code>use-package</code> to Enhance Key Binding</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+<a href="https://www.masteringemacs.org/article/mastering-key-bindings-emacs">https://www.masteringemacs.org/article/mastering-key-bindings-emacs</a>
+</p>
+
+<p>
+This plugin enables additional configuration keywords:
+</p>
+
+<ul class="org-ul">
+<li>:bind</li>
+<li>:bind*</li>
+<li>:bind-keymap</li>
+<li>:bind-keymap*</li>
+</ul>
+
+<p>
+The <code>bind-key</code> Elisp package is <b>part of</b> of the <code>use-package</code> code
+distribution.  In particular, the logic of the new <code>use-package</code> configuration
+symbols is in
+<a href="https://github.com/jwiegley/use-package/blob/master/use-package-bind-key.el">https://github.com/jwiegley/use-package/blob/master/use-package-bind-key.el</a>
+</p>
+
+<p>
+;; (use-package bind-key)    ALREADY LOADED
+</p>
+</div>
+</div>
+
+<div id="outline-container-org99d6ff3" class="outline-3">
+<h3 id="org99d6ff3"><span class="section-number-3">6.3</span> Add <code>general</code> Plugin to <code>use-package</code> to Enhance Key Binding Further</h3>
+<div class="outline-text-3" id="text-6-3">
+<p>
+<a href="https://www.masteringemacs.org/article/mastering-key-bindings-emacs">https://www.masteringemacs.org/article/mastering-key-bindings-emacs</a>
+</p>
+
+<p>
+The github:[[<a href="https://github.com/noctuid/general.el">https://github.com/noctuid/general.el</a> Elisp package is
+primarily for making key definition more clear and concise.  It adds the
+<code>:general</code> keyword to the <code>use-package</code> macro.
+</p>
+
+<p>
+;; (use-package general)   ALREADY LOADED
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgcf80cd9" class="outline-2">
+<h2 id="orgcf80cd9"><span class="section-number-2">7</span> Reporting About Loading and Configuration Details</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+When reporting about loading and configuration details, you should require the
+‘use-package’ feature in files that use ‘use-package’, even if these files
+only contain compiled expansions of the macros. If you don’t do so, then the
+expanded macros do their job silently.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">use-package</span>)
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgb079d7d" class="outline-3">
+<h3 id="orgb079d7d"><span class="section-number-3">7.1</span> Screen Decoration Zones</h3>
+<div class="outline-text-3" id="text-7-1">
+</div>
+
+<div id="outline-container-orgf08f5f7" class="outline-4">
+<h4 id="orgf08f5f7"><span class="section-number-4">7.1.1</span> Top Bar of Emacs Screen</h4>
+<div class="outline-text-4" id="text-7-1-1">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(menu-bar-mode
+  -1)   <span style="color: #b22222;">; </span><span style="color: #b22222;">Whether to show the menu bar along the top.</span>
+
+<span style="color: #b22222;">;;;; </span><span style="color: #b22222;">(defun new-frame-setup (frame)</span>
+<span style="color: #b22222;">;;;;   </span><span style="color: #b22222;">(if (display-graphic-p frame)</span>
+<span style="color: #b22222;">;;;;       </span><span style="color: #b22222;">(progn</span>
+<span style="color: #b22222;">;;;;          </span><span style="color: #b22222;">(message "This is a windowing system.")</span>
+
+<span style="color: #b22222;">;;;;          </span><span style="color: #b22222;">;; Don't want a toolbar in GUI mode (errs in invoke in text mode)</span>
+<span style="color: #b22222;">;;;;          </span><span style="color: #b22222;">(tool-bar-mode -1)</span>
+
+<span style="color: #b22222;">;;;;          </span><span style="color: #b22222;">;; Set the default size of the new frame</span>
+<span style="color: #b22222;">;;;;          </span><span style="color: #b22222;">(set-frame-size (selected-frame) 150 50)</span>
+<span style="color: #b22222;">;;;;       </span><span style="color: #b22222;">)</span>
+<span style="color: #b22222;">;;;;       </span><span style="color: #b22222;">(message "This is a non-windowing system.")</span>
+<span style="color: #b22222;">;;;;   </span><span style="color: #b22222;">)</span>
+<span style="color: #b22222;">;;;; </span><span style="color: #b22222;">)</span>
+
+<span style="color: #b22222;">;;;; </span><span style="color: #b22222;">;; Run across all already-existing frames, to catch 1st frame</span>
+<span style="color: #b22222;">;;;; </span><span style="color: #b22222;">(mapc 'new-frame-setup (frame-list))</span>
+
+<span style="color: #b22222;">;;;; </span><span style="color: #b22222;">;; But also run when a new frame is created</span>
+<span style="color: #b22222;">;;;; </span><span style="color: #b22222;">(add-hook 'after-make-frame-functions 'new-frame-setup)</span>
+
+<span style="color: #b22222;">;</span><span style="color: #b22222;">--(tool-bar-mode</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">--    nil)</span>
+
+(<span style="color: #4169e1;">setq</span> frame-title-format
+  <span style="color: #bc8f8f;">"Emacs: %b"</span>)  <span style="color: #b22222;">; </span><span style="color: #b22222;">Displays the name of the file being edited in the title bar along the top.</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org40b6925" class="outline-4">
+<h4 id="org40b6925"><span class="section-number-4">7.1.2</span> Along the Left/Right Sides of the Emacs Screen</h4>
+<div class="outline-text-4" id="text-7-1-2">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;;  </span><span style="color: #b22222;">(setq-default scroll-bar-mode</span>
+<span style="color: #b22222;">;;    </span><span style="color: #b22222;">nil)      ; Whether to show the scroll bar at all.</span>
+(set-scroll-bar-mode nil)
+
+<span style="color: #b22222;">;;  </span><span style="color: #b22222;">(setq-default set-scroll-bar-mode</span>
+<span style="color: #b22222;">;;    </span><span style="color: #b22222;">'right)   ; Where to show the scroll bar, left or right side.</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge1d862c" class="outline-4">
+<h4 id="orge1d862c"><span class="section-number-4">7.1.3</span> Along the Bottom, in the Mode Line</h4>
+<div class="outline-text-4" id="text-7-1-3">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq-default</span> line-number-mode
+  t)    <span style="color: #b22222;">; </span><span style="color: #b22222;">Enable the display, in the mode line along the bottom, of the current line number.</span>
+(<span style="color: #4169e1;">setq-default</span> column-number-mode
+  t)    <span style="color: #b22222;">; </span><span style="color: #b22222;">Enable the display, in the mode line along the bottom , of the current column number.</span>
+</pre>
+</div>
+
+<p>
+The Emacs modeline is a complex beast.
+</p>
+
+<p>
+Define the Elements to Be Part of the Modeline
+</p>
+</div>
+
+<ol class="org-ol">
+<li><a id="org79ac902"></a>Defining My Own Face and a Property Clause to Conditionally Display It<br />
+<div class="outline-text-5" id="text-7-1-3-1">
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(defface jeff-mode-line-client-face
+  `( ;; spec
+    (t (:background "red"))
+  )
+  "Used for displaying the region." ;; doc
+)
+
+(defface jeff-mode-line-client-face-inactive
+  `( ;; spec
+    (t (:background "gray"))
+  )
+  "Used for displaying the region." ;; doc
+)
+</pre>
+</div>
+
+<p>
+;;  (set-face-attribute 'org-list-dt
+;;    nil :foreground "Orange" :box "White" :inverse-video t)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(defun jeff-window-active-p ()
+  (eq (frame-selected-window) (selected-window))
+)
+
+(setq jeff2-mode-line-client
+  `(""
+    (:propertize
+      (""
+	(:eval
+	  (if (frame-parameter nil 'client)
+	    (
+	      "🠵x"
+	      'face (if (jeff-window-active-p)
+		'jeff-mode-line-client-face
+		'jeff-mode-line-client-face-inactive)
+	    )
+
+	    "")
+	)
+      )
+      help-echo ,(purecopy "emacsclient frame"))
+   )
+)
+</pre>
+</div>
+</div>
+</li>
+
+<li><a id="orgc8bd837"></a>Define My Custom Set of Widgets to Display on the Modeline<br />
+<div class="outline-text-5" id="text-7-1-3-2">
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">
+  (setq-default mode-line-format
+    (list
+      "%e"                         ;; print error msg about full memory
+       mode-line-front-space       ;; (:eval (if (display-graphic-p) " " "-"))
+       ;; mode-line-mule-info
+
+       jeff2-mode-line-client
+       mode-line-modified
+       mode-line-remote                ;; indicate a remote buffer
+;;;🔒 🔓
+       ;; mode-line-frame-identification  ;; (:eval (mode-line-frame-control))
+       mode-line-buffer-identification
+       " "
+       mode-line-position              ;; (very long expr)
+       ;; (vc-mode vc-mode)
+       " "
+       mode-line-modes             ;; (very long expr)
+       mode-line-misc-info         ;; ((global-mode-string ("" global-mode-string " ")))
+       mode-line-end-spaces        ;; (:eval (unless (display-graphic-p) "-%-"))
+    )
+  )
+;;              (list
+;;
+;;               '(:eval (propertize (if (eq 'emacs evil-state) "  " "  ")
+;;                                   'face (cogent/evil-state-face)))
+;;
+;;               " "
+;;               mode-line-misc-info ; for eyebrowse
+;;
+;;               '(:eval (when-let (vc vc-mode)
+;;                         (list " "
+;;                               (propertize (substring vc 5)
+;;                                           'face 'font-lock-comment-face)
+;;                               " ")))
+;;
+;;               '(:eval (list
+;;                        ;; the buffer name; the file name as a tool tip
+;;                        (propertize " %b" 'face 'font-lock-type-face
+;;                                    'help-echo (buffer-file-name))
+;;                        (when (buffer-modified-p)
+;;                          (propertize
+;;                           " "
+;;                           'face (if (cogent-line-selected-window-active-p)
+;;                                     'cogent-line-modified-face
+;;                                   'cogent-line-modified-face-inactive)))
+;;                        (when buffer-read-only
+;;                          (propertize
+;;                           ""
+;;                           'face (if (cogent-line-selected-window-active-p)
+;;                                     'cogent-line-read-only-face
+;;                                   'cogent-line-read-only-face-inactive)))
+;;                        " "))
+;;
+;;               ;; relative position in file
+;;               '(:eval (list (nyan-create))) ;; from the nyan-mode package
+;;               (propertize "%p" 'face 'font-lock-constant-face)
+;;
+;;               ;; spaces to align right
+;;               '(:eval (propertize
+;;                        " " 'display
+;;                        `((space :align-to (- (+ right right-fringe right-margin)
+;;                                              ,(+ 3 (string-width mode-name)))))))
+;;
+;;               ;; the current major mode
+;;               (propertize " %m " 'face 'font-lock-string-face)))
+</pre>
+</div>
+</div>
+</li>
+
+<li><a id="orgf25c8a6"></a>Define My Desired Appearance of Selected Modeline Widgets<br />
+<ol class="org-ol">
+<li><a id="org325442d"></a>Defining the Appearance of the "Org-Mode Clock"<br />
+<div class="outline-text-6" id="text-7-1-3-3-1">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">
+(set-face-attribute 'org-mode-line-clock
+  nil <span style="color: #00008b;">:foreground</span> <span style="color: #bc8f8f;">"green2"</span> <span style="color: #00008b;">:weight</span> 'bold)
+
+(set-face-attribute 'org-mode-line-clock-overrun
+  nil <span style="color: #00008b;">:foreground</span> <span style="color: #bc8f8f;">"red2"</span> <span style="color: #00008b;">:background</span> <span style="color: #bc8f8f;">"black"</span> <span style="color: #00008b;">:weight</span> 'bold)
+
+</pre>
+</div>
+</div>
+</li>
+</ol>
+</li>
+</ol>
+</div>
+
+
+<div id="outline-container-org726b7d0" class="outline-4">
+<h4 id="org726b7d0"><span class="section-number-4">7.1.4</span> Along the Bottom, inside the Minibuffer</h4>
+<div class="outline-text-4" id="text-7-1-4">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(add-hook 'minibuffer-setup-hook 'my-minibuffer-setup)
+
+(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">my-minibuffer-setup</span> ()
+  (set (make-local-variable 'face-remapping-alist)
+      '((default <span style="color: #00008b;">:height</span> 1.8)) <span style="color: #b22222;">;; </span><span style="color: #b22222;">use a larger font for my presentations</span>
+  )
+)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> org-clock-mode-line-total
+    'today) <span style="color: #b22222;">;; </span><span style="color: #b22222;">show on modeline all time clocked into this task today</span>
+
+(<span style="color: #4169e1;">setq</span> org-clock-clocked-in-display
+    'mode-line) <span style="color: #b22222;">;; </span><span style="color: #b22222;">show task name and clocked time on modeline but NOT frame title</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">org-element</span>)
+(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">org-clock</span>)
+
+(<span style="color: #4169e1;">defvar</span> <span style="color: #b8860b;">org-clock-running-ol</span> nil
+  <span style="color: #bc8f8f;">"Overlay for the running clock."</span>)
+
+(<span style="color: #4169e1;">defface</span> <span style="color: #b8860b;">org-clock-running-face</span>
+  '((t <span style="color: #00008b;">:foreground</span> <span style="color: #bc8f8f;">"Red"</span> <span style="color: #00008b;">:weight</span> bold))
+  <span style="color: #bc8f8f;">"Face for highlighting the running clock."</span>)
+
+(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">org-clock-add-running-ol</span> ()
+  <span style="color: #bc8f8f;">"Highlight the running clock."</span>
+  (<span style="color: #4169e1;">save-excursion</span>
+    (<span style="color: #4169e1;">when</span> (org-clock-is-active)
+      (org-clock-remove-running-ol)
+      (goto-char org-clock-marker)
+      (<span style="color: #4169e1;">setq</span> org-clock-running-ol (make-overlay (point) (scan-sexps (point) -1)))
+      (overlay-put org-clock-running-ol 'face 'org-clock-running-face)
+      )))
+
+(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">org-clock-remove-running-ol</span> ()
+  (<span style="color: #4169e1;">when</span> (overlayp org-clock-running-ol)
+    (delete-overlay org-clock-running-ol)
+    (<span style="color: #4169e1;">setq</span> org-clock-running-ol nil)))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org1ed7974" class="outline-3">
+<h3 id="org1ed7974"><span class="section-number-3">7.2</span> Preferred UI Behavior</h3>
+<div class="outline-text-3" id="text-7-2">
+</div>
+
+<div id="outline-container-org22a2957" class="outline-4">
+<h4 id="org22a2957"><span class="section-number-4">7.2.1</span> Make the "Active Region" Visible</h4>
+<div class="outline-text-4" id="text-7-2-1">
+<p>
+There are two controls over whether the region is highlighted or not:
+</p>
+
+<ul class="org-ul">
+<li>transient-mark-mode (variable)</li>
+<li>transient-mark-mode (function)   a global minor mode</li>
+</ul>
+
+<p>
+By default the <code>transient-mark-mode</code> variable is non-nil, so the region <b>is</b>
+highlighted, using the <code>region</code> face.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9e224eb" class="outline-4">
+<h4 id="org9e224eb"><span class="section-number-4">7.2.2</span> Make Trailing Whitespace Visible</h4>
+<div class="outline-text-4" id="text-7-2-2">
+<p>
+I like to highlight trailing whitespace as it bothers me when it exists
+invisibly, although sometimes I use this highlighting to mark important TODO
+headlines in <code>org-mode</code>.
+</p>
+
+<p>
+The face used to indicate trailing whitespace is ‘trailing-whitespace’.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq-default</span> show-trailing-whitespace
+  t)    <span style="color: #b22222;">; </span><span style="color: #b22222;">Visually indicate presence of whitespace at end-of-lines.</span>
+
+(global-set-key         [f2]
+  'delete-trailing-whitespace)  <span style="color: #b22222;">; </span><span style="color: #b22222;">Remove all trailing whitespace</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq-default</span> default-indicate-empty-lines
+  t)    <span style="color: #b22222;">; </span><span style="color: #b22222;">Visually indicate presence of blank lines at EOBs.</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org66e648a" class="outline-4">
+<h4 id="org66e648a"><span class="section-number-4">7.2.3</span> Highlight the Entire Current Line</h4>
+<div class="outline-text-4" id="text-7-2-3">
+<p>
+I like to highlight the entire current line, for better visibility while
+navigating.  The face <code>hl-line-face</code> is used to do the highlight, and I just
+change the background to my choice of color.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(global-hl-line-mode +1)
+
+(set-face-attribute 'hl-line  <span style="color: #b22222;">; </span><span style="color: #b22222;">of hl-line-face</span>
+  nil <span style="color: #00008b;">:inherit</span> nil <span style="color: #00008b;">:background</span> <span style="color: #bc8f8f;">"darkred"</span>)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgf9c1751" class="outline-3">
+<h3 id="orgf9c1751"><span class="section-number-3">7.3</span> Bell Indicator</h3>
+<div class="outline-text-3" id="text-7-3">
+<p>
+<a href="https://www.emacswiki.org/emacs/AlarmBell">https://www.emacswiki.org/emacs/AlarmBell</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> visible-bell
+  nil           <span style="color: #b22222;">; </span><span style="color: #b22222;">play the bell sound</span>
+  <span style="color: #b22222;">;; </span><span style="color: #b22222;">t          ; quietly flash the top and bottom lines of the Emacs frame</span>
+)
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org4621eda" class="outline-4">
+<h4 id="org4621eda"><span class="section-number-4">7.3.1</span> Lowest Level of Control</h4>
+<div class="outline-text-4" id="text-7-3-1">
+<p>
+At the <b>lowest level</b> of Emacs there is a variable defining a custom function
+to ring the bell, or (usually) left nil to allow the ring to occur naturally.
+To <b>globally</b> disable the bell do the following:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> ring-bell-function 'ignore)
+</pre>
+</div>
+
+<p>
+or provide a function that uses your choice of sound playing mechanism:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ZZZemacs-lisp">(setq ring-bell-function (lambda ()
+  (play-sound-file "/this/is/my/errorsound.au")))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org3e23ddd" class="outline-4">
+<h4 id="org3e23ddd"><span class="section-number-4">7.3.2</span> High Level of Control</h4>
+<div class="outline-text-4" id="text-7-3-2">
+<ul class="org-ul">
+<li><a href="https://emacs.stackexchange.com/questions/34746/how-to-get-an-audible-feedback-when-the-current-task-is-overrun">https://emacs.stackexchange.com/questions/34746/how-to-get-an-audible-feedback-when-the-current-task-is-overrun</a></li>
+<li><a href="https://emacs.stackexchange.com/questions/17796/emacs-tea-time-is-supposed-to-be-integrated-in-org-mode-but-apparently-its-no/17849#17849">https://emacs.stackexchange.com/questions/17796/emacs-tea-time-is-supposed-to-be-integrated-in-org-mode-but-apparently-its-no/17849#17849</a></li>
+</ul>
+
+<p>
+At a high level of beep decision making, there is in the file <code>org-clock.el</code> a
+variable indicating which sound to use when <code>org-mode</code> wants to notify you of
+overrunning the time estimate for a task you are working on.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ZZZemacs-lisp">(setq org-clock-sound nil) ;; no sound
+(setq org-clock-sound t) ;; Standard Emacs beep
+(setq org-clock-sound "/path/to/my/sound") ;; Play this sound file, fall back to beep
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> org-clock-sound <span style="color: #bc8f8f;">"~/bell-meditation-75335.mp3"</span>)
+
+(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">org-clock-play-sound</span> (<span style="color: #228b22;">&amp;optional</span> clock-sound)
+  <span style="color: #bc8f8f;">"Play sound as configured by `</span><span style="color: #5f9ea0;">org-clock-sound</span><span style="color: #bc8f8f;">'.</span>
+<span style="color: #bc8f8f;">Use mpg123 tool if available.</span>
+<span style="color: #bc8f8f;">If CLOCK-SOUND is non-nil, it overrides `</span><span style="color: #5f9ea0;">org-clock-sound</span><span style="color: #bc8f8f;">'."</span>
+  (<span style="color: #4169e1;">let</span>
+    (
+      (org-clock-sound (<span style="color: #4169e1;">or</span> clock-sound org-clock-sound))
+    )
+    (<span style="color: #4169e1;">cond</span>
+      ( (not org-clock-sound)
+                               )
+      ( (eq org-clock-sound t)
+          (beep t) (beep t)    )
+
+      ( (stringp org-clock-sound)
+        (<span style="color: #4169e1;">let</span>
+          (
+            (file (expand-file-name org-clock-sound))
+          )
+          (<span style="color: #4169e1;">if</span> (file-exists-p file)
+            (<span style="color: #4169e1;">if</span> (executable-find <span style="color: #bc8f8f;">"mpg123"</span>)
+              (start-process <span style="color: #bc8f8f;">"org-clock-play-notification"</span> nil <span style="color: #bc8f8f;">"mpg123"</span> file)
+                (<span style="color: #4169e1;">condition-case</span> nil
+                  (play-sound-file file)
+                  (<span style="color: #ff0000; font-weight: bold;">error</span> (beep t) (beep t))
+                )
+            ) <span style="color: #b22222;">; </span><span style="color: #b22222;">end of if</span>
+          ) <span style="color: #b22222;">; </span><span style="color: #b22222;">end of if</span>
+        ) <span style="color: #b22222;">; </span><span style="color: #b22222;">end of let</span>
+      )
+    )
+  )
+)
+</pre>
+</div>
+
+<p>
+; (defun org-notify (notification &amp;optional play-sound)
+;   "Send a NOTIFICATION and maybe PLAY-SOUND.
+; If PLAY-SOUND is non-nil, it overrides `org-clock-sound'."
+;   (org-show-notification notification)
+;   (if play-sound (org-clock-play-sound play-sound)))
+</p>
+
+<p>
+; (defun my/play-sound (orgin-fn sound)
+;   (cl-destructuring-bind (_ _ file) sound
+;     (make-process :name (concat "play-sound-" file)
+;                   :connection-type 'pipe
+;                   :command `("mpg123" ,file))))
+; (advice-add 'play-sound :around 'my/play-sound)
+</p>
+
+<p>
+In org-mode when a task is overrun - when the clocked time is bigger than the
+effort, there is a visual feedback in the mode-line.  This variable can be
+used to get an audible one as well.
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgd2f85f3" class="outline-3">
+<h3 id="orgd2f85f3"><span class="section-number-3">7.4</span> Choice of Font for the Emacs Work Area</h3>
+<div class="outline-text-3" id="text-7-4">
+<p>
+I purchased a nice font from <a href="https://fsd.it/shop/fonts/pragmatapro/">https://fsd.it/shop/fonts/pragmatapro/</a> and then
+told Emacs to use it by doing the following.
+</p>
+
+<p>
+To install the new font into Ubuntu Linux, I downloaded the .zip file and
+unpacked it under the directory <i>usr/share/fonts/truetype/PragmataPro0.829</i>.
+I then rebuild the font cache usng <code>fc-cache -f -v</code>.  Note that the <code>fc-cache</code>
+executable is available using <code>apt-get install fontconfig</code>.
+</p>
+
+<p>
+I can confirm they are installed correctly by running <code>fc-list | grep
+Pragmata</code>.  I can view them by using the "Font Manager" program on my Linux
+desktop or the "Font Matrix" program which is better.
+</p>
+
+<p>
+In my case, the PragmataPro fonts are divided up into:
+</p>
+
+<ul class="org-ul">
+<li>Family: PragmataPro
+<ul class="org-ul">
+<li>Style: Regular      PragmataPro</li>
+<li>Style: Italic       PragmataPro Italic</li>
+<li>Style: Bold         PragmataPro Bold</li>
+<li>Style: Bold Italic  PragmagaPro Bold Italic</li>
+</ul></li>
+<li>Family: PragmataPro Liga
+<ul class="org-ul">
+<li>Style: Regular      PragmataPro Liga</li>
+<li>Style: Italic       PragmataPro Liga Italic</li>
+<li>Style: Bold         PragmataPro Liga Bold</li>
+<li>Style: Bold Italic  PragmagaPro Liga Bold Italic</li>
+</ul></li>
+<li>Family: PragmataPro Mono
+<ul class="org-ul">
+<li>Style: Regular      PragmataPro Mono</li>
+<li>Style: Italic       PragmataPro Mono Italic</li>
+<li>Style: Bold         PragmataPro Mono Bold</li>
+<li>Style: Bold Italic  PragmagaPro Mono Bold Italic</li>
+</ul></li>
+<li>Family: PragmataPro Mono Liga
+<ul class="org-ul">
+<li>Style: Regular      PragmataPro Mono Liga</li>
+<li>Style: Italic       PragmataPro Mono Liga Italic</li>
+<li>Style: Bold         PragmataPro Mono Liga Bold</li>
+<li>Style: Bold Italic  PragmagaPro Mono Liga Bold Italic</li>
+</ul></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">  (set-frame-font
+    <span style="color: #bc8f8f;">"PragmataPro Mono Liga 14"</span>    <span style="color: #b22222;">;; </span><span style="color: #b22222;">FONT (namestring, object, entity or spec)</span>
+    nil                      <span style="color: #b22222;">;; </span><span style="color: #b22222;">KEEP-SIZE</span>
+    t                        <span style="color: #b22222;">;; </span><span style="color: #b22222;">FRAMES (t means to all frames)</span>
+  )
+<span style="color: #b22222;">;;  </span><span style="color: #b22222;">(set-frame-font "PragmataPro Liga 14" nil t)</span>
+</pre>
+</div>
+
+<p>
+In Emacs Lisp, fonts are represented using three different Lisp object types:
+</p>
+
+<dl class="org-dl">
+<dt>font object</dt><dd>a Lisp object that represents a font that Emacs has
+opened.  Font objects cannot be modified in Lisp, but they can be
+inspected.</dd>
+
+<dt>font spec </dt><dd>a font spec creating using font specifications args</dd>
+
+<dt>font entity</dt><dd>a reference to a font that need not be open.  Its
+properties are intermediate between a font object and a font spec: like a
+font object, and unlike a font spec, it refers to a single, specific font.</dd>
+</dl>
+
+<p>
+or just simply a string:
+</p>
+
+<dl class="org-dl">
+<dt>font name</dt><dd>a string in the <b>fontconfig</b> format</dd>
+</dl>
+
+<p>
+To display the complete list of available fonts, execute the following in the
+<b>Scratch Buffer</b>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(dolist (font (x-list-fonts "*"))
+  (insert (format "%s\n" font)))-GOOG-Noto Sans CJK KR-normal-normal-normal-*-*-*-*-*
+</pre>
+</div>
+
+<p>
+<a href="https://github.com/lumiknit/emacs-pragmatapro-ligatures">https://github.com/lumiknit/emacs-pragmatapro-ligatures</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(use-package pragmatapro-lig
+  :quelpa
+    (pragmatapro-lig
+      :fetcher url
+      :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
+    )
+)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">(quelpa</span>
+<span style="color: #b22222;">;;   </span><span style="color: #b22222;">'(pragmatapro-lig</span>
+<span style="color: #b22222;">;;      </span><span style="color: #b22222;">:fetcher url</span>
+<span style="color: #b22222;">;;      </span><span style="color: #b22222;">:url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"</span>
+<span style="color: #b22222;">;;    </span><span style="color: #b22222;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">)</span>
+
+<span style="color: #b22222;">;;; </span><span style="color: #b22222;">(add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/pragmatapro-lig")</span>
+(add-to-list 'load-path <span style="color: #bc8f8f;">"~/.emacs.d/lisp/emacs-pragmatapro-ligatures/"</span>)
+<span style="color: #b22222;">;;; </span><span style="color: #b22222;">(use-package pragmatapro-lig)</span>
+(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">pragmatapro-lig</span>)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(load-file <span style="color: #bc8f8f;">"~/.emacs.d/lisp/pragmatapro-prettify-symbols-v0.829.el"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org288a1db" class="outline-3">
+<h3 id="org288a1db"><span class="section-number-3">7.5</span> Colors</h3>
+<div class="outline-text-3" id="text-7-5">
+<dl class="org-dl">
+<dt>M-x list-colors-display RET </dt><dd>display an annotated rainbox of colors</dd>
+</dl>
+
+<p>
+To see the set of possible color names for X:
+    /usr/lib/X11/rgb.txt
+</p>
+
+<p>
+(distinguish btw colors for Emacs in X and colors for Emacs in an xterm)
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;;;</span><span style="color: #b22222;">NEEDED?  (set-background-color "White")</span>
+<span style="color: #b22222;">;;;</span><span style="color: #b22222;">NEEDED?  (set-foreground-color "Black")  ;; don't these duplicate the below?</span>
+<span style="color: #b22222;">;;;</span><span style="color: #b22222;">NEEDED?  (set-cursor-color     "Red")</span>
+<span style="color: #b22222;">;;;</span><span style="color: #b22222;">NEEDED?  (set-mouse-color      "Black")</span>
+<span style="color: #b22222;">;;;</span><span style="color: #b22222;">NEEDED?  (set-border-color     "Blue")</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2dae2c1" class="outline-3">
+<h3 id="org2dae2c1"><span class="section-number-3">7.6</span> Faces for Emacs Text            <code>faces vs colors vs themes</code></h3>
+<div class="outline-text-3" id="text-7-6">
+<p>
+To see the various faces:
+    M-x list-faces-display
+</p>
+
+<p>
+??? are the following needed to use faces or themes ???
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(global-font-lock-mode
+  t)    <span style="color: #b22222;">; </span><span style="color: #b22222;">Enable colorized text everywhere.</span>
+
+(<span style="color: #4169e1;">setq</span> font-lock-maximum-decoration
+  t)    <span style="color: #b22222;">; </span><span style="color: #b22222;">Enable colorized text everywhere.</span>
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgb23078d" class="outline-4">
+<h4 id="orgb23078d"><span class="section-number-4">7.6.1</span> Default Face for Specific Kinds of Text</h4>
+<div class="outline-text-4" id="text-7-6-1">
+<p>
+<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Standard-Faces.html">https://www.gnu.org/software/emacs/manual/html_node/emacs/Standard-Faces.html</a>
+</p>
+
+<dl class="org-dl">
+<dt>default</dt><dd>This face is used for ordinary text that doesn’t specify any
+face. Its background color is used as the frame’s background color.</dd>
+</dl>
+
+<p>
+M-x customize-face mode-line RET
+</p>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">  (custom-set-faces
+    '(default
+      (
+        (t
+          (<span style="color: #00008b;">:stipple</span> nil
+<span style="color: #b22222;">;;           </span><span style="color: #b22222;">:background "white"</span>
+<span style="color: #b22222;">;;           </span><span style="color: #b22222;">:foreground "black"</span>
+           <span style="color: #00008b;">:inverse-video</span> nil
+           <span style="color: #00008b;">:box</span> nil
+           <span style="color: #00008b;">:strike-through</span> nil
+           <span style="color: #00008b;">:overline</span> nil
+           <span style="color: #00008b;">:underline</span> nil
+           <span style="color: #00008b;">:slant</span> normal
+           <span style="color: #00008b;">:weight</span> normal
+           <span style="color: #00008b;">:height</span> 130
+           <span style="color: #00008b;">:width</span> normal
+           <span style="color: #00008b;">:family</span> <span style="color: #bc8f8f;">"PragmataPro"</span>
+          )
+        )
+      )
+    )
+  )
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org65ce3d3" class="outline-4">
+<h4 id="org65ce3d3"><span class="section-number-4">7.6.2</span> org-mode face elements</h4>
+<div class="outline-text-4" id="text-7-6-2">
+</div>
+<ol class="org-ol">
+<li><a id="org990ce41"></a>Visual Test of Typefaces in Org-Mode<br />
+<div class="outline-text-5" id="text-7-6-2-1">
+<ul class="org-ul">
+<li><b>Testing</b>   boldface</li>
+<li><i>Testing</i>   italics</li>
+<li><code>Testing</code>   verbatim</li>
+<li>-Testing-</li>
+<li><del>Testing</del>   strikethru</li>
+<li><code>Testing</code>   code
+<dl class="org-dl">
+<dt>Testing</dt><dd>description list</dd>
+</dl></li>
+</ul>
+
+<p>
+??? (add-to-list 'custom-theme-load-path "&lt;themefolder&gt;")
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">; </span><span style="color: #b22222;">Text surrounded by =TEXT=</span>
+<span style="color: #b22222;">;;; </span><span style="color: #b22222;">(set-face-attribute 'org-verbatim nil :foreground "LightGrey" :box "Orange" :inverse-video t)</span>
+
+<span style="color: #b22222;">; </span><span style="color: #b22222;">Text surrounded by ~TEXT~</span>
+(set-face-attribute 'org-code nil <span style="color: #00008b;">:foreground</span> <span style="color: #bc8f8f;">"Purple"</span>)
+
+<span style="color: #b22222;">; </span><span style="color: #b22222;">Text representing the definition term in a description list   - TERM  :: DEFINITION</span>
+(set-face-attribute 'org-list-dt nil <span style="color: #00008b;">:foreground</span> <span style="color: #bc8f8f;">"Orange"</span> <span style="color: #00008b;">:box</span> <span style="color: #bc8f8f;">"White"</span> <span style="color: #00008b;">:inverse-video</span> t)
+
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-builtin-face (dark blue on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-comment-face (red on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-constant-face (pink on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-doc-face (black on green)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-function-name-face (bright blue on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-keyword-face (bright cyan on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-string-face (black on green)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-type-face (FAINT green on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-variable-name-face (orange on grey HARD TO READ)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">font-lock-warning-face red on grey)</span>
+
+<span style="color: #b22222;">;</span><span style="color: #b22222;">(set-face-foreground 'font-lock-builtin-face "White")</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">(set-face-foreground 'font-lock-comment-face "White")</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">(set-face-foreground 'font-lock-function-name-face "White")</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">(set-face-foreground 'font-lock-string-face "White")</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">(set-face-foreground 'font-lock-variable-name-face "White")</span>
+
+<span style="color: #b22222;">;</span><span style="color: #b22222;">bold (black on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">bold-italic (black on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">border (black on black UNREADABLE)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">cursor (black on black UNREADABLE)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">default (black on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">fixed-pitch (black on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">fringe (black on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">header-line (underlined black on grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">highlight (black-on-green)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">isearch (UNREADABLE cyan-on-purple)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">isearch-lazy-highlight-face (black-on-cyan)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">italic (black-on-grey)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">menu  (grey-on-black)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">mode-line  (grey-on-black)</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">mouse</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">region</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">scroll-bar</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">secondary-selection</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">show-paren-match-face</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">tool-bar</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">tooltip</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">underline</span>
+<span style="color: #b22222;">;</span><span style="color: #b22222;">variable-pitch</span>
+</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+
+<div id="outline-container-org989018d" class="outline-4">
+<h4 id="org989018d"><span class="section-number-4">7.6.3</span> Themes</h4>
+<div class="outline-text-4" id="text-7-6-3">
+<p>
+A popular way of customizing Emacs colors is the use the #color-theme#
+package, of which a number of those these are aware of Org-mode.
+</p>
+
+<p>
+For my Gentoo Linux distribution I run, I had to emerge (install):
+</p>
+
+<p>
+$ emerge app-emacs/color-theme
+</p>
+
+<p>
+There is also a newer approach called <b>custom themes</b> but custom themes do not
+replace color themes, as each approach has its advantages.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(use-package grandshell-theme)
+(<span style="color: #4169e1;">setq</span> custom-enabled-themes '(grandshell))
+(load-theme 'grandshell t)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-DISABLEDemacs-lisp">;;;  (use-package color-theme)
+;;  (setq color-theme-is-global t)
+;;  (color-theme-initialize)
+
+;;  (load "org-beautify-theme")
+;;  (load "color-theme-github")
+;;  (load "color-theme-cobalt")  ;; looks normal
+;;  (load "color-theme-sanityinc-solarized")  ;; looks normal
+;;  (load "color-theme-sanityinc-tomorrow")  ;; looks normal
+
+;;  (load "grandshell-theme")  ;; on black but not bad
+
+;; cyberpunk          ;; on black but not bad
+;; grandshell-theme   ;; on black but not bad
+;; deeper-blue        ;; on black but not bad
+;; leuven             ;; on white but NICE!
+;; manoj-dark         ;; on black but VERY CLEAR
+
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(pixel-scroll-mode 1)
+(pixel-scroll-precision-mode 1)
+(<span style="color: #4169e1;">setq</span> pixel-scroll-precision-interpolate-page t)  <span style="color: #b22222;">;; </span><span style="color: #b22222;">so PgUp PgDn give a visual slide too.</span>
+(native-comp-available-p)
+</pre>
+</div>
+
+
+<p>
+hook &lt;wheel-up&gt; &lt;wheel-down&gt; to the correct good-scroll-up
+</p>
+
+
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(use-package mwheel
+  <span style="color: #00008b;">:ensure</span> nil
+  <span style="color: #00008b;">:custom</span>
+  (mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+  (mouse-wheel-progressive-speed nil)
+  (mouse-wheel-follow-mouse 't)
+  <span style="color: #00008b;">:config</span>
+  (<span style="color: #4169e1;">setq</span> scroll-step 1)
+  (<span style="color: #4169e1;">setq</span> scroll-conservatively 1000)
+  )
+</pre>
+</div>
+
+
+
+<p>
+<a href="https://github.com/io12/good-scroll.el">https://github.com/io12/good-scroll.el</a>
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(global-set-key [next] #'good-scroll-up-full-screen)
+(global-set-key [prior] #'good-scroll-down-full-screen)
+</pre>
+</div>
+
+<p>
+must build emacs with XInput 2
+&#x2013;with-xwidgets                     adds a built-in web browser based on webkit
+</p>
+
+<p>
+(setq mouse-wheel-tilt-scroll t)  - enables horizontal scrolling
+</p>
+
+<p>
+C-h C-n (M-x view-emacs-news)
+</p>
+
+
+
+
+
+<pre class="example">
+good-scroll-down-full-screen
+</pre>
+
+
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> mouse-wheel-scroll-amount
+  '(
+     2                  <span style="color: #b22222;">;; </span><span style="color: #b22222;">#lines to normally scroll by</span>
+     ((shift) . 1)      <span style="color: #b22222;">;; </span><span style="color: #b22222;">#lines when shift key pressed</span>
+     ((control) . nil)  <span style="color: #b22222;">;; </span><span style="color: #b22222;">full-screen when control key pressed</span>
+   )
+)
+(<span style="color: #4169e1;">setq</span> mouse-wheel-progressive-speed
+  nil) <span style="color: #b22222;">;; </span><span style="color: #b22222;">t adjusts faster, nil keeps it the same</span>
+</pre>
+</div>
+
+<p>
+??#+INCLUDE: "config/config-emacs-global-keyboard-setup.org"
+??#+INCLUDE: "config/config-emacs-work-protection.org"
+??#+INCLUDE: "config/config-printing-from-emacs.org"
+??#+INCLUDE: "config/config-install-of-org-mode.org"
+</p>
+<ul class="org-ul">
+<li>(agendapath???)  (tags???)</li>
+</ul>
+
+<p>
+The Lifecycle of Information (Capture, File, Archive)
+(some things are places, others are tags)
+</p>
+
+<p>
+??#+INCLUDE: "config/config-note-capture-using-org-mode.org"
+??#+INCLUDE: "config/config-note-refiling-using-org-mode.org"
+??#+INCLUDE: "config/config-note-archiving-using-org-mode.org"
+</p>
+
+<p>
+??#+INCLUDE: "config/config-scripting-via-org-babel.org"
+</p>
+
+<p>
+syntax coloring ?  (or put it in each mode?)
+org-babel ?
+org-query ?
+org-tramp ?
+databases ?
+</p>
+
+<p>
+??#+INCLUDE: "config/config-global-syntax-checking.org"
+??#+INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgd9e20b6" class="outline-2">
+<h2 id="orgd9e20b6"><span class="section-number-2">8</span> tags and places ???</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+tags
+refiling places
+</p>
+
+<p>
+??#+INCLUDE: "config/config-python-development.org"
+??#+INCLUDE: "config/config-research.org"
+??#+INCLUDE: "config/config-emacs-use-of-ai.org"
+</p>
+</div>
+</div>
+
+
+
+
+<div id="outline-container-org8f37e56" class="outline-2">
+<h2 id="org8f37e56"><span class="section-number-2">9</span> Emacs Configuration for Planning My Tasks (change to planning policy)</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+??#+INCLUDE: "config/config-task-planning.org"
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf7ff45c" class="outline-2">
+<h2 id="orgf7ff45c"><span class="section-number-2">10</span> Emacs Configuration for Reporting About My Tasks</h2>
+<div class="outline-text-2" id="text-10">
+<ul class="org-ul">
+<li>ad-hoc reports</li>
+</ul>
+<p>
+??#+INCLUDE: "config/config-task-reporting.org"
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf6555a7" class="outline-2">
+<h2 id="orgf6555a7"><span class="section-number-2">11</span> Emacs Configuration for Content Publishing</h2>
+<div class="outline-text-2" id="text-11">
+<ul class="org-ul">
+<li>publish</li>
+<li>export</li>
+<li>slide present</li>
+</ul>
+<p>
+??#+INCLUDE: "config/config-content-publishing.org"
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2827281" class="outline-2">
+<h2 id="org2827281"><span class="section-number-2">12</span> Emacs Configuration To Be Merged</h2>
+<div class="outline-text-2" id="text-12">
+<p>
+??#+INCLUDE: "config/config-emacs-to-be-merged.org"
+</p>
+</div>
+</div>
+
+<div id="outline-container-org32776a2" class="outline-2">
+<h2 id="org32776a2"><span class="section-number-2">13</span> Additional Small Configuration File</h2>
+<div class="outline-text-2" id="text-13">
+</div>
+<div id="outline-container-org2eebbe5" class="outline-3">
+<h3 id="org2eebbe5"><span class="section-number-3">13.1</span> Place for Small Automatic Configuration Settings</h3>
+<div class="outline-text-3" id="text-13-1">
+<p>
+Emacs likes to write small tidbits of manual configuration into an .el file so
+I use a small file that I never look into, to keep it separate from my
+<code>config.org</code>.  It also contains my private information like passwords.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> custom-file <span style="color: #bc8f8f;">"~/.emacs.d/custom-settings.el"</span>)
+(load custom-file t)
+</pre>
+</div>
+
+
+
+
+<p>
+M-x auto-complete of functions and variable names  ???
+</p>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-org17935cd" class="outline-2">
+<h2 id="org17935cd"><span class="section-number-2">14</span> What Is This File?</h2>
+<div class="outline-text-2" id="text-14">
+<p>
+follows in tradition
+</p>
+
+<p>
+<a href="https://orgmode.org/worg/org-contrib/babel/">Babel</a> is <a href="https://orgmode.org/">Org</a>'s ability to execute source code within Org documents. If you are not familiar with Org please take a moment to read the Org homepage before continuing. 
+</p>
+
+<p>
+<a href="https://orgmode.org/worg/">Worg or World of Org</a>
+</p>
+
+
+<p>
+<a href="https://github.com/andreyorst/dotfiles/tree/master/.config/emacs">https://github.com/andreyorst/dotfiles/tree/master/.config/emacs</a>
+</p>
+
+<p>
+<a href="https://panadestein.github.io/emacsd/">https://panadestein.github.io/emacsd/</a>  .html  very literate
+<a href="https://github.com/Panadestein/emacsd">https://github.com/Panadestein/emacsd</a>  .org
+</p>
+
+<p>
+(tangle .org into init.el instead of org-babel-load-file)
+<a href="https://github.com/eliaskanelis/.emacs.d">https://github.com/eliaskanelis/.emacs.d</a>
+</p>
+
+<p>
+There is an option to put back-references to the org file when
+tangling: #+PROPERTY: header-args+ :tangle :comments link
+</p>
+
+<p>
+take a look at gcmh package instead
+</p>
+
+<p>
+use :bind or :general in use-package sections instead of keybindings
+</p>
+
+<p>
+(use-package exec-path-from-shell
+  :custom
+  (exec-path-from-shell-check-startup-files nil)
+  :config
+  (exec-path-from-shell-initialize))
+</p>
+
+<p>
+use :hook not :config/:init (add-hook
+</p>
+
+<p>
+each mode introduced should enable the mode inside that use-package clause, not elsewhere
+</p>
+
+<p>
+turn on flycheck linters to catch bad stuff
+</p>
+
+
+<p>
+GNU ELPA is primary package repository
+</p>
+
+<p>
+what is this file?
+</p>
+<ul class="org-ul">
+<li>uses Babel for org-mode to better structure and explain my configuration</li>
+<li>embeds emacs lisp fragments that are tangled into one file and loaded</li>
+<li>allows org-mode TODO usage for planning work on my Emacs configuration</li>
+</ul>
+</div>
+
+<div id="outline-container-org5de6047" class="outline-3">
+<h3 id="org5de6047"><span class="section-number-3">14.1</span> Brief Intro to Babel</h3>
+<div class="outline-text-3" id="text-14-1">
+<p>
+Babel is org-mode's ability to execute or extract source code within Org-mode
+documents.  The source can be different programming languages, all in the same
+<code>.org</code> file.
+</p>
+
+<p>
+Babel has special support for embedding your Emacs initialization code into
+~org-mode files, so that you can make use of the nice features of org-mode such
+as outline folding, tags, notes, HTML export, etc.  The <i>org-babel-load-file</i>
+function can be used to load the Emacs Lisp code blocks embedded in a literate
+Org-mode file in the same way that you might load a regular Emacs Lisp file.
+</p>
+
+<p>
+To use org-mode for organizing your Emacs configuration, a very minimum amount
+of configuration goes into the user's <code>~/.emacs.d/init.el</code> file.
+</p>
+
+<pre class="example" id="~/.emacs.d/init.el">
+
+</pre>
+
+
+
+
+
+
+<p>
+where is this file published?
+others I have learned from
+which version of Emacs and which features of Emacs do I depend upon?
+directory structure
+what is my configuration philosophy?
+</p>
+<ul class="org-ul">
+<li>break configuration out properly
+(avoid declaring zero day and starting all over)
+(make it easy to disable/enable sections w/o breaking dependencies)
+(make it easy for others to adopt sections without dragging everything else in)
+(prefer public packages)
+(prefer .el files on public git repos)  using quelpa for fetch them
+(use local packages)
+(use local .el files)            (add-to-list 'load-path "~/.emacs.d/lisp/")</li>
+</ul>
+
+<p>
+(is Cask and Pallet still used?)
+</p>
+
+<p>
+packaging choice
+packages are:
+  explicitly loaded in this file
+  internatively loaded using load-packages-load and listed in <i>package-selected-packages</i> from package.el
+</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="outline-container-orgb76240a" class="outline-2">
+<h2 id="orgb76240a"><span class="section-number-2">15</span> colorizing sources, in Emacs and in exported formats.</h2>
+</div>
+
+<div id="outline-container-orgcfbc7d4" class="outline-2">
+<h2 id="orgcfbc7d4"><span class="section-number-2">16</span> Building Emacs from Source on Ubuntu</h2>
+<div class="outline-text-2" id="text-16">
+<p>
+<a href="https://practical.li/blog/posts/build-emacs-from-source-on-ubuntu-linux/">https://practical.li/blog/posts/build-emacs-from-source-on-ubuntu-linux/</a>
+</p>
+
+<p>
+$ git clone &#x2013;branch emacs-29 git://git.savannah.gnu.org/emacs.git emacs-29 &amp;&amp; cd emacs-29
+$ export CC=/usr/bin/gcc-10 &amp;&amp; export CXX=/usr/bin/gcc-10
+$ ./autogen.sh
+$ ./configure &#x2013;with-native-compilation=aot &#x2013;with-x &#x2013;with-json &#x2013;with-tree-sitter
+$ make -j$(nproc)
+$ ./src/emacs -Q                &#x2013; test it runs WITHOUT any of my emacs configuration
+$ sudo make install &#x2013;prefix /usr/local
+</p>
+
+<p>
+&#x2013;with-json
+&#x2013;with-tree-sitter
+&#x2013;with-pgtk      (use GTK instead of X windows)
+&#x2013;with-xwidgets  (requires gtk3)
+&#x2013;with-x
+</p>
+
+
+<p>
+frame
+text presentation
+  fonts
+  highlighting
+menu mechanism
+</p>
+
+<p>
+DONE disable ob-ledger
+WHY? Buffer directions.org modified, kill anyway?
+</p>
+
+<p>
+minimize use of customize.el
+minimize use of lisp/*.el files
+  quelpa.el
+  git-auto-commit-mode.el
+  ob-http-mode.el
+  ht.el
+  spinner.el
+  lsp-mode.el
+  diminish.el
+  unbound.el
+  hydra.el
+</p>
+
+<p>
+'(package-selected-packages
+  '(greader whisper ob-chatgpt-shell ob-dall-e-shell ob-graphql ob-html-chrome orca org-ai org-anki org-auto-expand org-clock-today org-dropbox org-make-toc ob-sql-mode ob-redis k8s-mode just-mode gptel gitlab-ci-mode-flycheck goggles code-review blacken chatgpt-shell dall-e-shell alda-mode ob-mermaid ejira highlight-indent-guides ob-browser ox-jira python-black ox-twbs ox-publish counsel-tramp counsel smart-mode-line org-ql org-mru-clock unbound window pragmatapro-lig origami org-super-agenda cal-iso org-notmuch rustic project projectile dap-mode lsp-ui lsp-mode flycheck-pycheckers flycheck-rust flycheck-yamllint ob-rust rust-auto-use ox-ssh ox-reveal ox-rfc language-detection jiralib2 org-agenda-property ob-restclient org-download pretty-hydra ob-http anki-editor terraform-mode hcl-mode py-autopep8 py-import-check pip-requirements org-special-block-extras org-sidebar gitlab gitlab-ci-mode ts hydra scimax-org-babel-python beacon magit-todos pyenv-mode eshell-prompt-extras jq-format jq-mode docker-tramp 0blayout indent-tools json-mode json-navigator json-reformat diminish use-package use-package-ensure-system-package use-package-hydra yaml-imenu yaml-mode yafolding magit-annex nginx-mode org-magit orgit ox-json timonier gitconfig git-timemachine git-annex git-lens git-link copy-as-format magit org-noter undo-tree ivy-hydra all-the-icons-ivy imenu-anywhere ivy ivy-dired-history ivy-gitlab swiper notmuch-labeler org-mime pdf-tools atomic-chrome ob-async simple-httpd git-auto-commit-mode stan-mode stan-snippets yasnippet elisp-lint org-elisp-help ox-epub ox-gfm ox-pandoc helm color-theme-cobalt color-theme-github color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow cyberpunk-theme org-time-budgets org-beautify-theme docker-compose-mode dockerfile-mode package-build shut-up epl git commander f dash s))
+</p>
+
+
+
+
+<p>
+⛔ Warning (comp): quelpa.el:237:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:241:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:245:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:516:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:669:2: Warning: defvar `quelpa-build&#x2013;wiki-min-request-interval' docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:1403:31: Warning: Empty let body
+⛔ Warning (comp): quelpa.el:1493:2: Warning: docstring wider than 80 characters
+⛔ Warning (comp): quelpa.el:1811:2: Warning: docstring has wrong usage of unescaped single quotes (use \= or different quoting)
+⛔ Warning (comp): quelpa.el:2014:2: Warning: docstring wider than 80 characters
+</p>
+</div>
+
+
+<div id="outline-container-org945b496" class="outline-3">
+<h3 id="org945b496"><span class="section-number-3">16.1</span> <span class="done DONE">DONE</span> support for the WebP image format, if the libwebp library is found</h3>
+</div>
+<div id="outline-container-orgfa0a562" class="outline-3">
+<h3 id="orgfa0a562"><span class="section-number-3">16.2</span> <span class="done DONE">DONE</span> Emacs on X now uses XInput 2 for input events, for better mousewheel support</h3>
+</div>
+<div id="outline-container-org3e7ef8a" class="outline-3">
+<h3 id="org3e7ef8a"><span class="section-number-3">16.3</span> <span class="done DONE">DONE</span> <a href="https://www.masteringemacs.org/article/speed-up-emacs-libjansson-native-elisp-compilation">Speed up Emacs with libjansson and native elisp compilation - Mastering Emacs</a></h3>
+<div class="outline-text-3" id="text-16-3">
+<p>
+I build Emacs with native compilation of elisp files upfront, so I don't have
+to pay the price later as each file is compiled as needed.
+</p>
+
+<p>
+enable-local-variables 
+file-local-variables-alist
+safe-local-variable-values
+</p>
+
+
+<ul class="org-ul">
+<li>LibraryThing (Android)</li>
+<li>Libib (Android, PC, Tablet)
+books, etc.</li>
+<li>MyLibrary (Android)
+simple</li>
+<li>Book Catalogue (Android, free)</li>
+<li>Goodreads
+no ISBN</li>
+</ul>
+
+
+<ul class="org-ul">
+<li>Book Track (only Apple)</li>
+
+<li>Leto (only Apple)</li>
+<li>Book Buddy (only Apple)</li>
+<li><p>
+Bookshelf (Android $1.49/mo)
+</p>
+
+<p>
+batch scan option?
+cover scan?
+</p></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-orge21e190" class="outline-3">
+<h3 id="orge21e190"><span class="section-number-3">16.4</span> <span class="todo TODO">TODO</span> Study tree-sitter and insure I have the grammar libraries I want</h3>
+<div class="outline-text-3" id="text-16-4">
+<p>
+libtree-sitter-&lt;LANG&gt;.so
+</p>
+
+<p>
+Emacs provides a user command, 'treesit-install-language-grammar',
+that automates the download and build process of a grammar library.
+It prompts for the language, the URL of the language grammar's VCS
+repository, and then uses the installed C/C++ compiler to build the
+library and install it.
+</p>
+
+<ul class="org-ul">
+<li><a href="https://www.masteringemacs.org/article/how-to-get-started-tree-sitter">How to Get Started with Tree-Sitter - Mastering Emacs</a></li>
+<li><a href="https://github.com/tree-sitter">https://github.com/tree-sitter</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org0b29749" class="outline-3">
+<h3 id="org0b29749"><span class="section-number-3">16.5</span> <span class="todo TODO">TODO</span> EGlot, the Language Server Client</h3>
+<div class="outline-text-3" id="text-16-5">
+<p>
+EGlot, the leaner complement to the fully-featured LSP-mode, is now built into
+Emacs. It should work out of the box. Just type M-x eglot in a buffer to get
+started.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org444cc3d" class="outline-3">
+<h3 id="org444cc3d"><span class="section-number-3">16.6</span> <span class="todo TODO">TODO</span> Use-package &#x2013; test all my uses of it in config.org</h3>
+<div class="outline-text-3" id="text-16-6">
+<p>
+Now included in Emacs.
+</p>
+
+<p>
+It’s an easier and more expressive way of sharing Emacs configuration
+snippets, and knowing it’s built in just makes everything much easier.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgefc314f" class="outline-3">
+<h3 id="orgefc314f"><span class="section-number-3">16.7</span> <span class="todo TODO">TODO</span> Pixel Scroll Precision Mode</h3>
+</div>
+
+
+
+<div id="outline-container-org89acf3d" class="outline-3">
+<h3 id="org89acf3d"><span class="section-number-3">16.8</span> <span class="todo TODO">TODO</span> specify location of user-emacs-directory</h3>
+<div class="outline-text-3" id="text-16-8">
+<p>
+$ emacs &#x2013;init-directory ~/.emacs.d/
+</p>
+
+
+
+<p>
+;; (defface org-block-begin-line
+;;   '((t (:underline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+;;   "Face used for the line delimiting the begin of source blocks.")
+</p>
+
+<p>
+;; (defface org-block-background
+;;   '((t (:background "lightgrey")))
+;;   "Face used for the source block background.")
+</p>
+
+<p>
+;; (defface org-block-end-line
+;;   '((t (:overline "#A7A6AA" :foreground "#008ED1" :background "#EAEAFF")))
+;;   "Face used for the line delimiting the end of source blocks.")
+</p>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-org9016770" class="outline-2">
+<h2 id="org9016770"><span class="section-number-2">17</span> MISC</h2>
+<div class="outline-text-2" id="text-17">
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(setq case-fold-search t)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lispEr">;;; https://github.com/Malabarba/smart-mode-line
+;;; (sml/setup)
+(setq sml/shorten-directory nil)
+(setq sml/shorten-modes nil)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(use-package git-auto-commit-mode)
+(use-package ob-http)
+(use-package lsp-mode)
+(use-package peg)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org540d9a6" class="outline-2">
+<h2 id="org540d9a6"><span class="section-number-2">18</span> About This File</h2>
+<div class="outline-text-2" id="text-18">
+<p>
+This is a current copy of my Emacs configuration, annotated with explanations.
+I've learned a lot by studying other people's Emacs configurations and I
+wanted to share what I've ended up with.
+</p>
+
+<p>
+Other Emacs files I've studied:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/redguardtoo/emacs.d">https://github.com/redguardtoo/emacs.d</a></li>
+<li><a href="https://github.com/purcell/emacs.d/blob/master/README.md">https://github.com/purcell/emacs.d/blob/master/README.md</a></li>
+<li>This is a VERY good example of a custom org-mode .emacs.d file.
+<a href="https://github.com/mwfogleman/.emacs.d/">https://github.com/mwfogleman/.emacs.d/</a></li>
+<li>~/.emacs.d/michael.org]] (local copy)</li>
+
+<li><a href="https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org">https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org</a></li>
+<li><a href="https://github.com/bbatsov/emacs.d/blob/master/init.el">https://github.com/bbatsov/emacs.d/blob/master/init.el</a></li>
+<li><a href="https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el">https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el</a></li>
+</ul>
+
+<p>
+My Emacs configuration is divided into two files:
+</p>
+
+<ul class="org-ul">
+<li>~/.emacs.d/init.el</li>
+<li>~/.emacs.d/config.org (automatically tangled into config.el)</li>
+</ul>
+
+<p>
+The <code>init.el</code> file is the first one executed by Emacs, and in it I do initial
+set up of my choice of package management, and then if <code>config.org</code> has been
+modified, tangle it into <code>config.el</code>, which is then loaded into Emacs by
+<code>init.el</code> to make those configuration settings take effect.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org152dea2" class="outline-2">
+<h2 id="org152dea2"><span class="section-number-2">19</span> My Emacs Directory Layout</h2>
+<div class="outline-text-2" id="text-19">
+<p>
+When Emacs is started, it tries to load a ELisp program from an init file,
+looking in the following places in this order:
+</p>
+
+<ul class="org-ul">
+<li>~/.emacs              &#x2013; I don't use this file</li>
+<li>~/.emacs.el           &#x2013; I don't use this file</li>
+<li>~/.emacs.d/init.el    &#x2013; This is the <b>start of my Emacs configuration</b></li>
+</ul>
+
+<p>
+In case of problems with <code>init.el</code>, you can use the command-line switch '-q'
+to prevent it being loaded or '&#x2013;debug-init' to get a traceback of the first
+error encountered.
+</p>
+
+<p>
+TIP: It is NOT recommendeed to byte-compile your init file as it does not
+     speed up startup very much and often leads to problems when you forget
+     to recompile the file.
+</p>
+
+<pre class="example">
+~/.emacs.d/
+.
+├── README.org	;; light introduction to my setup
+├── init.el		;; my init file for Emacs (versus ~/.emacs)
+├── agenda-files.py     ????????????????????????????????????????
+├── org-clock-save.el   ????????????????????????????????????????
+├── ARCHIVE/		;; modules that I retired using and will someday delete
+├── auto-save-list      ????????????????????????????????????????
+├── %backup%~           ????????????????????????????????????????
+├── backups/		;; backup copies of ANY edited files
+├── bookmarks           ????????????????????????????????????????
+├── Cask		;; installed modules list read by Cask and maintained by Pallet
+├── config.el		;; auto-built from my config.org each time Emacs starts
+├── config.org	;; my Emacs configuration in org-mode 'literate' format
+├── config.org~
+├── config-XXX.org
+├── custom-settings.el	;; tiny custom settings auto-edited by Emacs itself
+├── elpa
+│   ├── PACKAGE-A-YYYYMMDD.HHMM/
+│   ├── PACKAGE-B-YYYYMMDD.HHMM/
+│   ├── archives/
+│   │   ├── gnu/
+│   │   │   ├── archive-contents
+│   │   │   └── archive-contents.signed
+│   │   ├── melpa/
+│   │   │   └── archive-contents
+│   │   └── melpa-stable/
+│   │       └── archive-contents
+├── eshell/
+│   ├── alias
+│   ├── history
+│   └── lastdir
+├── quelpa/
+│   ├── build/
+│   │   └── PACKAGE-A/
+├── ido.last
+├── library.org
+├── LICENSE
+├── lisp/			;; individual .el files I create or work on
+├── jeff-light-theme.el
+├── michael.org
+├── network-security.data
+├── places
+├── pymd5-1c2b62349aded4d3a40a729148cbd68c.py
+├── recentf
+├── request
+│   └── curl-cookie-jar
+├── session.1012cc9dcd52891180156817838919458300000018020070
+├── session.106f8e8df9fad6f21c156806759412428700000015480070
+├── snippets		;; my library of text fragments for use by the snippet library
+├── templates 	;; my library of text fragments for use by org-capture
+│   ├── PACKAGE-A/
+│   ├── PACKAGE-B/
+├── tramp
+├── transient
+│   └── history.el
+└── url
+    └── cookies
+
+;;      .cask/
+;;         25.3/		;; cache/collection of modules pulled down by package manager
+;;      ac-dict/		;; auto-complete dictionary for various modes/languages
+;;   ~/.cask/
+;;      Cask			;; specification file of dependencies of the Cask pgm
+;;      bin/
+;;         cask			;; command-line tool for invoking Cask outside of Emacs
+;;      cask.el			;; ELisp source of the Cask library
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org4602b94" class="outline-2">
+<h2 id="org4602b94"><span class="section-number-2">20</span> orientation &#x2013; overall file flow</h2>
+<div class="outline-text-2" id="text-20">
+</div>
+<div id="outline-container-orga31f9c9" class="outline-3">
+<h3 id="orga31f9c9"><span class="section-number-3">20.1</span> ~/.emacs.d/init.el&#xa0;&#xa0;&#xa0;<span class="tag"><span class="FILE">FILE</span></span></h3>
+<div class="outline-text-3" id="text-20-1">
+<p>
+CAPTION: ~/.emacs.d/init.el
+NAME: init.el
+BEGIN_SRC shell :results output replace :exports none :eval never-export
+cat ~/.emacs.d/init.el
+END_SRC
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2bc77c6" class="outline-3">
+<h3 id="org2bc77c6"><span class="section-number-3">20.2</span> packages and libraries</h3>
+<div class="outline-text-3" id="text-20-2">
+</div>
+<div id="outline-container-orge910352" class="outline-4">
+<h4 id="orge910352"><span class="section-number-4">20.2.1</span> ~/emacs.d/backups</h4>
+</div>
+</div>
+<div id="outline-container-orgb375b28" class="outline-3">
+<h3 id="orgb375b28"><span class="section-number-3">20.3</span> ~/emacs.d/elpa</h3>
+</div>
+</div>
+
+
+<div id="outline-container-org13029a8" class="outline-2">
+<h2 id="org13029a8"><span class="section-number-2">21</span> Emacs Configuration for Mobile Syncing</h2>
+<div class="outline-text-2" id="text-21">
+<p>
+??? #+INCLUDE: "config/config-content-mobile-sync.org"
+</p>
+</div>
+
+<div id="outline-container-orgf94ae6b" class="outline-3">
+<h3 id="orgf94ae6b"><span class="section-number-3">21.1</span> mobile</h3>
+<div class="outline-text-3" id="text-21-1">
+<p>
+On my Android, I have the Orgzly app installed and always watching my Dropbox
+collection of .org files.  And I have defined a named search in Orgzly titled
+"Things to Study" so I can at any time pull up and study something when I
+have spare time.  The query string is:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text" id="org875a17f">tn.study i.TODO o.scheduled o.priority o.notebook
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7b303ff" class="outline-2">
+<h2 id="org7b303ff"><span class="section-number-2">22</span> Emacs Configuration for Email Usage Inside of Emacs</h2>
+<div class="outline-text-2" id="text-22">
+<p>
+INCLUDE: "config/config-emacs-email-usage.org"               <code>NOT USED</code>
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgadb04a2" class="outline-2">
+<h2 id="orgadb04a2"><span class="section-number-2">23</span> Emacs Configuration for Personal Memory Retention</h2>
+<div class="outline-text-2" id="text-23">
+<p>
+??? #+INCLUDE: "config/config-???"                           <code>NOT USED</code>
+</p>
+</div>
+<div id="outline-container-org9800deb" class="outline-3">
+<h3 id="org9800deb"><span class="section-number-3">23.1</span> Export Org-Mode Outlines as an Anki Knowledgebase</h3>
+<div class="outline-text-3" id="text-23-1">
+<p>
+url = git@github.com:louietan/anki-editor.git
+    :load-path "~/.emacs.d/lisp/anki-editor/" ;; use my Git checkout
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisper">(use-package anki-editor
+  :config
+  (setq anki-editor-create-decks t)
+  (setq anki-editor-ignored-org-tags
+    '("export" "noexport" "REFILING" "HEALTHZZZ")
+  )
+)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org634e066" class="outline-2">
+<h2 id="org634e066"><span class="section-number-2">24</span> searching content</h2>
+</div>
+<div id="outline-container-org165cb26" class="outline-2">
+<h2 id="org165cb26"><span class="section-number-2">25</span> music composition</h2>
+<div class="outline-text-2" id="text-25">
+</div>
+<div id="outline-container-org22063d1" class="outline-3">
+<h3 id="org22063d1"><span class="section-number-3">25.1</span> Music Notation Editting and Playing</h3>
+<div class="outline-text-3" id="text-25-1">
+<div class="org-src-container">
+<pre class="src src-emacs-lispER">(add-to-list 'load-path "~/.emacs.d/lisp/alda-mode/")
+(require 'alda-mode)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org83b917d" class="outline-2">
+<h2 id="org83b917d"><span class="section-number-2">26</span> clone mode</h2>
+<div class="outline-text-2" id="text-26">
+<p>
+INCLUDE: "config/config-emacs-use-of-cloning.org"
+</p>
+</div>
+</div>
+
+<div id="outline-container-org2d2e1b6" class="outline-2">
+<h2 id="org2d2e1b6"><span class="section-number-2">27</span> Emacs Explanatory Notes</h2>
+<div class="outline-text-2" id="text-27">
+<p>
+INCLUDE: "config/config-helpful-notes.org"
+</p>
+</div>
+</div>
+
+<div id="outline-container-org3030c71" class="outline-2">
+<h2 id="org3030c71"><span class="section-number-2">28</span> Footer of the Emacs package</h2>
+<div class="outline-text-2" id="text-28">
+<p>
+<a id="org75ffea0"></a>
+</p>
+
+<p>
+You've journeyed to the finale or perhaps, you've taken a particular interest in the art of closing an Emacs package.
+If my configuration intrigues you and you'd like to experiment with it, I warmly invite you to <a href="https://github.com/Panadestein/emacsd/fork">fork it</a> on GitHub.
+Your support and feedback will surely fuel its continuous development. Thank you for your time and interest!
+So, without further ado, let's elegantly wrap up the tangling process:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">
+(<span style="color: #4169e1;">provide</span> '<span style="color: #5f9ea0;">init.el</span>)
+<span style="color: #b22222;">;;; </span><span style="color: #b22222;">init.el ends here</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="email">Email: <a href="mailto:mailto:xanalogica@gmail.com">mailto:xanalogica@gmail.com</a></p>
+<p class="creator"><a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.1 (<a href="https://orgmode.org">Org</a> mode 9.3)</p>
+</div>
+</body>
+</html>
