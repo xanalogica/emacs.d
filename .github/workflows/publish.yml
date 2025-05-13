@@ -16,11 +16,12 @@ jobs:
         run: sudo apt install emacs-nox --yes
 
       - name: Build the site
-        run: ./publi.sh
+        # run: ./publi.sh
+        run: (cd site-publisher && emacs -Q --script build-site.el)
 
       - name: Publish generated content to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: public
+          folder: site-publisher/public
           branch: gh-pages
           single-commit: true

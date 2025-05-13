@@ -69,7 +69,7 @@
 
      :base-extension              "org"
 
-     :include                     '("config.org")
+     :include                     '("../index.org")
 
      ;; :with-author                 t
      ;; :with-creator                nil

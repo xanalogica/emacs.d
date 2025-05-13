@@ -1,0 +1,12 @@
+
+* Introduction   BLAH BLAH BLAH
+
+This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
+explain how and why I did each configuration setting, and yet automatically
+export it into emacs-lisp format for loading into Emacs at start-up time.
+This style of documenting is called [[https://en.wikipedia.org/wiki/Literate_programming][Literate Programming]].
+
+I maintain my Emacs configuration https://github.com/xanalogica/.emacs.d/ and
+automatically publish the polished documentation at ??? using a CI pipeline.
+
+
