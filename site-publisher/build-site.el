@@ -63,13 +63,11 @@
   (list
 
     (list "config.org"
-     :base-directory              "."
-     :publishing-directory        "./public"
-     :recursive                   nil
-
      :base-extension              "org"
-
      :include                     '("../index.org")
+     :base-directory              "."
+     :publishing-directory        "./public/webstyling"
+     :recursive                   nil
 
      ;; :with-author                 t
      ;; :with-creator                nil
