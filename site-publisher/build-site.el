@@ -59,66 +59,91 @@
 
 ;; Define the project to be published
 
-(defun my/org-publish-config-as-index (plist filename pub-dir)
-  "Publish ~/.emacs.d/config.org to index.html."
-  (let ((org-html-extension "html")) ;; ensure correct extension
-    (org-publish-org-to
-     'html
-     filename
-     (concat (file-name-as-directory pub-dir) "index.html")
-     plist)))
+(let* ((site-root (file-name-directory (or load-file-name buffer-file-name)))
+       (output-dir (expand-file-name "public/" site-root)))  ;; ← absolute path
+  (make-directory output-dir t)
 
-(setq org-publish-project-alist
-  '(
-     ;; ----------------------------------------------------------------------
-     ;; Publish config.org as index.html Publishing Directory
-     ;; ----------------------------------------------------------------------
+  (defun my/org-publish-config-as-index (plist filename pub-dir)
+    "Publish config.org to index.html."
+    (let ((output-file (expand-file-name "index.html" pub-dir)))
+      (make-directory (file-name-directory output-file) t)
+      (org-publish-org-to 'html filename output-file plist)))
 
-     ("config-as-index"
-      :base-extension "org"
-      :base-directory "."
-      :publishing-directory "../public/"
+  (setq org-publish-project-alist
+        `(("config-as-index"
+           :base-extension "org"
+           :base-directory ,site-root
+           :publishing-directory ,output-dir
+           :recursive nil
+           :with-toc t
+           :time-stamp-file nil
+           :publishing-function my/org-publish-config-as-index
+           :exclude ".*"
+           :include ("config.org"))))
 
-      ;; :with-author t
-      ;; :with-creator nil
-      :with-toc t
-      ;; :section-numbers nil
-      :time-stamp-file  nil
-
-      :recursive nil
-      :publishing-function my/org-publish-config-as-index
-      :exclude ".*"                    ;; exclude everything...
-      :include ("config.org")          ;; ...except this one
-     )
-
-     ;; ----------------------------------------------------------------------
-     ;; Copy Diagrams (and Folders) into Publishing Directory
-     ;; ----------------------------------------------------------------------
-
-     ("webstyling"
-      :base-directory             "webstyling"
-      :publishing-directory       "./public/webstyling"
-      :recursive                  t
-
-      :base-extension             site-attachments
-
-      :publishing-function        'org-publish-attachment
-     )
-  )
+  (message "[build-site] Publishing to: %s" output-dir)
+  (org-publish-all t)
+  (message "[build-site] Done")
 )
+
+
+
+
+;;; (setq org-publish-project-alist
+;;;   '(
+;;;      ;; ----------------------------------------------------------------------
+;;;      ;; Publish config.org as index.html Publishing Directory
+;;;      ;; ----------------------------------------------------------------------
+;;; 
+;;;      ("config-as-index"
+;;;       :base-extension "org"
+;;;       :base-directory "."
+;;;       :publishing-directory "../public/"
+;;; 
+;;;       ;; :with-author t
+;;;       ;; :with-creator nil
+;;;       :with-toc t
+;;;       ;; :section-numbers nil
+;;;       :time-stamp-file  nil
+;;; 
+;;;       :recursive nil
+;;;       :publishing-function my/org-publish-config-as-index
+;;;       :exclude ".*"                    ;; exclude everything...
+;;;       :include ("config.org")          ;; ...except this one
+;;;      )
+;;; 
+;;;      ;; ----------------------------------------------------------------------
+;;;      ;; Copy Diagrams (and Folders) into Publishing Directory
+;;;      ;; ----------------------------------------------------------------------
+;;; 
+;;;      ("webstyling"
+;;;       :base-directory             "webstyling"
+;;;       :publishing-directory       "./public/webstyling"
+;;;       :recursive                  t
+;;; 
+;;;       :base-extension             site-attachments
+;;; 
+;;;       :publishing-function        'org-publish-attachment
+;;;      )
+;;;   )
+;;; )
+
+;; at time of publish, I'm in site-publisher/
+;; and I'm writing to site-publisher/public
+
 
 ;; Generate site
 
-(let ((pub-dir (expand-file-name "./public/")))
-  (unless (file-directory-p pub-dir)
-    (make-directory pub-dir t)
-    (message "[publish] Writing to %s" (expand-file-name "index.html" pub-dir))
-  )
-)
+;;; (let ((pub-dir (expand-file-name "./public/")))
+;;;   (unless (file-directory-p pub-dir)
+;;;     (make-directory pub-dir t)
+;;;     (message "[publish] Writing to %s" (expand-file-name "index.html" pub-dir))
+;;;   )
+;;; )
 
-(org-publish-all t)
+;;; (org-publish-all t)
 
-(message "Build completed")
+;;; (message "Build completed")
 
 (provide 'build-site)
 ;;; build-site.el ends here
