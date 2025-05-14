@@ -65,8 +65,9 @@
 
   (defun my/org-publish-config-as-index (plist filename pub-dir)
     "Publish config.org to index.html."
-    (let ((output-file (expand-file-name "index.html" pub-dir)))
+    (let ((output-file (expand-file-name "index2.html" pub-dir)))
       (make-directory (file-name-directory output-file) t)
+      (message "[build-site] Going to publish to: %s" output-file)
       (org-publish-org-to 'html filename output-file plist)))
 
 ;;; filename:    /home/runner/work/emacs.d/emacs.d/site-publisher/config.org
