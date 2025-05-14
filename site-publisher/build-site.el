@@ -76,12 +76,8 @@
 
      ("config-as-index"
       :base-extension "org"
-
       :base-directory "."
-      ;; :base-directory "~/.emacs.d/"
-
       :publishing-directory "./public/"
-      ;; :publishing-directory "~/.emacs.d/public/"
 
       ;; :with-author t
       ;; :with-creator nil
@@ -112,6 +108,13 @@
 )
 
 ;; Generate site
+
+(let ((pub-dir (expand-file-name "./public/")))
+  (unless (file-directory-p pub-dir)
+    (make-directory pub-dir t)
+    (message "[publish] Writing to %s" (expand-file-name "index.html" pub-dir))
+  )
+)
 
 (org-publish-all t)
 
