@@ -8,12 +8,20 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out
         uses: actions/checkout@v4
 
       - name: Install Emacs
         run: sudo apt install emacs-nox --yes
+
+      - name: Examine file permissions
+        run: ls -ld .
+
+      - name: Examine file tree
+        run: ls -lR site-publisher
 
       - name: Build the site
         # run: ./publi.sh

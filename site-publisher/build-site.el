@@ -69,6 +69,20 @@
       (make-directory (file-name-directory output-file) t)
       (org-publish-org-to 'html filename output-file plist)))
 
+;;; filename:    /home/runner/work/emacs.d/emacs.d/site-publisher/config.org
+;;; output-file: /home/runner/work/emacs.d/emacs.d/site-publisher/public/index.html
+;;; plist: (
+;;;   :base-extension "org"
+;;;   :base-directory "/home/runner/work/emacs.d/emacs.d/site-publisher/"
+;;;   :publishing-directory "/home/runner/work/emacs.d/emacs.d/site-publisher/public/"
+;;;   :recursive nil
+;;;   :with-toc t
+;;;   :time-stamp-file nil
+;;;   :publishing-function my/org-publish-config-as-index
+;;;   :exclude ".*"
+;;;   :include ("config.org")
+;;;   )
+
   (setq org-publish-project-alist
         `(("config-as-index"
            :base-extension "org"
