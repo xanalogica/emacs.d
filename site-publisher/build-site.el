@@ -69,12 +69,12 @@
      plist)))
 
 (setq org-publish-project-alist
+  '(
+     ;; ----------------------------------------------------------------------
+     ;; Publish config.org as index.html Publishing Directory
+     ;; ----------------------------------------------------------------------
 
-    ;; ----------------------------------------------------------------------
-    ;; Publish config.org as index.html Publishing Directory
-    ;; ----------------------------------------------------------------------
-
-   '(("config-as-index"
+     ("config-as-index"
       :base-extension "org"
 
       :base-directory "."
@@ -94,12 +94,12 @@
       :exclude ".*"                    ;; exclude everything...
       :include ("config.org")          ;; ...except this one
      )
-    )
 
-    ;; ----------------------------------------------------------------------
-    ;; Copy Diagrams (and Folders) into Publishing Directory
-    ;; ----------------------------------------------------------------------
-    (list "webstyling"
+     ;; ----------------------------------------------------------------------
+     ;; Copy Diagrams (and Folders) into Publishing Directory
+     ;; ----------------------------------------------------------------------
+
+     ("webstyling"
       :base-directory             "webstyling"
       :publishing-directory       "./public/webstyling"
       :recursive                  t
@@ -107,8 +107,7 @@
       :base-extension             site-attachments
 
       :publishing-function        'org-publish-attachment
-    )
-
+     )
   )
 )
 
