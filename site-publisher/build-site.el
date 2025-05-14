@@ -77,7 +77,7 @@
      ("config-as-index"
       :base-extension "org"
       :base-directory "."
-      :publishing-directory "./public/"
+      :publishing-directory "../public/"
 
       ;; :with-author t
       ;; :with-creator nil
