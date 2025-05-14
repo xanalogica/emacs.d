@@ -1,0 +1,127 @@
+#+TITLE: Modular Emacs Configuration Loader
+#+SUBTITLE: Structured Using Org-Babel
+#+AUTHOR:	Jeffrey Rush
+#+EMAIL:	mailto:jeff@thoughtamps.info
+#+OPTIONS:	author:t creator:t email:t title:t
+#+OPTIONS:	toc:t title:nil tasks:nil tags:nil prop:nil num:t broken-links:mark
+#+OPTIONS:	^:{}
+#+CATEGORY:     emacs
+#+DESCRIPTION: Tangle + load functionally organized config files
+#+SETUPFILE:	site-publisher/webstyling/theme-readtheorg-local.setup
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp
+;;; config.el --- Tangled master config  -*- lexical-binding: t -*-
+#+END_SRC
+
+#+BEGIN_ABSTRACT
+
+*Abstract*
+
+TO BE WRITTEN
+
+#+END_ABSTRACT
+#+TOC: headlines 2
+
+* TODO RESOLVE which file to load:
+  - config.org
+  - load-all-config.org => config.el
+  - index.org => index.html
+  I WANT:
+    config.org => config.el
+               => index.html
+
+
+* TODO FIX: Emacs sees no network; skipping Straight recipe updates for now
+* TODO FIX: Unable to read file "/home/jrush/.emacs.d/webstyling/theme-readtheorg-local.setup" [2 times]
+* TODO FIX: ⛔ Warning (org-element): org-element--cache: Org parser error in load-all-config.org::3054. Resetting.
+ The error was: (error "Invalid search bound (wrong side of point)")
+ Backtrace:
+nil
+ Please report this to Org mode mailing list (M-x org-submit-bug-report).
+* TODO RESOLVE: The local variables list in init.el or .dir-locals.el contains values that may not be safe (*)
+  lexical-binding : t
+  no-byte-compile : t
+  * outline-minor-mode : t
+
+
+* Init system
+
+** Load helper function for conditional tangling
+
+#+BEGIN_SRC emacs-lisp
+  (defun jlr/load-org-if-exists (file)
+    "Tangle and load FILE if it exists."
+    (let* ((org-path (expand-file-name file user-emacs-directory))
+           (base-name (file-name-base file))
+           (tangle-path (expand-file-name (concat base-name ".el")
+                                          (expand-file-name "cache/tangled/" user-emacs-directory))))
+      (if (file-exists-p org-path)
+          (progn
+            (make-directory (file-name-directory tangle-path) t)
+            (message "[tangle] Tangling %s → %s" file tangle-path)
+            (org-element-with-disabled-cache  ;; in Org v9.7.x many cache issues are still unresolved
+              (org-babel-tangle-file org-path tangle-path "emacs-lisp"))
+            (load-file tangle-path))
+        (message "[tangle] Skipping missing file: %s" file))))
+#+END_SRC
+
+* Phase 00 – Core system and helper macros
+
+Here’s what makes sense to put in 00-core-boot.org after startup has
+begun but before UI and mode config begins:
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "00-core-boot.org")
+(jlr/load-org-if-exists "05-security-secrets.org")
+#+END_SRC
+
+* Phase 10 – UI and input system
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "10-ui-frame-appearance.org")
+(jlr/load-org-if-exists "15-ui-modeline-input.org")
+#+END_SRC
+
+* Phase 20 – Global behavior and editing
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "20-keybindings-global.org")
+(jlr/load-org-if-exists "25-editor-behavior.org")
+(jlr/load-org-if-exists "30-core-behavior-tweaks.org")
+#+END_SRC
+
+* Phase 40 – Programming environment
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "40-prog-python.org")
+(jlr/load-org-if-exists "45-prog-common.org")
+#+END_SRC
+
+* Phase 50 – Org-mode environment
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "50-org-core.org")
+(jlr/load-org-if-exists "51-org-capture.org")
+(jlr/load-org-if-exists "52-org-refile-archive.org")
+(jlr/load-org-if-exists "53-org-links-export.org")
+(jlr/load-org-if-exists "54-org-tasks.org")
+(jlr/load-org-if-exists "55-org-ui.org")
+(jlr/load-org-if-exists "59-org-extensions.org")
+#+END_SRC
+
+* Phase 60 – Personal tooling
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "60-ai-tools.org")
+(jlr/load-org-if-exists "65-writing-knowledge.org")
+(jlr/load-org-if-exists "70-communication-email.org")
+(jlr/load-org-if-exists "75-web-editing.org")
+(jlr/load-org-if-exists "80-project-vc.org")
+#+END_SRC
+
+* Final – Private overrides
+
+#+BEGIN_SRC emacs-lisp
+(jlr/load-org-if-exists "99-local-overrides.org")
+#+END_SRC

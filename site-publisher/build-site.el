@@ -59,24 +59,41 @@
 
 ;; Define the project to be published
 
+(defun my/org-publish-config-as-index (plist filename pub-dir)
+  "Publish ~/.emacs.d/config.org to index.html."
+  (let ((org-html-extension "html")) ;; ensure correct extension
+    (org-publish-org-to
+     'html
+     filename
+     (concat (file-name-as-directory pub-dir) "index.html")
+     plist)))
+
 (setq org-publish-project-alist
-  (list
 
-    (list "config.org"
-     :base-extension              "org"
-     :include                     '("../index.org")
-     :base-directory              "."
-     :publishing-directory        "./public/webstyling"
-     :recursive                   nil
+    ;; ----------------------------------------------------------------------
+    ;; Publish config.org as index.html Publishing Directory
+    ;; ----------------------------------------------------------------------
 
-     ;; :with-author                 t
-     ;; :with-creator                nil
-     :with-toc                    t
-     ;; :section-numbers             nil
+   '(("config-as-index"
+      :base-extension "org"
 
-     :time-stamp-file             nil
+      :base-directory "."
+      ;; :base-directory "~/.emacs.d/"
 
-     :publishing-function 'org-html-publish-to-html
+      :publishing-directory "./public/webstyling"
+      ;; :publishing-directory "~/.emacs.d/public/"
+
+      ;; :with-author t
+      ;; :with-creator nil
+      :with-toc t
+      ;; :section-numbers nil
+      :time-stamp-file  nil
+
+      :recursive nil
+      :publishing-function my/org-publish-config-as-index
+      :exclude ".*"                    ;; exclude everything...
+      :include ("config.org")          ;; ...except this one
+     )
     )
 
     ;; ----------------------------------------------------------------------

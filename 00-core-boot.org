@@ -1,0 +1,187 @@
+#+TITLE: 00-core-boot
+#+DESCRIPTION: Core config for startup, secrets, runtime defaults
+#+STARTUP: overview
+
+#+CAPTION: Verify what org-mode I'm running
+#+BEGIN_SRC emacs-lisp
+
+(defun jlr/check-org-version-min (min-version)
+  "Check Org version is >= MIN-VERSION."
+  (let* ((org-path (find-library-name "org"))
+         (actual-version (org-version))) ;; ← no second arg
+    (message "[org-check] Org version: %s" actual-version)
+    (message "[org-check] Org library path: %s" org-path)
+    (cond
+     ((version< actual-version min-version)
+      (warn "[org-check] ⛔ Org version too old! Require ≥ %s, but got %s"
+            min-version actual-version))
+     ((string-match-p "/straight/repos/org-mode/" org-path)
+      (message "[org-check] ✅ Org is installed via straight.el (Git version)."))
+     ((string-match-p "/emacs/[0-9.]+/lisp/org/" org-path)
+      (message "[org-check] ✅ Org is the built-in Emacs version."))
+     (t
+      (warn "[org-check] ⚠ Org source is non-standard: %s" org-path)))))
+
+  ;; Automatically run this check after Org is loaded
+  (with-eval-after-load 'org
+    (jlr/check-org-version-min "9.7.11"))
+#+END_SRC
+
+#+CAPTION: Report Improperly Terminated Variable Blocks
+#+BEGIN_SRC emacs-lisp
+(defun jlr/check-org-local-variable-blocks (&optional dir)
+  "Check for org files in DIR (default: user-emacs-directory) with invalid Local Variables blocks."
+  (let* ((root (or dir user-emacs-directory))
+         (org-files (directory-files-recursively root "\\.org$"))
+         (bad-files '()))
+    (dolist (file org-files)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (goto-char (point-min))
+        (when (re-search-forward "^[#;]+[ \t]*Local Variables:" nil t)
+          (unless (re-search-forward "^[#;]+[ \t]*End:" nil t)
+            (push file bad-files)))))
+    (when bad-files
+      (message "⚠ Org files with malformed Local Variables block:")
+      (dolist (f (reverse bad-files))
+        (message " - %s" f)))
+    bad-files))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (jlr/check-org-local-variable-blocks "~/.emacs.d/")))
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+;;; 00-core-boot.el --- Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Directory Setup for a More Organized ~/.emacs.d/ Directory
+
+#+BEGIN_SRC emacs-lisp
+  (defconst jlr/cache-dir (expand-file-name "cache/" user-emacs-directory))
+  (defconst jlr/data-dir  (expand-file-name "data/"  user-emacs-directory))
+
+  ;; Create them if they don't exist
+  (make-directory jlr/cache-dir t)
+  (make-directory jlr/data-dir t)
+#+END_SRC
+
+* Redirect Individual Features
+
+#+CAPTION: places.el (cursor locations)
+#+BEGIN_SRC emacs-lisp
+  (setq save-place-file (expand-file-name "places" jlr/data-dir))
+  (save-place-mode 1)
+#+END_SRC
+
+#+CAPTION: bookmark.el
+#+BEGIN_SRC emacs-lisp
+  (setq bookmark-default-file (expand-file-name "bookmarks" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: recentf
+#+BEGIN_SRC emacs-lisp
+  (setq recentf-save-file (expand-file-name "recentf" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: tramp
+#+BEGIN_SRC emacs-lisp
+  (setq tramp-persistency-file-name (expand-file-name "tramp" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: nov.el (ePub reader)
+#+BEGIN_SRC emacs-lisp
+(setq nov-save-place-file (expand-file-name "nov-places" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: transient (magic, etc.)
+#+BEGIN_SRC emacs-lisp
+(setq transient-history-file     (expand-file-name "transient/history.el" jlr/data-dir)
+      transient-levels-file      (expand-file-name "transient/levels.el" jlr/data-dir)
+      transient-values-file      (expand-file-name "transient/values.el" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: eshell history and data
+#+BEGIN_SRC emacs-lisp
+  (setq eshell-directory-name (expand-file-name "eshell/" jlr/cache-dir))
+#+END_SRC
+
+#+CAPTION: eln-cache
+#+BEGIN_SRC emacs-lisp
+  (when (boundp 'native-comp-eln-load-path)
+    (startup-redirect-eln-cache (expand-file-name "eln-cache/" jlr/cache-dir)))
+#+END_SRC
+
+#+CAPTION: auto-save and backup files
+#+BEGIN_SRC emacs-lisp
+  (setq backup-directory-alist `(("." . ,(expand-file-name "backups/" jlr/cache-dir)))
+        auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" jlr/cache-dir) t)))
+#+END_SRC
+
+#+CAPTION: org-babel library
+#+BEGIN_SRC emacs-lisp
+  (setq org-babel-library-of-babel-file (expand-file-name "org-babel-library.org" jlr/data-dir))
+#+END_SRC
+
+
+#+CAPTION: Auto-save list
+#+BEGIN_SRC emacs-lisp
+  (setq auto-save-list-file-prefix (expand-file-name "auto-save-list/#" jlr/cache-dir))
+#+END_SRC
+
+#+CAPTION: Org clock persistence
+#+BEGIN_SRC emacs-lisp
+  (setq org-clock-persist-file (expand-file-name "org-clock-save.el" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: Custom settings file
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (expand-file-name "custom-settings.el" jlr/data-dir))
+  (when (file-exists-p custom-file)
+    (load custom-file 'noerror))
+#+END_SRC
+
+#+CAPTION: Request.el
+#+BEGIN_SRC emacs-lisp
+  (setq request-storage-directory (expand-file-name "request/" jlr/cache-dir))
+#+END_SRC
+
+#+CAPTION: yasnippet
+#+BEGIN_SRC emacs-lisp
+  (setq yas-snippet-dirs `(,(expand-file-name "snippets/" jlr/data-dir)))
+#+END_SRC
+
+#+CAPTION: cookies/history
+#+BEGIN_SRC emacs-lisp
+  (setq url-cookie-file (expand-file-name "url/cookies" jlr/data-dir)
+        url-history-file (expand-file-name "url/history" jlr/data-dir))
+#+END_SRC
+
+#+CAPTION: Persistent undo
+#+BEGIN_SRC emacs-lisp
+  (setq undo-tree-history-directory-alist
+        `(("." . ,(expand-file-name "undo/" jlr/cache-dir))))
+  (setq undo-tree-auto-save-history t)
+#+END_SRC
+
+#+CAPTION: chatgpt/ and chatgpt-shell.el (from gpt.el or chatgpt-shell)
+#+BEGIN_SRC emacs-lisp
+  ;; GPT-related package paths
+  (setq chatgpt-shell-history-directory (expand-file-name "chatgpt/" jlr/data-dir)
+        chatgpt-shell-configuration-file (expand-file-name "chatgpt-shell.el" jlr/data-dir))
+
+  (make-directory chatgpt-shell-history-directory t)
+#+END_SRC
+
+#+CAPTION: .org-id-locations and .org-generic-id-locations
+#+BEGIN_SRC emacs-lisp
+  (setq org-id-locations-file (expand-file-name "org-id-locations" jlr/data-dir))
+
+  ;; Optional: if using org-generic-id (less common)
+  (setq org-generic-id-locations-file (expand-file-name "org-generic-id-locations" jlr/data-dir))
+#+END_SRC
+
