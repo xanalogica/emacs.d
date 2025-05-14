@@ -80,7 +80,7 @@
       :base-directory "."
       ;; :base-directory "~/.emacs.d/"
 
-      :publishing-directory "./public/webstyling"
+      :publishing-directory "./public/"
       ;; :publishing-directory "~/.emacs.d/public/"
 
       ;; :with-author t
