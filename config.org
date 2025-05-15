@@ -18,39 +18,438 @@
 
 *Abstract*
 
-TO BE WRITTEN
+
+This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
+explain how and why I did each configuration setting, and yet automatically
+export it into emacs-lisp format for loading into Emacs at start-up time.
+This style of documenting is called [[https://en.wikipedia.org/wiki/Literate_programming][Literate Programming]].
+
+I maintain my Emacs configuration https://github.com/xanalogica/.emacs.d/ and
+automatically publish the polished documentation at ??? using a CI pipeline.
+
+https://github.com/xanalogica/.emacs.d/  (not on gitlab.com/xanalogica)
 
 #+END_ABSTRACT
 #+TOC: headlines 2
 
-* TODO RESOLVE which file to load:
-  - config.org
-  - load-all-config.org => config.el
-  - index.org => index.html
-  I WANT:
-    config.org => config.el
-               => index.html
-
-
+* TODO FIX pipeline to config.org => index.html
 * TODO FIX: Emacs sees no network; skipping Straight recipe updates for now
-* TODO FIX: Unable to read file "/home/jrush/.emacs.d/webstyling/theme-readtheorg-local.setup" [2 times]
-* TODO FIX: ⛔ Warning (org-element): org-element--cache: Org parser error in load-all-config.org::3054. Resetting.
- The error was: (error "Invalid search bound (wrong side of point)")
- Backtrace:
-nil
- Please report this to Org mode mailing list (M-x org-submit-bug-report).
-* TODO RESOLVE: The local variables list in init.el or .dir-locals.el contains values that may not be safe (*)
-  lexical-binding : t
-  no-byte-compile : t
-  * outline-minor-mode : t
+
+* Web Sites that Quality Offer Guidance on Emacs Configuration 
+- https://git.sr.ht/~ashton314/emacs-bedrock/tree   GOOD!
+- https://rossabaker.com/configs/emacs/   =VERY GOOD ADDITIONS I NEED TO INTEGRATE AND IT IS EMACS 29!=
+
+* My Publishing System
+- https://github.com/JamesIves/github-pages-deploy-action
+
+My personal ~/.emacs.d/ directory is versioned under
+https://github.com/xanalogica/emacs.d.  Upon commit, GitHub Actions
+ 1. check out
+ 2. install emacs
+ 3. invoke ./publi.sh to build the site
+ 4. publish generate content to GitHub Pages from branch gh-pages
+
+cause it to be published into a GitHub Page at
+https://xanalogica.github.io/emacs.d/.  I have an extensive .gitignore
+that omits the transient, cached or personal content.
+
+The published content on the gh-pages branch looks like:
+  - config.html  <- config.org
+  - webstyling/
+  - NEEDS index.html <- README.html
+
+.github/workflows
+site-publisher/
+  publi.sh          invoked from .github/workflows/publish.yml
+  build-site.el
+  webstyling/
+    src/
+    local.css                         REMOVE?
+    paval.css                         REMOVE?
+    paval.js                          REMOVE?
+    theme-readtheorg.html
 
 
-* Init system
+Org includes a publishing management system that allows you to
+configure automatic HTML conversion of projects composed of
+interlinked Org files. You can also configure Org to automatically
+upload your exported HTML pages and related attachments, such as
+images and source code files, to a web server.
+
+You can also use Org to convert files into PDF, or even combine HTML
+and PDF conversion so that files are available in both formats on the
+server.
+
+config.org => index.org => index.html
+
+.emacs.d/.github/workflows/publish.yml
+
+https://xanalogica.github.io/.emacs.d/
+http://www.thoughtamps.info/.emacs.d/
+https://{userid}.github.io/{reponame}
+
+I put it into the form of ReadTheDocs with index along left-side.
+
+cache/        eshell, eln-cache, backups, auto-save
+data/         places, bookmarks, recentf, tramp, nov-places, transient, eshell, library.org
+
+* The Big Picture
+:PROPERTIES:
+:ID:       87baf222-7172-4202-ac71-f36b30dafc9a
+:END:
+
+My Emacs configuration is spread out across several files, for ease of
+understanding, sharing and using a feature without dragging everything else
+in.  I try to fully configuration and document each feature I make use of in
+*one* place and avoid sprinkling it around.
+
+- ~/.emacs.d/early-init.el
+- ~/.emacs.d/init.el
+- ~/.emacs.d/config.org -> ???
+- ~/.emacs.d/config/config-emacs-display-presentation.org
+- ~/.emacs.d/config/config-emacs-global-keyboard-setup.org
+- ~/.emacs.d/config/config-emacs-work-protection.org
+- ~/.emacs.d/config/config-printing-from-emacs.org
+- ~/.emacs.d/config/config-install-of-org-mode.org
+- ~/.emacs.d/config/config-note-capture-using-org-mode.org
+- ~/.emacs.d/config/config-note-refiling-using-org-mode.org
+- ~/.emacs.d/config/config-note-archiving-using-org-mode.org
+- ~/.emacs.d/config/config-scripting-via-org-babel.org
+- ~/.emacs.d/config/config-global-syntax-checking.org
+- ~/.emacs.d/config/config-emacs-new-links-for-org-mode.org
+- ~/.emacs.d/config/config-python-development.org
+- ~/.emacs.d/config/config-research.org
+- ~/.emacs.d/config/config-emacs-use-of-ai.org
+- ~/.emacs.d/config/config-task-planning.org
+- ~/.emacs.d/config/config-task-reporting.org
+- ~/.emacs.d/config/config-content-publishing.org
+- ~/.emacs.d/config/config-emacs-to-be-merged.org
+- ~/.emacs.d/config/config-filetype-epub.org
+- ~/.emacs.d/config/config-content-mobile-sync.org   UNUSED
+- ~/.emacs.d/config/config-emacs-email-usage.org     UNUSED
+- ~/.emacs.d/config/config-emacs-use-of-cloning.org  UNUSED
+- ~/.emacs.d/config/config-helpful-notes.org         UNUSED
+
+This is a current copy of my Emacs configuration, annotated with explanations.
+I've learned a lot by studying other people's Emacs configurations and I
+wanted to share what I've ended up with.
+
+Other Emacs files I've studied:
+
+  - https://github.com/redguardtoo/emacs.d
+  - https://github.com/purcell/emacs.d/blob/master/README.md
+  - This is a VERY good example of a custom org-mode .emacs.d file.
+    https://github.com/mwfogleman/.emacs.d/
+  - ~/.emacs.d/michael.org]] (local copy)
+
+  - https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org
+  - https://github.com/bbatsov/emacs.d/blob/master/init.el
+  - https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el
+
+My Emacs configuration is divided into two files:
+
+  - ~/.emacs.d/init.el
+  - ~/.emacs.d/config.org (automatically tangled into config.el)
+
+The =init.el= file is the first one executed by Emacs, and in it I do initial
+set up of my choice of package management, and then if =config.org= has been
+modified, tangle it into =config.el=, which is then loaded into Emacs by
+=init.el= to make those configuration settings take effect.
+
+
+#+INCLUDE: "config/config-emacs-display-presentation.org"
+
+
+
+
+#+INCLUDE: "config/config-emacs-global-keyboard-setup.org"
+#+INCLUDE: "config/config-emacs-work-protection.org"
+#+INCLUDE: "config/config-printing-from-emacs.org"
+#+INCLUDE: "config/config-install-of-org-mode.org"
+#+INCLUDE: "config/config-note-capture-using-org-mode.org"
+#+INCLUDE: "config/config-note-refiling-using-org-mode.org"
+#+INCLUDE: "config/config-note-archiving-using-org-mode.org"
+#+INCLUDE: "config/config-scripting-via-org-babel.org"
+#+INCLUDE: "config/config-global-syntax-checking.org"
+#+INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
+#+INCLUDE: "config/config-python-development.org"
+#+INCLUDE: "config/config-research.org"
+#+INCLUDE: "config/config-emacs-use-of-ai.org"
+#+INCLUDE: "config/config-task-planning.org"
+#+INCLUDE: "config/config-task-reporting.org"
+#+INCLUDE: "config/config-content-publishing.org"
+#+INCLUDE: "config/config-emacs-to-be-merged.org"
+#+INCLUDE: "config/config-filetype-epub.org"
+??#+INCLUDE: "config/config-content-mobile-sync.org"
+INCLUDE: "config/config-emacs-email-usage.org"               =NOT USED=
+Emacs Configuration for Personal Memory Retention
+??#+INCLUDE: "config/config-???"                           =NOT USED=
+Export Org-Mode Outlines as an Anki Knowledgebase
+INCLUDE: "config/config-emacs-use-of-cloning.org"
+INCLUDE: "config/config-helpful-notes.org"
+
+
+
+
+* My Emacs Directory Layout
+
+When Emacs is started, it tries to load a ELisp program from an init file,
+looking in the following places in this order:
+
+    - ~/.emacs              -- I don't use this file
+    - ~/.emacs.el           -- I don't use this file
+    - ~/.emacs.d/init.el    -- This is the *start of my Emacs configuration*
+
+In case of problems with =init.el=, you can use the command-line switch '-q'
+to prevent it being loaded or '--debug-init' to get a traceback of the first
+error encountered.
+
+TIP: It is NOT recommendeed to byte-compile your init file as it does not
+     speed up startup very much and often leads to problems when you forget
+     to recompile the file.
+
+#+BEGIN_EXAMPLE
+~/.emacs.d/
+.
+├── README.org	;; light introduction to my setup
+├── init.el		;; my init file for Emacs (versus ~/.emacs)
+├── agenda-files.py     ????????????????????????????????????????
+├── org-clock-save.el   ????????????????????????????????????????
+├── ARCHIVE/		;; modules that I retired using and will someday delete
+├── auto-save-list      ????????????????????????????????????????
+├── %backup%~           ????????????????????????????????????????
+├── backups/		;; backup copies of ANY edited files
+├── bookmarks           ????????????????????????????????????????
+├── Cask		;; installed modules list read by Cask and maintained by Pallet
+├── config.el		;; auto-built from my config.org each time Emacs starts
+├── config.org	;; my Emacs configuration in org-mode 'literate' format
+├── config.org~
+├── config-XXX.org
+├── custom-settings.el	;; tiny custom settings auto-edited by Emacs itself
+├── elpa
+│   ├── PACKAGE-A-YYYYMMDD.HHMM/
+│   ├── PACKAGE-B-YYYYMMDD.HHMM/
+│   ├── archives/
+│   │   ├── gnu/
+│   │   │   ├── archive-contents
+│   │   │   └── archive-contents.signed
+│   │   ├── melpa/
+│   │   │   └── archive-contents
+│   │   └── melpa-stable/
+│   │       └── archive-contents
+├── eshell/
+│   ├── alias
+│   ├── history
+│   └── lastdir
+├── quelpa/
+│   ├── build/
+│   │   └── PACKAGE-A/
+├── ido.last
+├── library.org
+├── LICENSE
+├── lisp/			;; individual .el files I create or work on
+├── jeff-light-theme.el
+├── michael.org
+├── network-security.data
+├── places
+├── pymd5-1c2b62349aded4d3a40a729148cbd68c.py
+├── recentf
+├── request
+│   └── curl-cookie-jar
+├── session.1012cc9dcd52891180156817838919458300000018020070
+├── session.106f8e8df9fad6f21c156806759412428700000015480070
+├── snippets		;; my library of text fragments for use by the snippet library
+├── templates 	;; my library of text fragments for use by org-capture
+│   ├── PACKAGE-A/
+│   ├── PACKAGE-B/
+├── tramp
+├── transient
+│   └── history.el
+└── url
+    └── cookies
+
+;;      .cask/
+;;         25.3/		;; cache/collection of modules pulled down by package manager
+;;      ac-dict/		;; auto-complete dictionary for various modes/languages
+;;   ~/.cask/
+;;      Cask			;; specification file of dependencies of the Cask pgm
+;;      bin/
+;;         cask			;; command-line tool for invoking Cask outside of Emacs
+;;      cask.el			;; ELisp source of the Cask library
+#+END_EXAMPLE
+
+
+
+
+* MISC TO CONSIDER
+
+;; Automatically reread from disk if the underlying file changes
+(setopt auto-revert-avoid-polling t)  ;; save power by avoiding polling when possible
+
+;; Fix archaic defaults
+(setopt sentence-end-double-space nil)
+
+
+;; Make right-click do something sensible
+(when (display-graphic-p)
+  (context-menu-mode))
+
+;; Show the help buffer after startup
+(add-hook 'after-init-hook 'help-quick)
+
+;; which-key: shows a popup of available keybindings when typing a long key
+;; sequence (e.g. C-x ...)
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode))
+
+(setopt x-underline-at-descent-line nil)           ; Prettier underlines
+
+
+;; Enable horizontal scrolling
+(setopt mouse-wheel-tilt-scroll t)
+(setopt mouse-wheel-flip-direction t)
+
+(pixel-scroll-precision-mode 1)                         ; Smooth scrolling
+
+* Initialization Sequence
+
+1. ~/.emacs.d/early-init.el
+2. ~/.emacs.d/init.el
+3. ~/.emacs.d/config.org
+
+** About ~/.emacs.d/early-init.el
+
+Most customizations for Emacs should be put in the normal init file.  See The
+Emacs Initialization File.  However, it is sometimes necessary to have
+customizations take effect during Emacs startup earlier than the normal init
+file is processed.  Such customizations can be put in the early init file,
+~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el.  This file is loaded
+before the package system and GUI is initialized, so in it you can customize
+variables that affect the package initialization process, such as
+package-enable-at-startup, package-load-list, and package-user-dir.  Note that
+variables like package-archives which only affect the installation of new
+packages, and not the process of making already-installed packages available,
+may be customized in the regular init file. See Package Installation.
+
+We do not recommend that you move into early-init.el customizations that can
+be left in the normal init files.  That is because the early init file is read
+before the GUI is initialized, so customizations related to GUI features will
+not work reliably in early-init.el.  By contrast, the normal init files are
+read after the GUI is initialized.  If you must have customizations in the
+early init file that rely on GUI features, make them run off hooks provided by
+the Emacs startup, such as window-setup-hook or tty-setup-hook. See Hooks.
+
+For more information on the early init file, see Init File in The Emacs Lisp
+Reference Manual.
+
+#+INCLUDE: "early-init.el" example emacs-lisp
+
+;;;; This file is loaded before the package system and GUI is initialized, so
+;;;; in it you can customize variables that affect the package initialization
+;;;; process, such as package-enable-at-startup, package-load-list, and
+;;;; package-user-dir. Note that variables like package-archives which only
+;;;; affect the installation of new packages, and not the process of making
+;;;; already-installed packages available, may be customized in the regular
+;;;; init file.
+
+** Garbage Collection
+
+
+** Choice of Package Manager
+
+;; There are many package managers for Emacs, ranging from simple scripts to download files from EmacsWiki to full-featured package management solutions like straight.el. Here are the most feature-rich alternatives to straight.el:
+
+;; - package.el: de facto standard, bundled with Emacs.
+;; - Quelpa: allows you to use external sources like GitHub with package.el. Essentially a local MELPA.
+;; - Cask: another package.el wrapper. Specify your dependencies in a Cask file; can be used for project management or an Emacs configuration.
+;; - el-get: ridiculously OP in terms of how many different sources you can pull packages from (package.el, every known VCS, distro package managers, go get(!!)).
+;; - Borg: assimilates packages as Git submodules into .emacs.d, relying on Emacsmirror.
+;; - "Screw package managers! I'll just handle it all myself!"
+
+`use-package' is a macro that provides convenient syntactic sugar for many
+common tasks related to installing and configuring Emacs packages. Of course,
+it does not actually install the packages, but instead defers to a package
+manager, like straight.el (which comes with use-package integration by
+default).
+
+;; does Emacs 29 need straight.el anymore ???
+;; https://github.com/radian-software/straight.el
+;; Note: straight.el is a replacement for package.el, not use-package. use-package can be used with either package.el or straight.el.
+
+
+
+; Most customizations for Emacs should be put in the normal init file. See The
+; Emacs Initialization File. However, it is sometimes necessary to have
+; customizations take effect during Emacs startup earlier than the normal init
+; file is processed. Such customizations can be put in the early init file,
+; ~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el. This file is
+; loaded before the package system and GUI is initialized, so in it you can
+; customize variables that affect the package initialization process, such as
+; package-enable-at-startup, package-load-list, and package-user-dir. Note
+; that variables like package-archives which only affect the installation of
+; new packages, and not the process of making already-installed packages
+; available, may be customized in the regular init file. See Package
+; Installation.
+
+; We do not recommend that you move into early-init.el any customizations that can
+; be left in the normal init files. That is because the early init file is
+; read before the GUI is initialized, so customizations related to GUI
+; features will not work reliably in early-init.el. By contrast, the normal
+; init files are read after the GUI is initialized. If you must have
+; customizations in the early init file that rely on GUI features, make them
+; run off hooks provided by the Emacs startup, such as window-setup-hook or
+; tty-setup-hook. See Hooks.
+
+; For more information on the early init file, see Init File in The Emacs Lisp
+; Reference Manual.
+
+** About ~/.emacs.d/init.el
+
+#+INCLUDE: "init.el" example emacs-lisp
+
+*** About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
+
+There are many ways to provide package settings, from raw Elisp to tidy macros.
+The github:[[https://github.com/jwiegley/use-package][use-package]] Elisp macro allows one to isolate package configuration
+in your Emacs configuration files in a way that is both performance-oriented
+and tidy.
+
+- [[https://www.masteringemacs.org/article/spotlight-use-package-a-declarative-configuration-tool][Spotlight: use-package, a declarative configuration tool - Mastering Emacs]]
+- [[http://cachestocaches.com/2015/8/getting-started-use-package/][Getting Started with Use-Package]]
+
+
+https://github.com/emacs-straight/use-package.git   OFFICIAL ONE
+
+The /straight-use-package-by-default/ variable in straight.el is a convenience
+setting that allows you to simplify your use-package declarations.  When it is
+enabled (set to t), straight.el automatically manages packages declared via
+use-package without requiring you to explicitly specify :straight t for each
+package.
+
+
+Use of 'straight' for loading packages is more popular, more robust and better
+at dependency management than 'quelpa'.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ** Load helper function for conditional tangling
 
 #+BEGIN_SRC emacs-lisp
-  (defun jlr/load-org-if-exists (file)
+  (defun xan/load-org-if-exists (file)
     "Tangle and load FILE if it exists."
     (let* ((org-path (expand-file-name file user-emacs-directory))
            (base-name (file-name-base file))
@@ -72,56 +471,63 @@ Here’s what makes sense to put in 00-core-boot.org after startup has
 begun but before UI and mode config begins:
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "00-core-boot.org")
-(jlr/load-org-if-exists "05-security-secrets.org")
+(xan/load-org-if-exists "00-core-boot.org")
+(xan/load-org-if-exists "05-security-secrets.org")
 #+END_SRC
 
 * Phase 10 – UI and input system
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "10-ui-frame-appearance.org")
-(jlr/load-org-if-exists "15-ui-modeline-input.org")
+(xan/load-org-if-exists "10-ui-frame-appearance.org")
+(xan/load-org-if-exists "15-ui-modeline-input.org")
 #+END_SRC
 
 * Phase 20 – Global behavior and editing
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "20-keybindings-global.org")
-(jlr/load-org-if-exists "25-editor-behavior.org")
-(jlr/load-org-if-exists "30-core-behavior-tweaks.org")
+(xan/load-org-if-exists "20-keybindings-global.org")
+(xan/load-org-if-exists "25-editor-behavior.org")
+(xan/load-org-if-exists "30-core-behavior-tweaks.org")
 #+END_SRC
 
 * Phase 40 – Programming environment
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "40-prog-python.org")
-(jlr/load-org-if-exists "45-prog-common.org")
+(xan/load-org-if-exists "40-prog-python.org")
+(xan/load-org-if-exists "45-prog-common.org")
 #+END_SRC
 
 * Phase 50 – Org-mode environment
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "50-org-core.org")
-(jlr/load-org-if-exists "51-org-capture.org")
-(jlr/load-org-if-exists "52-org-refile-archive.org")
-(jlr/load-org-if-exists "53-org-links-export.org")
-(jlr/load-org-if-exists "54-org-tasks.org")
-(jlr/load-org-if-exists "55-org-ui.org")
-(jlr/load-org-if-exists "59-org-extensions.org")
+(xan/load-org-if-exists "50-org-core.org")
+(xan/load-org-if-exists "51-org-capture.org")
+(xan/load-org-if-exists "52-org-refile-archive.org")
+(xan/load-org-if-exists "53-org-links-export.org")
+(xan/load-org-if-exists "54-org-tasks.org")
+(xan/load-org-if-exists "55-org-ui.org")
+(xan/load-org-if-exists "59-org-extensions.org")
 #+END_SRC
 
 * Phase 60 – Personal tooling
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "60-ai-tools.org")
-(jlr/load-org-if-exists "65-writing-knowledge.org")
-(jlr/load-org-if-exists "70-communication-email.org")
-(jlr/load-org-if-exists "75-web-editing.org")
-(jlr/load-org-if-exists "80-project-vc.org")
+(xan/load-org-if-exists "60-ai-tools.org")
+(xan/load-org-if-exists "65-writing-knowledge.org")
+(xan/load-org-if-exists "70-communication-email.org")
+(xan/load-org-if-exists "75-web-editing.org")
+(xan/load-org-if-exists "80-project-vc.org")
 #+END_SRC
 
 * Final – Private overrides
 
 #+BEGIN_SRC emacs-lisp
-(jlr/load-org-if-exists "99-local-overrides.org")
+(xan/load-org-if-exists "99-local-overrides.org")
 #+END_SRC
+
+- [ ] proper indentation in org-mode
+- [ ] red trailing whitespace
+- [ ] faces for TODOs
+- [ ] org-element-at-point: Symbol’s function definition is void: org-element--cache-active-p
+- [ ] ability to mark TODOs done
+- [ ] a config file just for org-babel stuff
