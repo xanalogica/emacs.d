@@ -341,7 +341,7 @@ For more information on the early init file, see Init File in The Emacs Lisp
 Reference Manual.
 
 #+CAPTION: ~/.emacs.d/early-init.el
-#+INCLUDE: "early-init.el" example emacs-lisp
+[[#+INCLUDE: "early-init.el" example emacs-lisp]]
 
 ;;;; This file is loaded before the package system and GUI is initialized, so
 ;;;; in it you can customize variables that affect the package initialization
@@ -405,7 +405,7 @@ default).
 ** About ~/.emacs.d/init.el
 
 #+CAPTION: ~/.emacs.d/init.el
-#+INCLUDE: "init.el" example emacs-lisp
+[[#+INCLUDE: "init.el" example emacs-lisp]]
 
 *** About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
 
@@ -446,6 +446,7 @@ at dependency management than 'quelpa'.
 
 ** Load helper function for conditional tangling
 
+#+CAPTION: Refresh-Tangle-Load Function
 #+BEGIN_SRC emacs-lisp
   (defun xan/load-org-if-exists (file)
     "Tangle and load FILE if it exists."
