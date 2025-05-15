@@ -59,18 +59,36 @@
 
 ;; Define the project to be published
 
-(let* ((site-root (file-name-directory (or load-file-name buffer-file-name)))
-       (output-dir (expand-file-name "public/" site-root)))  ;; ← absolute path
+(let* ((site-root (expand-file-name "../" default-directory)) ;; emacs.d/
+       (output-dir (expand-file-name "site-publisher/public/" site-root))
+       (source-file (expand-file-name "config.org" site-root)))
+
+  ;; Make sure output directory exists
   (make-directory output-dir t)
 
+  ;; Define a safe publishing function
   (defun my/org-publish-config-as-index (plist filename pub-dir)
-    "Publish config.org to index.html."
+    "Publish config.org to index.html inside pub-dir."
     (let ((output-file (expand-file-name "index.html" pub-dir)))
-      (make-directory (file-name-directory output-file) t)
-      (message "[build-site] Going to publish to: %s" output-file)
-      (org-publish-org-to 'html filename nil plist)
-      ;;; (org-publish-org-to 'html filename output-file plist)
-  )
+      (message "[build-site] Writing to: %s" output-file)
+      (org-publish-org-to 'html filename output-file plist)))
+
+  ;; Org-publish project alist
+  (setq org-publish-project-alist
+        `(("config-as-index"
+           :base-directory ,site-root
+           :publishing-directory ,output-dir
+           :base-extension "org"
+           :include (,source-file)
+           :recursive nil
+           :with-toc t
+           :time-stamp-file nil
+           :publishing-function my/org-publish-config-as-index)))
+
+  ;; Do the publish
+  (message "[build-site] Publishing %s → %s" source-file output-dir)
+  (org-publish-project "config-as-index" t)
+  (message "[build-site] ✅ Done")
 )
 
 ;;; filename:    /home/runner/work/emacs.d/emacs.d/site-publisher/config.org
@@ -86,23 +104,6 @@
 ;;;   :exclude ".*"
 ;;;   :include ("config.org")
 ;;;   )
-
-  (setq org-publish-project-alist
-        `(("config-as-index"
-           :base-extension "org"
-           :base-directory ,site-root
-           :publishing-directory ,output-dir
-           :recursive nil
-           :with-toc t
-           :time-stamp-file nil
-           :publishing-function my/org-publish-config-as-index
-           :exclude ".*"
-           :include ("config.org"))))
-
-  (message "[build-site] Publishing to: %s" output-dir)
-  (org-publish-all t)
-  (message "[build-site] Done")
-)
 
 
 
