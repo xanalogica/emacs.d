@@ -61,35 +61,68 @@
 
 (let* ((site-root (expand-file-name "../" default-directory)) ;; emacs.d/
        (output-dir (expand-file-name "site-publisher/public/" site-root))
-       (source-file (expand-file-name "config.org" site-root)))
+       (source-file (expand-file-name "config.org" site-root))
+       (output-file (expand-file-name "index.html" output-dir)))
 
-  ;; Make sure output directory exists
+  ;; Ensure output directory exists
   (make-directory output-dir t)
 
-  ;; Define a safe publishing function
-  (defun my/org-publish-config-as-index (plist filename pub-dir)
-    "Publish config.org to index.html inside pub-dir."
-    (let ((output-file (expand-file-name "index.html" pub-dir)))
-      (message "[build-site] Writing to: %s" output-file)
-      (org-publish-org-to 'html filename output-file plist)))
+  (require 'ox-html)
 
-  ;; Org-publish project alist
-  (setq org-publish-project-alist
-        `(("config-as-index"
-           :base-directory ,site-root
-           :publishing-directory ,output-dir
-           :base-extension "org"
-           :include (,source-file)
-           :recursive nil
-           :with-toc t
-           :time-stamp-file nil
-           :publishing-function my/org-publish-config-as-index)))
+  (message "[build-site] Publishing %s → %s" source-file output-file)
 
-  ;; Do the publish
-  (message "[build-site] Publishing %s → %s" source-file output-dir)
-  (org-publish-project "config-as-index" t)
+  ;; Publish config.org directly to index.html
+  (with-current-buffer (find-file-noselect source-file)
+    (org-export-to-file 'html output-file nil nil nil nil
+                        `(:with-toc t
+                          :section-numbers nil
+                          :html-validation-link nil
+                          :html-postamble nil
+                          :html-head "<meta charset='utf-8' />")))
+
   (message "[build-site] ✅ Done")
 )
+
+
+
+
+
+
+
+
+
+;; (let* ((site-root (expand-file-name "../" default-directory)) ;; emacs.d/
+;;        (output-dir (expand-file-name "site-publisher/public/" site-root))
+;;        (source-file (expand-file-name "config.org" site-root)))
+;; 
+;;   ;; Make sure output directory exists
+;;   (make-directory output-dir t)
+;; 
+;;   ;; Define a safe publishing function
+;;   (defun my/org-publish-config-as-index (plist filename pub-dir)
+;;     "Publish config.org to index.html inside pub-dir."
+;;     (let ((output-file (expand-file-name "index.html" pub-dir)))
+;;       (message "[build-site] Writing to: %s" output-file)
+;;       (org-publish-org-to 'html filename output-file plist)))
+;; 
+;;   ;; Org-publish project alist
+;;   (setq org-publish-project-alist
+;;         `(("config-as-index"
+;;            :base-directory ,site-root
+;;            :publishing-directory ,output-dir
+;;            :base-extension "org"
+;;            :include (,source-file)
+;;            :recursive nil
+;;            :with-toc t
+;;            :time-stamp-file nil
+;;            :publishing-function my/org-publish-config-as-index)))
+;; 
+;;   ;; Do the publish
+;;   (message "[build-site] Publishing %s → %s" source-file output-dir)
+;;   (org-publish-project "config-as-index" t)
+;;   (message "[build-site] ✅ Done")
+;; )
+
 
 ;;; filename:    /home/runner/work/emacs.d/emacs.d/site-publisher/config.org
 ;;; output-file: /home/runner/work/emacs.d/emacs.d/site-publisher/public/index.html
