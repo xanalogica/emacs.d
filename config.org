@@ -157,29 +157,25 @@ modified, tangle it into =config.el=, which is then loaded into Emacs by
 =init.el= to make those configuration settings take effect.
 
 
-#+INCLUDE: "config/config-emacs-display-presentation.org"
-
-
-
-
-#+INCLUDE: "config/config-emacs-global-keyboard-setup.org"
-#+INCLUDE: "config/config-emacs-work-protection.org"
-#+INCLUDE: "config/config-printing-from-emacs.org"
-#+INCLUDE: "config/config-install-of-org-mode.org"
-#+INCLUDE: "config/config-note-capture-using-org-mode.org"
-#+INCLUDE: "config/config-note-refiling-using-org-mode.org"
-#+INCLUDE: "config/config-note-archiving-using-org-mode.org"
-#+INCLUDE: "config/config-scripting-via-org-babel.org"
-#+INCLUDE: "config/config-global-syntax-checking.org"
-#+INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
-#+INCLUDE: "config/config-python-development.org"
-#+INCLUDE: "config/config-research.org"
-#+INCLUDE: "config/config-emacs-use-of-ai.org"
-#+INCLUDE: "config/config-task-planning.org"
-#+INCLUDE: "config/config-task-reporting.org"
-#+INCLUDE: "config/config-content-publishing.org"
-#+INCLUDE: "config/config-emacs-to-be-merged.org"
-#+INCLUDE: "config/config-filetype-epub.org"
+- [ ] INCLUDE: "config/config-emacs-display-presentation.org"
+- [ ] INCLUDE: "config/config-emacs-global-keyboard-setup.org"
+- [ ] INCLUDE: "config/config-emacs-work-protection.org"
+- [ ] INCLUDE: "config/config-printing-from-emacs.org"
+- [ ] INCLUDE: "config/config-install-of-org-mode.org"
+- [ ] INCLUDE: "config/config-note-capture-using-org-mode.org"
+- [ ] INCLUDE: "config/config-note-refiling-using-org-mode.org"
+- [ ] INCLUDE: "config/config-note-archiving-using-org-mode.org"
+- [ ] INCLUDE: "config/config-scripting-via-org-babel.org"
+- [ ] INCLUDE: "config/config-global-syntax-checking.org"
+- [ ] INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
+- [ ] INCLUDE: "config/config-python-development.org"
+- [ ] INCLUDE: "config/config-research.org"
+- [ ] INCLUDE: "config/config-emacs-use-of-ai.org"
+- [ ] INCLUDE: "config/config-task-planning.org"
+- [ ] INCLUDE: "config/config-task-reporting.org"
+- [ ] INCLUDE: "config/config-content-publishing.org"
+- [ ] INCLUDE: "config/config-emacs-to-be-merged.org"
+- [ ] INCLUDE: "config/config-filetype-epub.org"
 ??#+INCLUDE: "config/config-content-mobile-sync.org"
 INCLUDE: "config/config-emacs-email-usage.org"               =NOT USED=
 Emacs Configuration for Personal Memory Retention
@@ -474,6 +470,9 @@ begun but before UI and mode config begins:
 (xan/load-org-if-exists "00-core-boot.org")
 (xan/load-org-if-exists "05-security-secrets.org")
 #+END_SRC
+
+#+INCLUDE: "00-core-boot.org"
+#+INCLUDE: "05-security-secrets.org"
 
 * Phase 10 – UI and input system
 
