@@ -73,12 +73,21 @@
 
   ;; Publish config.org directly to index.html
   (with-current-buffer (find-file-noselect source-file)
-    (org-export-to-file 'html output-file nil nil nil nil
-                        `(:with-toc t
-                          :section-numbers nil
-                          :html-validation-link nil
-                          :html-postamble nil
-                          :html-head "<meta charset='utf-8' />")))
+    (let ((default-directory (file-name-directory source-file)))
+      (org-export-to-file 'html output-file nil nil nil nil
+                          '(:with-toc t
+                            :section-numbers nil
+                            :html-validation-link nil
+                            :html-postamble nil
+                            :html-head "<meta charset='utf-8' />"))))
+
+;;  (with-current-buffer (find-file-noselect source-file)
+;;    (org-export-to-file 'html output-file nil nil nil nil
+;;                        `(:with-toc t
+;;                          :section-numbers nil
+;;                          :html-validation-link nil
+;;                          :html-postamble nil
+;;                          :html-head "<meta charset='utf-8' />")))
 
   (message "[build-site] ✅ Done")
 )
