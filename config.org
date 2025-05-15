@@ -343,11 +343,6 @@ Reference Manual.
 #+CAPTION: ~/.emacs.d/early-init.el
 #+INCLUDE: "early-init.el" example emacs-lisp
 
-
-[[#+INCLUDE:path/to/your/file.org]
-
-
-
 ;;;; This file is loaded before the package system and GUI is initialized, so
 ;;;; in it you can customize variables that affect the package initialization
 ;;;; process, such as package-enable-at-startup, package-load-list, and
