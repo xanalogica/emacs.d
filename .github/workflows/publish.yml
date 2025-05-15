@@ -25,7 +25,7 @@ jobs:
 
       - name: Build the site
         # run: ./publi.sh
-        run: (cd site-publisher && emacs -Q --script build-site.el)
+        run: (cd site-publisher && mkdir -p public && pwd && ls -lR && emacs -Q --script build-site.el)
 
       - name: Publish generated content to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
