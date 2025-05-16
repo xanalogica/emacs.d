@@ -26,7 +26,6 @@
 
 *Abstract*
 
-
 This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
 explain how and why I did each configuration setting, and yet automatically
 export it into emacs-lisp format for loading into Emacs at start-up time.
@@ -43,7 +42,7 @@ https://github.com/xanalogica/.emacs.d/  (not on gitlab.com/xanalogica)
 * TODO FIX pipeline to config.org => index.html
 * TODO FIX: Emacs sees no network; skipping Straight recipe updates for now
 
-* Web Sites that Quality Offer Guidance on Emacs Configuration 
+* Web Sites that Offer Quality Guidance on Emacs Configuration 
 - https://git.sr.ht/~ashton314/emacs-bedrock/tree   GOOD!
 - https://rossabaker.com/configs/emacs/   =VERY GOOD ADDITIONS I NEED TO INTEGRATE AND IT IS EMACS 29!=
 
@@ -184,16 +183,14 @@ modified, tangle it into =config.el=, which is then loaded into Emacs by
 - [ ] INCLUDE: "config/config-content-publishing.org"
 - [ ] INCLUDE: "config/config-emacs-to-be-merged.org"
 - [ ] INCLUDE: "config/config-filetype-epub.org"
-??#+INCLUDE: "config/config-content-mobile-sync.org"
-INCLUDE: "config/config-emacs-email-usage.org"               =NOT USED=
-Emacs Configuration for Personal Memory Retention
-??#+INCLUDE: "config/config-???"                           =NOT USED=
-Export Org-Mode Outlines as an Anki Knowledgebase
-INCLUDE: "config/config-emacs-use-of-cloning.org"
-INCLUDE: "config/config-helpful-notes.org"
 
-
-
+- [ ] ??#+INCLUDE: "config/config-content-mobile-sync.org"
+- [ ] INCLUDE: "config/config-emacs-email-usage.org"               =NOT USED=
+- [ ] Emacs Configuration for Personal Memory Retention
+- [ ] ??#+INCLUDE: "config/config-???"                           =NOT USED=
+- [ ] Export Org-Mode Outlines as an Anki Knowledgebase
+- [ ] INCLUDE: "config/config-emacs-use-of-cloning.org"
+- [ ] INCLUDE: "config/config-helpful-notes.org"
 
 * My Emacs Directory Layout
 
@@ -349,7 +346,7 @@ For more information on the early init file, see Init File in The Emacs Lisp
 Reference Manual.
 
 #+CAPTION: ~/.emacs.d/early-init.el
-[[#+INCLUDE: "early-init.el" example emacs-lisp]]
+#+INCLUDE: "early-init.el" example emacs-lisp
 
 ;;;; This file is loaded before the package system and GUI is initialized, so
 ;;;; in it you can customize variables that affect the package initialization
@@ -413,7 +410,7 @@ default).
 ** About ~/.emacs.d/init.el
 
 #+CAPTION: ~/.emacs.d/init.el
-[[#+INCLUDE: "init.el" example emacs-lisp]]
+#+INCLUDE: "init.el" example emacs-lisp
 
 *** About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
 
@@ -477,7 +474,7 @@ at dependency management than 'quelpa'.
 Here’s what makes sense to put in 00-core-boot.org after startup has
 begun but before UI and mode config begins:
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :exports none
 (xan/load-org-if-exists "00-core-boot.org")
 (xan/load-org-if-exists "05-security-secrets.org")
 #+END_SRC
