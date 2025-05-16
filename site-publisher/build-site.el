@@ -150,8 +150,8 @@
 
 
 
-;;; (setq org-publish-project-alist
-;;;   '(
+(setq org-publish-project-alist
+  '(
 ;;;      ;; ----------------------------------------------------------------------
 ;;;      ;; Publish config.org as index.html Publishing Directory
 ;;;      ;; ----------------------------------------------------------------------
@@ -172,22 +172,22 @@
 ;;;       :exclude ".*"                    ;; exclude everything...
 ;;;       :include ("config.org")          ;; ...except this one
 ;;;      )
-;;; 
-;;;      ;; ----------------------------------------------------------------------
-;;;      ;; Copy Diagrams (and Folders) into Publishing Directory
-;;;      ;; ----------------------------------------------------------------------
-;;; 
-;;;      ("webstyling"
-;;;       :base-directory             "webstyling"
-;;;       :publishing-directory       "./public/webstyling"
-;;;       :recursive                  t
-;;; 
-;;;       :base-extension             site-attachments
-;;; 
-;;;       :publishing-function        'org-publish-attachment
-;;;      )
-;;;   )
-;;; )
+
+     ;; ----------------------------------------------------------------------
+     ;; Copy Diagrams (and Folders) into Publishing Directory
+     ;; ----------------------------------------------------------------------
+
+     ("webstyling"
+      :base-directory             "webstyling"
+      :publishing-directory       "./public/webstyling"
+      :recursive                  t
+
+      :base-extension             site-attachments
+
+      :publishing-function        'org-publish-attachment
+     )
+  )
+)
 
 ;; at time of publish, I'm in site-publisher/
 ;; and I'm writing to site-publisher/public

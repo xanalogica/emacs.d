@@ -2,13 +2,12 @@
 #+DESCRIPTION: Core config for startup, secrets, runtime defaults
 #+STARTUP: overview
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :exports none
 ;;; 00-core-boot.el --- Foundational Emacs config -*- lexical-binding: t -*-
 #+END_SRC
 
 #+CAPTION: Verify what org-mode I'm running
 #+BEGIN_SRC emacs-lisp
-
 (defun xan/check-org-version-min (min-version)
   "Check Org version is >= MIN-VERSION."
   (let* ((org-path (find-library-name "org"))
