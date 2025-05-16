@@ -12,13 +12,11 @@
 #+HTML_HEAD:    <script type="text/javascript" src="webstyling/src/lib/js/jquery.stickytableheaders.min.js"></script>
 #+HTML_HEAD:    <script type="text/javascript" src="webstyling/src/readtheorg_theme/js/readtheorg.js"></script>
 #+HTML_HEAD:    <script> var HS_STARTUP_FOLDED = true; </script>
-
 #+OPTIONS:	author:t creator:t email:t title:t
 #+OPTIONS:	toc:t title:t tasks:nil todo:nil tags:nil prop:nil num:t broken-links:mark
 #+OPTIONS:	^:{}
 #+STARTUP:	overview
-
-#+PROPERTY:	header-args:emacs-lisp+ :commends link
+#+PROPERTY:	header-args:emacs-lisp+ :comments link
 
 #+BEGIN_SRC emacs-lisp :exports none
 ;;; config.el --- Tangled master config  -*- lexical-binding: t -*-

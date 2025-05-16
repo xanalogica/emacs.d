@@ -1,14 +1,13 @@
-;; Publish org-mode files into GitHub pages
+;;; build-site.el --- Publish Org site + web styling assets
 
-;; This is a customized script for the Emacs editor that compiles into HTML my
-;; notes in the org-mode (.org files) markup.  It is invoked by a CI pipeline
-;; process, defined in the file .gitlab-ci.yml, each time I commit new content
-;; to the main Git branch, to regenerate my website from my notes, making it
-;; available at https://techdocs.zeomega.org.
+;; Publish org-mode files into GitHub Pages
 
-;;; package --- Build Org website
+;; This is a customized script for the Emacs editor that compiles into
+;; HTML my notes in the org-mode (.org files) markup.  It is invoked
+;; by a GitHub Actions CI pipeline process, each time I commit new
+;; content to the main Git branch, to regenerate my website from my
+;; notes, making it available at https://xanalogica.github.io/emacs.d/.
 
-;;; Commentary:
 ;; Build website from Org-mode source files
 
 ;;; Code:
@@ -20,191 +19,77 @@
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
-;; Initialize the package system
-
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
 
-;; Install packages needed for HTML export
-
-(package-install 'htmlize)
-(package-install 'reformatter)
-(package-install 'nix-mode)
-(package-install 'color-theme-modern)
+;; Install minimal packages  (omitted: reformatter, nix-mode)
+(dolist (pkg '(htmlize color-theme-modern))
+  (unless (package-installed-p pkg)
+    (package-install pkg)))
 
 (require 'htmlize)
 (require 'ox-publish)
-(require 'font-lock)
+;;;AI OMITTED (require 'font-lock)
 
+;; Emacs batch mode can't get colors unless a theme is enabled
+(load-theme 'greiner t t)
+(enable-theme 'greiner)
+(global-font-lock-mode t)
+
+;; Disable validation noise and postamble
+(setq org-html-validation-link nil
+      org-html-head "<meta charset='utf-8' />"
+      org-html-postamble nil
+      org-html-include-default-style nil
+      org-html-include-scripts nil)
+;;;AI OMITTED  (setq org-src-fontify-natively t)
+
+;; Set your identity
 (setq user-full-name "Xanalogica")
 (setq user-mail-address "xanalogica@gmail.com")
 
-;; Using this library is a work-around to get color in HTML exports.
-;; Otherwise Emacs in batch mode cannot get the correct faces
-
-(load-theme 'greiner t t)
-(enable-theme 'greiner)
-
-;; Set some variables for the export
-
-(global-font-lock-mode t)
-(setq org-html-validation-link nil
-      org-html-head-include-scripts nil
-      org-html-include-default-style nil
-      org-src-fontify-natively t)
-
-(defvar site-attachments (regexp-opt '("jpg" "jpeg" "gif" "png" "svg"
-                                       "ico" "cur" "css" "js" "woff" "html" "pdf")))
-
-;; Define the project to be published
-
-(let* ((site-root (expand-file-name "../" default-directory)) ;; emacs.d/
+;; Define paths
+(let* ((site-root (expand-file-name "../" default-directory))  ;; .emacs.d/
        (output-dir (expand-file-name "site-publisher/public/" site-root))
-       (source-file (expand-file-name "config.org" site-root))
-       (output-file (expand-file-name "index.html" output-dir)))
+       (source-org (expand-file-name "config.org" site-root))
+       (output-html (expand-file-name "index.html" output-dir))
+       (webstyling-src (expand-file-name "site-publisher/webstyling" site-root))
+       (webstyling-out (expand-file-name "webstyling" output-dir)))
 
-  ;; Ensure output directory exists
   (make-directory output-dir t)
 
-  (require 'ox-html)
+  ;;;AT OMITTED (require 'ox-html)
 
-  (message "[build-site] Publishing %s → %s" source-file output-file)
-
-  ;; Publish config.org directly to index.html
-  (with-current-buffer (find-file-noselect source-file)
-    (let ((default-directory (file-name-directory source-file)))
-      (org-export-to-file 'html output-file nil nil nil nil
+  ;; Publish config.org → index.html
+  (message "[build-site] Exporting config.org → index.html")
+  (with-current-buffer (find-file-noselect source-org)
+    (let ((default-directory (file-name-directory source-org)))
+      (org-export-to-file 'html output-html nil nil nil nil
                           '(:with-toc t
                             :section-numbers nil
                             :html-validation-link nil
                             :html-postamble nil
                             :html-head "<meta charset='utf-8' />"))))
+  (message "[build-site] ✅ config.org published to %s" output-html)
 
-;;  (with-current-buffer (find-file-noselect source-file)
-;;    (org-export-to-file 'html output-file nil nil nil nil
-;;                        `(:with-toc t
-;;                          :section-numbers nil
-;;                          :html-validation-link nil
-;;                          :html-postamble nil
-;;                          :html-head "<meta charset='utf-8' />")))
+  ;; Define webstyling project
+  (setq org-publish-project-alist
+        `(("webstyling"
+           :base-directory ,webstyling-src
+           :publishing-directory ,webstyling-out
+           :recursive t
+           :base-extension "css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|svg\\|woff\\|ico\\|cur\\|html\\|pdf"
+           :publishing-function (lambda (file pub-dir)
+                                  (let ((target (expand-file-name (file-name-nondirectory file) pub-dir)))
+                                    (make-directory pub-dir t)
+                                    (copy-file file target t)
+                                    (message "[webstyling] Copied: %s → %s" file target))))))
 
-  (message "[build-site] ✅ Done")
-)
+  ;; Publish webstyling
+  (message "[build-site] Publishing assets from webstyling/")
+  (org-publish-project "webstyling" t)
 
+  (message "[build-site] ✅ All assets published to %s" output-dir))
 
-
-
-
-
-
-
-
-;; (let* ((site-root (expand-file-name "../" default-directory)) ;; emacs.d/
-;;        (output-dir (expand-file-name "site-publisher/public/" site-root))
-;;        (source-file (expand-file-name "config.org" site-root)))
-;; 
-;;   ;; Make sure output directory exists
-;;   (make-directory output-dir t)
-;; 
-;;   ;; Define a safe publishing function
-;;   (defun my/org-publish-config-as-index (plist filename pub-dir)
-;;     "Publish config.org to index.html inside pub-dir."
-;;     (let ((output-file (expand-file-name "index.html" pub-dir)))
-;;       (message "[build-site] Writing to: %s" output-file)
-;;       (org-publish-org-to 'html filename output-file plist)))
-;; 
-;;   ;; Org-publish project alist
-;;   (setq org-publish-project-alist
-;;         `(("config-as-index"
-;;            :base-directory ,site-root
-;;            :publishing-directory ,output-dir
-;;            :base-extension "org"
-;;            :include (,source-file)
-;;            :recursive nil
-;;            :with-toc t
-;;            :time-stamp-file nil
-;;            :publishing-function my/org-publish-config-as-index)))
-;; 
-;;   ;; Do the publish
-;;   (message "[build-site] Publishing %s → %s" source-file output-dir)
-;;   (org-publish-project "config-as-index" t)
-;;   (message "[build-site] ✅ Done")
-;; )
-
-
-;;; filename:    /home/runner/work/emacs.d/emacs.d/site-publisher/config.org
-;;; output-file: /home/runner/work/emacs.d/emacs.d/site-publisher/public/index.html
-;;; plist: (
-;;;   :base-extension "org"
-;;;   :base-directory "/home/runner/work/emacs.d/emacs.d/site-publisher/"
-;;;   :publishing-directory "/home/runner/work/emacs.d/emacs.d/site-publisher/public/"
-;;;   :recursive nil
-;;;   :with-toc t
-;;;   :time-stamp-file nil
-;;;   :publishing-function my/org-publish-config-as-index
-;;;   :exclude ".*"
-;;;   :include ("config.org")
-;;;   )
-
-
-
-
-(setq org-publish-project-alist
-  '(
-;;;      ;; ----------------------------------------------------------------------
-;;;      ;; Publish config.org as index.html Publishing Directory
-;;;      ;; ----------------------------------------------------------------------
-;;; 
-;;;      ("config-as-index"
-;;;       :base-extension "org"
-;;;       :base-directory "."
-;;;       :publishing-directory "../public/"
-;;; 
-;;;       ;; :with-author t
-;;;       ;; :with-creator nil
-;;;       :with-toc t
-;;;       ;; :section-numbers nil
-;;;       :time-stamp-file  nil
-;;; 
-;;;       :recursive nil
-;;;       :publishing-function my/org-publish-config-as-index
-;;;       :exclude ".*"                    ;; exclude everything...
-;;;       :include ("config.org")          ;; ...except this one
-;;;      )
-
-     ;; ----------------------------------------------------------------------
-     ;; Copy Diagrams (and Folders) into Publishing Directory
-     ;; ----------------------------------------------------------------------
-
-     ("webstyling"
-      :base-directory             "webstyling"
-      :publishing-directory       "./public/webstyling"
-      :recursive                  t
-
-      :base-extension             site-attachments
-
-      :publishing-function        'org-publish-attachment
-     )
-  )
-)
-
-;; at time of publish, I'm in site-publisher/
-;; and I'm writing to site-publisher/public
-
-
-;; Generate site
-
-;;; (let ((pub-dir (expand-file-name "./public/")))
-;;;   (unless (file-directory-p pub-dir)
-;;;     (make-directory pub-dir t)
-;;;     (message "[publish] Writing to %s" (expand-file-name "index.html" pub-dir))
-;;;   )
-;;; )
-
-(org-publish-all t)
-
-(message "Build completed")
-
-(provide 'build-site)
-;;; build-site.el ends here
+(message "[build-site] 🟢 Build completed.")
