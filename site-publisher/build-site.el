@@ -73,6 +73,13 @@
                             :html-head "<meta charset='utf-8' />"))))
   (message "[build-site] ✅ config.org published to %s" output-html)
 
+  (defun xan/publish-and-log-file (file pub-dir)
+    "Copy FILE to PUB-DIR and log the action."
+    (let ((target (expand-file-name (file-name-nondirectory file) pub-dir)))
+      (make-directory pub-dir t)
+      (copy-file file target t)
+      (message "[webstyling] Copied: %s → %s" file target)))
+
   ;; Define webstyling project
   (setq org-publish-project-alist
         `(("webstyling"
@@ -80,11 +87,7 @@
            :publishing-directory ,webstyling-out
            :recursive t
            :base-extension "css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|svg\\|woff\\|ico\\|cur\\|html\\|pdf"
-           :publishing-function ,(lambda (file pub-dir)
-                                  (let ((target (expand-file-name (file-name-nondirectory file) pub-dir)))
-                                    (make-directory pub-dir t)
-                                    (copy-file file target t)
-                                    (message "[webstyling] Copied: %s → %s" file target))))))
+           :publishing-function xan/publish-and-log-file)))
 
   ;; Publish webstyling
   (message "[build-site] Publishing assets from webstyling/")
