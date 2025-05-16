@@ -73,8 +73,8 @@
                             :html-head "<meta charset='utf-8' />"))))
   (message "[build-site] ✅ config.org published to %s" output-html)
 
-  (defun xan/publish-and-log-file (file pub-dir)
-    "Copy FILE to PUB-DIR and log the action."
+  (defun xan/publish-and-log-file (file pub-dir _plist)
+    "Copy FILE to PUB-DIR and log the action. Ignore _PLIST."
     (let ((target (expand-file-name (file-name-nondirectory file) pub-dir)))
       (make-directory pub-dir t)
       (copy-file file target t)
