@@ -202,9 +202,9 @@
 ;;;   )
 ;;; )
 
-;;; (org-publish-all t)
+(org-publish-all t)
 
-;;; (message "Build completed")
+(message "Build completed")
 
 (provide 'build-site)
 ;;; build-site.el ends here
