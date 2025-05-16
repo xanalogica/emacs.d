@@ -80,7 +80,7 @@
            :publishing-directory ,webstyling-out
            :recursive t
            :base-extension "css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|svg\\|woff\\|ico\\|cur\\|html\\|pdf"
-           :publishing-function (lambda (file pub-dir)
+           :publishing-function ,(lambda (file pub-dir)
                                   (let ((target (expand-file-name (file-name-nondirectory file) pub-dir)))
                                     (make-directory pub-dir t)
                                     (copy-file file target t)
