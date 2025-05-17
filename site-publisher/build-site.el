@@ -39,11 +39,17 @@
 
 ;; Disable validation noise and postamble
 (setq org-html-validation-link nil
-      org-html-head "<meta charset='utf-8' />"
+      org-html-head "<meta charset='utf-8' /><style>.linenr{color:#888;font-family:monospace;padding-right:1em;}</style>"
       org-html-postamble nil
       org-html-include-default-style nil
-      org-html-include-scripts nil)
-;;;AI OMITTED  (setq org-src-fontify-natively t)
+      org-html-include-scripts nil
+      org-src-fontify-natively t  ; colorize in buffer not via CSS
+      org-src-preserve-indentation nil  ; ensure consistent indentation
+      org-src-tab-acts-natively t
+      org-html-number-lines t           ; 👈 enable line numbers
+      org-html-htmlize-output-type 'css  ; embed styles in exported HTML
+      org-html-htmlize-font-prefix "org-" ;; clean class names
+)
 
 ;; Set your identity
 (setq user-full-name "Xanalogica")
