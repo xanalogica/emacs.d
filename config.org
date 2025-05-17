@@ -409,8 +409,10 @@ default).
 
 ** About ~/.emacs.d/init.el
 
-#+CAPTION: ~/.emacs.d/init.el
-#+INCLUDE: "init.el" example emacs-lisp
+#+INCLUDE_SRC: "init.el" caption="~/.emacs.d/init.el" tangle="no"
+
+### CAPTION: ~/.emacs.d/init.el
+### INCLUDE: "init.el" example emacs-lisp
 
 *** About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
 

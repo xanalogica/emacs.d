@@ -55,6 +55,58 @@
 (setq user-full-name "Xanalogica")
 (setq user-mail-address "xanalogica@gmail.com")
 
+
+(defun xan/expand-include-src-directives ()
+  "Expand custom #+INCLUDE_SRC directives into org-mode source blocks.
+
+Recognized directive format:
+  #+INCLUDE_SRC: \"FILENAME\" [LANGUAGE] [keyword=\"value\" ...]
+
+Supported keywords (all optional):
+  - caption=\"string\"       → Adds a #+CAPTION line
+  - tangle=\"yes\" or \"no\"   → Controls :tangle (default = \"yes\")
+  - lineno=\"yes\" or \"no\"   → Adds :number-lines if \"yes\" (default = \"yes\")
+
+Defaults:
+  - LANGUAGE: emacs-lisp
+  - tangle: yes
+  - lineno: yes
+
+Examples:
+  #+INCLUDE_SRC: \"init.el\" caption=\"~/.emacs.d/init.el\"
+  #+INCLUDE_SRC: \"early.el\" lineno=\"no\" tangle=\"no\"
+"
+  (goto-char (point-min))
+  (while (re-search-forward "^#\\+INCLUDE_SRC:[ \t]+\"\\([^\"]+\\)\"\\(?:[ \t]+\\([a-zA-Z0-9-]+\\)\\)?\\(.*\\)$" nil t)
+    (let* ((file (match-string 1))
+           (lang (or (match-string 2) "emacs-lisp"))
+           (args (match-string 3))
+           (caption (when (string-match "caption=\"\\([^\"]+\\)\"" args)
+                      (match-string 1 args)))
+           (tangle (if (string-match "tangle=\"\\([^\"]+\\)\"" args)
+                       (match-string 1 args)
+                     "yes"))
+           (lineno (if (string-match "lineno=\"\\([^\"]+\\)\"" args)
+                       (match-string 1 args)
+                     "yes"))
+           (header (string-join
+                    (delq nil
+                          (list
+                           (format ":tangle %s" tangle)
+                           (when (string= lineno "yes") ":number-lines")))
+                    " "))
+           (code
+            (if (file-readable-p file)
+                (with-temp-buffer
+                  (insert-file-contents file)
+                  (buffer-string))
+              (format ";;; ERROR: Cannot read file \"%s\"" file)))
+           (replacement
+            (concat
+             (when caption (format "#+CAPTION: %s\n" caption))
+             (format "#+BEGIN_SRC %s %s\n%s#+END_SRC\n" lang header code))))
+      (replace-match replacement t t))))
+
 ;; Define paths
 (let* ((site-root (expand-file-name "../" default-directory))  ;; .emacs.d/
        (output-dir (expand-file-name "site-publisher/public/" site-root))
@@ -71,6 +123,8 @@
   (message "[build-site] Exporting config.org → index.html")
   (with-current-buffer (find-file-noselect source-org)
     (let ((default-directory (file-name-directory source-org)))
+      (save-excursion
+        (xan/expand-include-src-directives))
       (org-export-to-file 'html output-html nil nil nil nil
                           '(:with-toc t
                             :section-numbers nil
