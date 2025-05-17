@@ -62,7 +62,7 @@
   "Expand all #+INCLUDE_SRC directives into full Org source blocks.
 
 Directive form:
-  #+INCLUDE_SRC: \"file.el\" [language] [keyword=\"value\" ...]
+  #+INCLUDE_SRC: \"filename\" [language] [keyword=\"value\" ...]
 
 Defaults:
   • language = emacs-lisp  
@@ -70,73 +70,73 @@ Defaults:
   • lineno   = yes  
 
 Supported keywords:
-  • caption=\"...\"  
+  • caption=\"…\"  
   • tangle=\"yes\" | \"no\"  
   • lineno=\"yes\" | \"no\""
   (save-excursion
     (goto-char (point-min))
     (while (re-search-forward
+            ;; group1 = file, group2 = rest of line (all args)
             "^#\\+INCLUDE_SRC:[ \t]+\"\\([^\"]+\\)\"\\(.*\\)$"
             nil t)
-      (let* ((start  (match-beginning 0))
-             (end    (match-end   0))
-             (file   (match-string 1))
+      (let* ((start (match-beginning 0))
+             (end   (match-end   0))
+             (file  (match-string 1))
              (argstr (string-trim (match-string 2)))
              (tokens (if (string-empty-p argstr)
                          nil
                        (split-string argstr "[ \t]+" t)))
-             ;; 1) language = first token without '='
-             (lang   "emacs-lisp")
-             (rest   tokens))
-        (when (and rest (not (string-match-p "=" (car rest))))
-          (setq lang (pop rest)))
-        ;; 2) parse keywords from rest
-        (let* ((caption
-                (when-let (tok (seq-find
-                                (lambda (t) (string-match "^caption=\"\\([^\"]+\\)\"$" t))
-                                rest))
-                  (string-match "^caption=\"\\([^\"]+\\)\"$" tok)
-                  (match-string 1 tok)))
-               (tangle
-                (or (when-let (tok (seq-find
-                                    (lambda (t) (string-match "^tangle=\"\\(yes\\|no\\)\"$" t))
-                                    rest))
-                      (string-match "^tangle=\"\\(yes\\|no\\)\"$" tok)
-                      (match-string 1 tok))
-                    "yes"))
-               (lineno
-                (or (when-let (tok (seq-find
-                                    (lambda (t) (string-match "^lineno=\"\\(yes\\|no\\)\"$" t))
-                                    rest))
-                      (string-match "^lineno=\"\\(yes\\|no\\)\"$" tok)
-                      (match-string 1 tok))
-                    "yes"))
-               (header-args
-                (string-join
-                 (delq nil
-                       (list
-                        (format ":tangle %s" tangle)
-                        (when (string= lineno "yes") ":number-lines")))
-                 " "))
-               (code
-                (if (file-readable-p file)
-                    (with-temp-buffer
-                      (insert-file-contents file)
-                      (buffer-string))
-                  (format ";;; ERROR: Cannot read file \"%s\"" file)))
-               (replacement
-                (concat
-                 (when caption (format "#+CAPTION: %s\n" caption))
-                 (format "#+BEGIN_SRC %s%s\n%s#+END_SRC\n"
-                         lang
-                         (if (string-empty-p header-args)
-                             ""
-                           (concat " " header-args))
-                         code))))
-          ;; Replace the directive with our fully-formed block
-          (goto-char start)
-          (delete-region start end)
-          (insert replacement))))))
+             ;; defaults
+             (lang    "emacs-lisp")
+             (tangle  "yes")
+             (lineno  "yes")
+             (caption nil)
+             code header replacement)
+
+        ;; parse tokens
+        (dolist (tok tokens)
+          (cond
+           ((string-match-p "^tangle=\"\\(yes\\|no\\)\"$" tok)
+            (setq tangle (substring tok (length "tangle=\"") -1)))
+           ((string-match-p "^lineno=\"\\(yes\\|no\\)\"$" tok)
+            (setq lineno (substring tok (length "lineno=\"") -1)))
+           ((string-match-p "^caption=\"\\([^\"]*\\)\"$" tok)
+            (setq caption
+                  (substring tok (length "caption=\"") -1)))
+           ((not (string-match-p "=" tok))
+            (setq lang tok))))
+
+        ;; build header args
+        (setq header
+              (string-join
+               (delq nil
+                     (list
+                      (format ":tangle %s" tangle)
+                      (when (string= lineno "yes")
+                        ":number-lines")))
+               " "))
+
+        ;; read file or emit error
+        (setq code
+              (if (file-readable-p file)
+                  (with-temp-buffer
+                    (insert-file-contents file)
+                    (buffer-string))
+                (format ";;; ERROR: Cannot read file \"%s\"" file)))
+
+        ;; assemble replacement
+        (setq replacement
+              (concat
+               (when caption (format "#+CAPTION: %s\n" caption))
+               (format "#+BEGIN_SRC %s %s\n%s#+END_SRC\n"
+                       lang
+                       (if (string-empty-p header) "" header)
+                       code)))
+
+        ;; replace in buffer
+        (goto-char start)
+        (delete-region start end)
+        (insert replacement)))))
 
 ;; Define paths
 (let* ((site-root (expand-file-name "../" default-directory))  ;; .emacs.d/
