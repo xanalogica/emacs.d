@@ -56,10 +56,10 @@
 (setq user-mail-address "xanalogica@gmail.com")
 
 (defun xan/expand-include-src-directives ()
-  "Replace all #+INCLUDE_SRC: directives in buffer with expanded source blocks.
+  "Expand all #+INCLUDE_SRC directives into full source blocks.
 
-Each directive should look like:
-  #+INCLUDE_SRC: \"filename\" [language] [keyword=\"value\" ...]
+Syntax:
+  #+INCLUDE_SRC: \"file.el\" [language] [keyword=\"value\" ...]
 
 Defaults:
   - language = emacs-lisp
@@ -67,7 +67,7 @@ Defaults:
   - lineno   = yes
 
 Supported keywords:
-  - caption  = \"text\"
+  - caption  = \"caption text\"
   - tangle   = \"yes\" | \"no\"
   - lineno   = \"yes\" | \"no\""
   (save-excursion
@@ -86,12 +86,12 @@ Supported keywords:
              (lineno (if (string-match "lineno=\"\\([^\"]+\\)\"" args)
                          (match-string 1 args)
                        "yes"))
-             (header (string-join
-                      (delq nil
-                            (list
-                             (format ":tangle %s" tangle)
-                             (when (string= lineno "yes") ":number-lines")))
-                      " "))
+             (header-args (string-join
+                           (delq nil
+                                 (list
+                                  (when tangle (format ":tangle %s" tangle))
+                                  (when (string= lineno "yes") ":number-lines")))
+                           " "))
              (code
               (if (file-readable-p file)
                   (with-temp-buffer
@@ -101,8 +101,11 @@ Supported keywords:
              (replacement
               (concat
                (when caption (format "#+CAPTION: %s\n" caption))
-               (format "#+BEGIN_SRC %s %s\n%s#+END_SRC\n" lang header code))))
-        ;; Replace the match without re-entering it
+               (format "#+BEGIN_SRC %s %s\n%s#+END_SRC\n"
+                       lang
+                       (if (string-empty-p header-args) "" header-args)
+                       code))))
+        ;; Replace original directive with expanded block
         (goto-char start)
         (delete-region start end)
         (insert replacement)))))
