@@ -56,28 +56,35 @@
 (setq user-mail-address "xanalogica@gmail.com")
 
 (defun xan/expand-include-src-directives ()
-  "Expand all #+INCLUDE_SRC directives into full source blocks.
+  "Expand all #+INCLUDE_SRC directives into full Org source blocks.
 
-Syntax:
-  #+INCLUDE_SRC: \"file.el\" [language] [keyword=\"value\" ...]
+Format:
+  #+INCLUDE_SRC: \"filename\" [language] [keyword=\"value\" ...]
 
 Defaults:
-  - language = emacs-lisp
-  - tangle   = yes
-  - lineno   = yes
+  - language: emacs-lisp
+  - tangle:   yes
+  - lineno:   yes
 
 Supported keywords:
-  - caption  = \"caption text\"
-  - tangle   = \"yes\" | \"no\"
-  - lineno   = \"yes\" | \"no\""
+  - caption=\"...\"   → sets #+CAPTION
+  - tangle=\"yes|no\" → sets :tangle
+  - lineno=\"yes|no\" → sets :number-lines"
   (save-excursion
     (goto-char (point-min))
-    (while (re-search-forward "^#\\+INCLUDE_SRC:[ \t]+\"\\([^\"]+\\)\"\\(?:[ \t]+\\([a-zA-Z0-9-]+\\)\\)?\\(.*\\)$" nil t)
+    (while (re-search-forward
+            "^#\\+INCLUDE_SRC:[ \t]+\"\\([^\"]+\\)\"\\(?:[ \t]+\\([^ \t\n]+\\)\\)?\\(.*\\)$"
+            nil t)
       (let* ((start (match-beginning 0))
              (end (match-end 0))
              (file (match-string 1))
-             (lang (or (match-string 2) "emacs-lisp"))
+             ;; Use 2 only if it's not part of the keyword block
+             (maybe-lang (match-string 2))
              (args (match-string 3))
+             (lang (if (and maybe-lang
+                            (not (string-match-p "=" maybe-lang)))
+                       maybe-lang
+                     "emacs-lisp"))
              (caption (when (string-match "caption=\"\\([^\"]+\\)\"" args)
                         (match-string 1 args)))
              (tangle (if (string-match "tangle=\"\\([^\"]+\\)\"" args)
@@ -89,7 +96,7 @@ Supported keywords:
              (header-args (string-join
                            (delq nil
                                  (list
-                                  (when tangle (format ":tangle %s" tangle))
+                                  (format ":tangle %s" tangle)
                                   (when (string= lineno "yes") ":number-lines")))
                            " "))
              (code
@@ -105,7 +112,6 @@ Supported keywords:
                        lang
                        (if (string-empty-p header-args) "" header-args)
                        code))))
-        ;; Replace original directive with expanded block
         (goto-char start)
         (delete-region start end)
         (insert replacement)))))
