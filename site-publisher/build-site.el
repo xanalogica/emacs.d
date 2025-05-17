@@ -39,10 +39,24 @@
 
 ;; Disable validation noise and postamble
 (setq org-html-validation-link nil
-      org-html-head "<meta charset='utf-8' /><style>.linenr{color:#888;font-family:monospace;padding-right:1em;}</style>"
       org-html-postamble nil
-      org-html-include-default-style nil
+      org-html-head-include-default-style nil 
       org-html-include-scripts nil
+      org-html-include-default-style nil
+      org-html-head
+      "<meta charset='utf-8' />\n\
+   <style type=\"text/css\">\n\
+     /* line numbers */\n\
+     .linenr {\n\
+       display: inline-block;\n\
+       width: 3em;\n\
+       text-align: right;\n\
+       padding-right: 1em;\n\
+       color: #888;\n\
+       font-family: monospace;\n\
+     }\n\
+     pre.src { white-space: pre; }\n\
+   </style>"
       org-src-fontify-natively t  ; colorize in buffer not via CSS
       org-src-preserve-indentation nil  ; ensure consistent indentation
       org-src-tab-acts-natively t
