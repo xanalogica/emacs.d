@@ -1,0 +1,1626 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-05-17 Sat 12:42 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modular Emacs Configuration Loader 00-core-boot 05-security-secrets</title>
+<meta name="author" content="Jeffrey Rush" />
+<meta name="description" content="Tangle + load functionally organized config files
+Core config for startup, secrets, runtime defaults
+Secrets, encryption, authentication file paths, and GPG integration" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/readtheorg.css"/>
+<link rel="stylesheet" type="text/css" href="webstyling/src/custom/css/default.css"/>
+<script type="text/javascript" src="webstyling/src/lib/js/jquery.min.js"></script>
+<script type="text/javascript" src="webstyling/src/lib/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="webstyling/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="webstyling/src/readtheorg_theme/js/readtheorg.js"></script>
+<script> var HS_STARTUP_FOLDED = true; </script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Modular Emacs Configuration Loader 00-core-boot 05-security-secrets
+<br />
+<span class="subtitle">Structured Using Org-Babel</span>
+</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org84d9519">1. Web Sites that Offer Quality Guidance on Emacs Configuration</a></li>
+<li><a href="#orgec62052">2. My Publishing System</a></li>
+<li><a href="#orga7ee31a">3. The Big Picture</a></li>
+<li><a href="#orgcf8b966">4. My Emacs Directory Layout</a></li>
+<li><a href="#orgedc8528">5. MISC TO CONSIDER</a></li>
+<li><a href="#org614788d">6. Initialization Sequence</a>
+<ul>
+<li><a href="#org18e09ab">6.1. About ~/.emacs.d/early-init.el</a></li>
+<li><a href="#org4e6ce19">6.2. Garbage Collection</a></li>
+<li><a href="#org313dd47">6.3. Choice of Package Manager</a></li>
+<li><a href="#orgea0ae91">6.4. About ~/.emacs.d/init.el</a>
+<ul>
+<li><a href="#org2cc21f6">6.4.1. About <code>use-package</code> Emacs Lisp Macro To More Efficiently Organize Package Settings</a></li>
+</ul>
+</li>
+<li><a href="#org4edffbf">6.5. Load helper function for conditional tangling</a></li>
+</ul>
+</li>
+<li><a href="#orga6330cf">7. Phase 00 – Core system and helper macros</a>
+<ul>
+<li><a href="#org1a372bd">7.1. Directory Setup for a More Organized ~/.emacs.d/ Directory</a></li>
+<li><a href="#orgdaf69fa">7.2. Redirect Individual Features</a></li>
+<li><a href="#orgbf5f617">7.3. Foundational behaviors that affect how Emacs runs and loads, before you load modes or packages.</a>
+<ul>
+<li><a href="#org1a6cf59">7.3.1. gcmh – Garbage collection tuning</a></li>
+<li><a href="#org5b20531">7.3.2. benchmark-init – Measures startup time</a></li>
+<li><a href="#org8f3a0c7">7.3.3. gnutls – TLS security for downloading packages or HTTPS communication</a></li>
+<li><a href="#orgaad1b79">7.3.4. diminish – Minor mode modeline cleanup</a></li>
+<li><a href="#org9f28726">7.3.5. mouse-wheel-scroll-amount and mwheel – Mouse behavior tweaks, global defaults</a></li>
+</ul>
+</li>
+<li><a href="#orgd46fbcc">7.4. Additional Small Configuration File</a>
+<ul>
+<li><a href="#orga35c9c2">7.4.1. Place for Small Automatic Configuration Settings</a></li>
+</ul>
+</li>
+<li><a href="#orge7be057">7.5. Auth Sources</a></li>
+<li><a href="#org1da6fe9">7.6. GPG/epa Configuration</a></li>
+<li><a href="#org6a5be60">7.7. Load Optional Secrets Files</a></li>
+<li><a href="#org0487cc9">7.8. Optional Vault/GPG agent settings</a></li>
+</ul>
+</li>
+<li><a href="#org30676a8">8. Phase 10 – UI and input system</a></li>
+<li><a href="#orgc7201d2">9. Phase 20 – Global behavior and editing</a></li>
+<li><a href="#org9efb6cb">10. Phase 40 – Programming environment</a></li>
+<li><a href="#org6cd311b">11. Phase 50 – Org-mode environment</a></li>
+<li><a href="#orgead82f9">12. Phase 60 – Personal tooling</a></li>
+<li><a href="#orgf0448ad">13. Final – Private overrides</a></li>
+</ul>
+</div>
+</div>
+<div class="ABSTRACT" id="org7ded57c">
+<p>
+
+</p>
+
+<p>
+<b>Abstract</b>
+</p>
+
+<p>
+This is my Emacs configuration, expressed in the <a href="https://orgmode.org/">org-mode markup</a> so I can
+explain how and why I did each configuration setting, and yet automatically
+export it into emacs-lisp format for loading into Emacs at start-up time.
+This style of documenting is called <a href="https://en.wikipedia.org/wiki/Literate_programming">Literate Programming</a>.
+</p>
+
+<p>
+I maintain my Emacs configuration <a href="https://github.com/xanalogica/.emacs.d/">https://github.com/xanalogica/.emacs.d/</a> and
+automatically publish the polished documentation at ??? using a CI pipeline.
+</p>
+
+<p>
+<a href="https://github.com/xanalogica/.emacs.d/">https://github.com/xanalogica/.emacs.d/</a>  (not on gitlab.com/xanalogica)
+</p>
+
+</div>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org84d9519">1. Web Sites that Offer Quality Guidance on Emacs Configuration</a></li>
+<li><a href="#orgec62052">2. My Publishing System</a></li>
+<li><a href="#orga7ee31a">3. The Big Picture</a></li>
+<li><a href="#orgcf8b966">4. My Emacs Directory Layout</a></li>
+<li><a href="#orgedc8528">5. MISC TO CONSIDER</a></li>
+<li><a href="#org614788d">6. Initialization Sequence</a>
+<ul>
+<li><a href="#org18e09ab">6.1. About ~/.emacs.d/early-init.el</a></li>
+<li><a href="#org4e6ce19">6.2. Garbage Collection</a></li>
+<li><a href="#org313dd47">6.3. Choice of Package Manager</a></li>
+<li><a href="#orgea0ae91">6.4. About ~/.emacs.d/init.el</a></li>
+<li><a href="#org4edffbf">6.5. Load helper function for conditional tangling</a></li>
+</ul>
+</li>
+<li><a href="#orga6330cf">7. Phase 00 – Core system and helper macros</a>
+<ul>
+<li><a href="#org1a372bd">7.1. Directory Setup for a More Organized ~/.emacs.d/ Directory</a></li>
+<li><a href="#orgdaf69fa">7.2. Redirect Individual Features</a></li>
+<li><a href="#orgbf5f617">7.3. Foundational behaviors that affect how Emacs runs and loads, before you load modes or packages.</a></li>
+<li><a href="#orgd46fbcc">7.4. Additional Small Configuration File</a></li>
+<li><a href="#orge7be057">7.5. Auth Sources</a></li>
+<li><a href="#org1da6fe9">7.6. GPG/epa Configuration</a></li>
+<li><a href="#org6a5be60">7.7. Load Optional Secrets Files</a></li>
+<li><a href="#org0487cc9">7.8. Optional Vault/GPG agent settings</a></li>
+</ul>
+</li>
+<li><a href="#org30676a8">8. Phase 10 – UI and input system</a></li>
+<li><a href="#orgc7201d2">9. Phase 20 – Global behavior and editing</a></li>
+<li><a href="#org9efb6cb">10. Phase 40 – Programming environment</a></li>
+<li><a href="#org6cd311b">11. Phase 50 – Org-mode environment</a></li>
+<li><a href="#orgead82f9">12. Phase 60 – Personal tooling</a></li>
+<li><a href="#orgf0448ad">13. Final – Private overrides</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org84d9519" class="outline-2">
+<h2 id="org84d9519"><span class="section-number-2">1.</span> Web Sites that Offer Quality Guidance on Emacs Configuration</h2>
+<div class="outline-text-2" id="text-1">
+<ul class="org-ul">
+<li><a href="https://git.sr.ht/~ashton314/emacs-bedrock/tree">https://git.sr.ht/~ashton314/emacs-bedrock/tree</a>   GOOD!</li>
+<li><a href="https://rossabaker.com/configs/emacs/">https://rossabaker.com/configs/emacs/</a>   <code>VERY GOOD ADDITIONS I NEED TO INTEGRATE AND IT IS EMACS 29!</code></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgec62052" class="outline-2">
+<h2 id="orgec62052"><span class="section-number-2">2.</span> My Publishing System</h2>
+<div class="outline-text-2" id="text-2">
+<ul class="org-ul">
+<li><a href="https://github.com/JamesIves/github-pages-deploy-action">https://github.com/JamesIves/github-pages-deploy-action</a></li>
+</ul>
+
+<p>
+My personal ~/.emacs.d/ directory is versioned under
+<a href="https://github.com/xanalogica/emacs.d">https://github.com/xanalogica/emacs.d</a>.  Upon commit, GitHub Actions
+</p>
+<ol class="org-ol">
+<li>check out</li>
+<li>install emacs</li>
+<li>invoke ./publi.sh to build the site</li>
+<li>publish generate content to GitHub Pages from branch gh-pages</li>
+</ol>
+
+<p>
+cause it to be published into a GitHub Page at
+<a href="https://xanalogica.github.io/emacs.d/">https://xanalogica.github.io/emacs.d/</a>.  I have an extensive .gitignore
+that omits the transient, cached or personal content.
+</p>
+
+<p>
+The published content on the gh-pages branch looks like:
+</p>
+<ul class="org-ul">
+<li>config.html  &lt;- config.org</li>
+<li>webstyling/</li>
+<li>NEEDS index.html &lt;- README.html</li>
+</ul>
+
+<p>
+.github/workflows
+site-publisher/
+  publi.sh          invoked from .github/workflows/publish.yml
+  build-site.el
+  webstyling/
+    src/
+    local.css                         REMOVE?
+    paval.css                         REMOVE?
+    paval.js                          REMOVE?
+    theme-readtheorg.html
+</p>
+
+
+<p>
+Org includes a publishing management system that allows you to
+configure automatic HTML conversion of projects composed of
+interlinked Org files. You can also configure Org to automatically
+upload your exported HTML pages and related attachments, such as
+images and source code files, to a web server.
+</p>
+
+<p>
+You can also use Org to convert files into PDF, or even combine HTML
+and PDF conversion so that files are available in both formats on the
+server.
+</p>
+
+<p>
+config.org =&gt; index.org =&gt; index.html
+</p>
+
+<p>
+.emacs.d/.github/workflows/publish.yml
+</p>
+
+<p>
+<a href="https://xanalogica.github.io/.emacs.d/">https://xanalogica.github.io/.emacs.d/</a>
+<a href="http://www.thoughtamps.info/.emacs.d/">http://www.thoughtamps.info/.emacs.d/</a>
+<a href="https://{userid}.github.io/%7Breponame">https://{userid}.github.io/%7Breponame</a>}
+</p>
+
+<p>
+I put it into the form of ReadTheDocs with index along left-side.
+</p>
+
+<p>
+cache/        eshell, eln-cache, backups, auto-save
+data/         places, bookmarks, recentf, tramp, nov-places, transient, eshell, library.org
+</p>
+</div>
+</div>
+
+<div id="outline-container-orga7ee31a" class="outline-2">
+<h2 id="orga7ee31a"><span class="section-number-2">3.</span> The Big Picture</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+My Emacs configuration is spread out across several files, for ease of
+understanding, sharing and using a feature without dragging everything else
+in.  I try to fully configuration and document each feature I make use of in
+<b>one</b> place and avoid sprinkling it around.
+</p>
+
+<ul class="org-ul">
+<li>~/.emacs.d/early-init.el</li>
+<li>~/.emacs.d/init.el</li>
+<li>~/.emacs.d/config.org -&gt; ???</li>
+<li>~/.emacs.d/config/config-emacs-display-presentation.org</li>
+<li>~/.emacs.d/config/config-emacs-global-keyboard-setup.org</li>
+<li>~/.emacs.d/config/config-emacs-work-protection.org</li>
+<li>~/.emacs.d/config/config-printing-from-emacs.org</li>
+<li>~/.emacs.d/config/config-install-of-org-mode.org</li>
+<li>~/.emacs.d/config/config-note-capture-using-org-mode.org</li>
+<li>~/.emacs.d/config/config-note-refiling-using-org-mode.org</li>
+<li>~/.emacs.d/config/config-note-archiving-using-org-mode.org</li>
+<li>~/.emacs.d/config/config-scripting-via-org-babel.org</li>
+<li>~/.emacs.d/config/config-global-syntax-checking.org</li>
+<li>~/.emacs.d/config/config-emacs-new-links-for-org-mode.org</li>
+<li>~/.emacs.d/config/config-python-development.org</li>
+<li>~/.emacs.d/config/config-research.org</li>
+<li>~/.emacs.d/config/config-emacs-use-of-ai.org</li>
+<li>~/.emacs.d/config/config-task-planning.org</li>
+<li>~/.emacs.d/config/config-task-reporting.org</li>
+<li>~/.emacs.d/config/config-content-publishing.org</li>
+<li>~/.emacs.d/config/config-emacs-to-be-merged.org</li>
+<li>~/.emacs.d/config/config-filetype-epub.org</li>
+<li>~/.emacs.d/config/config-content-mobile-sync.org   UNUSED</li>
+<li>~/.emacs.d/config/config-emacs-email-usage.org     UNUSED</li>
+<li>~/.emacs.d/config/config-emacs-use-of-cloning.org  UNUSED</li>
+<li>~/.emacs.d/config/config-helpful-notes.org         UNUSED</li>
+</ul>
+
+<p>
+This is a current copy of my Emacs configuration, annotated with explanations.
+I've learned a lot by studying other people's Emacs configurations and I
+wanted to share what I've ended up with.
+</p>
+
+<p>
+Other Emacs files I've studied:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://github.com/redguardtoo/emacs.d">https://github.com/redguardtoo/emacs.d</a></li>
+<li><a href="https://github.com/purcell/emacs.d/blob/master/README.md">https://github.com/purcell/emacs.d/blob/master/README.md</a></li>
+<li>This is a VERY good example of a custom org-mode .emacs.d file.
+<a href="https://github.com/mwfogleman/.emacs.d/">https://github.com/mwfogleman/.emacs.d/</a></li>
+<li>~/.emacs.d/michael.org]] (local copy)</li>
+
+<li><a href="https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org">https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org</a></li>
+<li><a href="https://github.com/bbatsov/emacs.d/blob/master/init.el">https://github.com/bbatsov/emacs.d/blob/master/init.el</a></li>
+<li><a href="https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el">https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el</a></li>
+</ul>
+
+<p>
+My Emacs configuration is divided into two files:
+</p>
+
+<ul class="org-ul">
+<li>~/.emacs.d/init.el</li>
+<li>~/.emacs.d/config.org (automatically tangled into config.el)</li>
+</ul>
+
+<p>
+The <code>init.el</code> file is the first one executed by Emacs, and in it I do initial
+set up of my choice of package management, and then if <code>config.org</code> has been
+modified, tangle it into <code>config.el</code>, which is then loaded into Emacs by
+<code>init.el</code> to make those configuration settings take effect.
+</p>
+
+
+<ul class="org-ul">
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-display-presentation.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-global-keyboard-setup.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-work-protection.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-printing-from-emacs.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-install-of-org-mode.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-note-capture-using-org-mode.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-note-refiling-using-org-mode.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-note-archiving-using-org-mode.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-scripting-via-org-babel.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-global-syntax-checking.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-new-links-for-org-mode.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-python-development.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-research.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-use-of-ai.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-task-planning.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-task-reporting.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-content-publishing.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-to-be-merged.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-filetype-epub.org"</li>
+
+<li class="off"><code>[&#xa0;]</code> ??#+INCLUDE: "config/config-content-mobile-sync.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-email-usage.org"               <code>NOT USED</code></li>
+<li class="off"><code>[&#xa0;]</code> Emacs Configuration for Personal Memory Retention</li>
+<li class="off"><code>[&#xa0;]</code> ??#+INCLUDE: "config/config-???"                           <code>NOT USED</code></li>
+<li class="off"><code>[&#xa0;]</code> Export Org-Mode Outlines as an Anki Knowledgebase</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-emacs-use-of-cloning.org"</li>
+<li class="off"><code>[&#xa0;]</code> INCLUDE: "config/config-helpful-notes.org"</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgcf8b966" class="outline-2">
+<h2 id="orgcf8b966"><span class="section-number-2">4.</span> My Emacs Directory Layout</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+When Emacs is started, it tries to load a ELisp program from an init file,
+looking in the following places in this order:
+</p>
+
+<ul class="org-ul">
+<li>~/.emacs              &#x2013; I don't use this file</li>
+<li>~/.emacs.el           &#x2013; I don't use this file</li>
+<li>~/.emacs.d/init.el    &#x2013; This is the <b>start of my Emacs configuration</b></li>
+</ul>
+
+<p>
+In case of problems with <code>init.el</code>, you can use the command-line switch '-q'
+to prevent it being loaded or '&#x2013;debug-init' to get a traceback of the first
+error encountered.
+</p>
+
+<p>
+TIP: It is NOT recommendeed to byte-compile your init file as it does not
+     speed up startup very much and often leads to problems when you forget
+     to recompile the file.
+</p>
+
+<pre class="example" id="org751eda5">
+~/.emacs.d/
+.
+├── README.org	;; light introduction to my setup
+├── init.el		;; my init file for Emacs (versus ~/.emacs)
+├── agenda-files.py     ????????????????????????????????????????
+├── org-clock-save.el   ????????????????????????????????????????
+├── ARCHIVE/		;; modules that I retired using and will someday delete
+├── auto-save-list      ????????????????????????????????????????
+├── %backup%~           ????????????????????????????????????????
+├── backups/		;; backup copies of ANY edited files
+├── bookmarks           ????????????????????????????????????????
+├── Cask		;; installed modules list read by Cask and maintained by Pallet
+├── config.el		;; auto-built from my config.org each time Emacs starts
+├── config.org	;; my Emacs configuration in org-mode 'literate' format
+├── config.org~
+├── config-XXX.org
+├── custom-settings.el	;; tiny custom settings auto-edited by Emacs itself
+├── elpa
+│   ├── PACKAGE-A-YYYYMMDD.HHMM/
+│   ├── PACKAGE-B-YYYYMMDD.HHMM/
+│   ├── archives/
+│   │   ├── gnu/
+│   │   │   ├── archive-contents
+│   │   │   └── archive-contents.signed
+│   │   ├── melpa/
+│   │   │   └── archive-contents
+│   │   └── melpa-stable/
+│   │       └── archive-contents
+├── eshell/
+│   ├── alias
+│   ├── history
+│   └── lastdir
+├── quelpa/
+│   ├── build/
+│   │   └── PACKAGE-A/
+├── ido.last
+├── library.org
+├── LICENSE
+├── lisp/			;; individual .el files I create or work on
+├── jeff-light-theme.el
+├── michael.org
+├── network-security.data
+├── places
+├── pymd5-1c2b62349aded4d3a40a729148cbd68c.py
+├── recentf
+├── request
+│   └── curl-cookie-jar
+├── session.1012cc9dcd52891180156817838919458300000018020070
+├── session.106f8e8df9fad6f21c156806759412428700000015480070
+├── snippets		;; my library of text fragments for use by the snippet library
+├── templates 	;; my library of text fragments for use by org-capture
+│   ├── PACKAGE-A/
+│   ├── PACKAGE-B/
+├── tramp
+├── transient
+│   └── history.el
+└── url
+    └── cookies
+
+;;      .cask/
+;;         25.3/		;; cache/collection of modules pulled down by package manager
+;;      ac-dict/		;; auto-complete dictionary for various modes/languages
+;;   ~/.cask/
+;;      Cask			;; specification file of dependencies of the Cask pgm
+;;      bin/
+;;         cask			;; command-line tool for invoking Cask outside of Emacs
+;;      cask.el			;; ELisp source of the Cask library
+</pre>
+</div>
+</div>
+
+
+
+
+<div id="outline-container-orgedc8528" class="outline-2">
+<h2 id="orgedc8528"><span class="section-number-2">5.</span> MISC TO CONSIDER</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+;; Automatically reread from disk if the underlying file changes
+(setopt auto-revert-avoid-polling t)  ;; save power by avoiding polling when possible
+</p>
+
+<p>
+;; Fix archaic defaults
+(setopt sentence-end-double-space nil)
+</p>
+
+
+<p>
+;; Make right-click do something sensible
+(when (display-graphic-p)
+  (context-menu-mode))
+</p>
+
+<p>
+;; Show the help buffer after startup
+(add-hook 'after-init-hook 'help-quick)
+</p>
+
+<p>
+;; which-key: shows a popup of available keybindings when typing a long key
+;; sequence (e.g. C-x &#x2026;)
+(use-package which-key
+  :ensure t
+  :config
+  (which-key-mode))
+</p>
+
+<p>
+(setopt x-underline-at-descent-line nil)           ; Prettier underlines
+</p>
+
+
+<p>
+;; Enable horizontal scrolling
+(setopt mouse-wheel-tilt-scroll t)
+(setopt mouse-wheel-flip-direction t)
+</p>
+
+<p>
+(pixel-scroll-precision-mode 1)                         ; Smooth scrolling
+</p>
+</div>
+</div>
+
+<div id="outline-container-org614788d" class="outline-2">
+<h2 id="org614788d"><span class="section-number-2">6.</span> Initialization Sequence</h2>
+<div class="outline-text-2" id="text-6">
+<ol class="org-ol">
+<li>~/.emacs.d/early-init.el</li>
+<li>~/.emacs.d/init.el</li>
+<li>~/.emacs.d/config.org</li>
+</ol>
+</div>
+
+<div id="outline-container-org18e09ab" class="outline-3">
+<h3 id="org18e09ab"><span class="section-number-3">6.1.</span> About ~/.emacs.d/early-init.el</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+Most customizations for Emacs should be put in the normal init file.  See The
+Emacs Initialization File.  However, it is sometimes necessary to have
+customizations take effect during Emacs startup earlier than the normal init
+file is processed.  Such customizations can be put in the early init file,
+~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el.  This file is loaded
+before the package system and GUI is initialized, so in it you can customize
+variables that affect the package initialization process, such as
+package-enable-at-startup, package-load-list, and package-user-dir.  Note that
+variables like package-archives which only affect the installation of new
+packages, and not the process of making already-installed packages available,
+may be customized in the regular init file. See Package Installation.
+</p>
+
+<p>
+We do not recommend that you move into early-init.el customizations that can
+be left in the normal init files.  That is because the early init file is read
+before the GUI is initialized, so customizations related to GUI features will
+not work reliably in early-init.el.  By contrast, the normal init files are
+read after the GUI is initialized.  If you must have customizations in the
+early init file that rely on GUI features, make them run off hooks provided by
+the Emacs startup, such as window-setup-hook or tty-setup-hook. See Hooks.
+</p>
+
+<p>
+For more information on the early init file, see Init File in The Emacs Lisp
+Reference Manual.
+</p>
+
+<pre class="example" id="org72e4b5e">
+;;; early-init.el --- Tweaks that must run *before* package.el  -*- lexical-binding: t; -*-
+
+;; Author: Jeffrey Rush
+;; Keywords: Emacs configuration
+;; Homepage: https://github.com/xanalogica/emacs.d.git
+
+;;; Commentary:
+
+;; My Initialization Flow:
+;;   1. early-init.el
+;;   2. init.el
+;;   3. config.org
+
+;; The idea of a `early-init.el` file was introduced in Emacs 27.1 and is loaded BEFORE
+;; the package system and GUI is initialized.  This is a great place for
+;; *startup optimizing*, because only here can you *prevent* things from
+;; loading, rather than turn them off after-the-fact.
+
+;; NOTE: `early-init.el` is meant to disable features, NOT initialize systems.  Since
+;; this file is read by Emacs before the GUI is initialized, before a package system
+;; is established and before the network is fully up, do NOT include your customizations
+;; that are best left in the normal `init.el` file.
+
+;; Emacs 30.1+ configuration.  (my version of Emacs at the time of composing this file)
+
+;;; Code:
+
+;; Require Emacs 30+
+(when (&lt; emacs-major-version 30)
+  (user-error "This config requires Emacs 30+ (you have %s)" emacs-version))
+
+;; ----------------------------------------------------------------------
+;; Prevent initialization of the Emacs built-in `package.el` system until we
+;; get to the `init.el` file where use the `straight.el` package manage instead.
+;;
+;; Since `straight.el` requires networking, loading files, and setting up load
+;; paths — this is too early to do reliably in `early-init.el` before Emacs
+;; initializes its GUI, environment variables, and process subsystems.
+
+(setq package-enable-at-startup nil
+      package-quickstart        nil)
+
+;; ----------------------------------------------------------------------
+;; To speed up the Emacs startup process, temporarily loosen the garbage
+;; collector behavior so it does not compact memory during initialization.
+;; Add a hook function to restore sane garbage collector behavior after
+;; Emacs startup is complete.
+
+(defvar xan/file-name-handler-alist file-name-handler-alist)
+
+(setq file-name-handler-alist  nil
+      gc-cons-threshold        most-positive-fixnum
+      gc-cons-percentage       0.6)
+
+;; Restore sane GC &amp; file‑handler settings after init
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold (* 64 1024 1024) ; 64 MB
+                  gc-cons-percentage 0.1
+                  file-name-handler-alist xan/file-name-handler-alist)))
+
+;; ----------------------------------------------------------------------
+;; Disable UI elements to prevent flickering during startup and to load faster.
+;; We'll restore them later in the initialization process.  Also don't load
+;; any custom.el settings that might disrupt initialization because everything
+;; is not yet configured to accept it.
+
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+
+;; Disable the fancy graphical splash screen in its own buffer,
+;; typically named *GNU Emacs*.
+
+;; That screen normally shows:
+;;
+;;   - Emacs logo
+;;   - Keybinding cheatsheet
+;;   - Link to the Emacs tutorial
+
+(setq inhibit-startup-screen t)
+
+;; Don't load any custom.el automatically by redirecting it to an empty temp file
+(setq custom-file (make-temp-file "emacs-custom-"))
+
+;; ----------------------------------------------------------------------
+;; In order to declutter my ~/.emacs.d/ directory I've adopted a layout
+;; of putting anything that is cache related under ~/.emacs.d/cache/ and
+;; anything that is dynamically generated data under ~/.emacs.d/data/.
+;;
+;; Here we establish global variables for those locations, insure certain
+;; basic subdirectories are present, and tell the .el native compiler to
+;; cache its .eln files there.
+
+(defvar xan/cache-dir (expand-file-name "cache/" user-emacs-directory))
+(defvar xan/data-dir  (expand-file-name "data/"  user-emacs-directory))
+
+;; make the minimal set of subdirectories under cache/
+(dolist (sub '("auto-save/" "auto-save-list/" "backups/"))
+  (make-directory (expand-file-name sub xan/cache-dir) t))
+
+(setq auto-save-list-file-prefix (expand-file-name "auto-save-list/#" xan/cache-dir)
+      auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" xan/cache-dir) t)))
+
+;; Redirect compiled code under cache/eln-cache/
+(when (boundp 'native-comp-eln-load-path)
+  (startup-redirect-eln-cache (expand-file-name "eln-cache/" xan/cache-dir)))
+
+;; ----------------------------------------------------------------------
+;;   Define Various Emacs Policies re Debugging and Analysis of Issues
+
+;; Useful for debugging problems with Emacs on occasion.
+; (setq debug-on-error t)
+; (setq stack-trace-on-error t)
+; (debug-on-entry 'integerp)
+
+;; Respect DEBUG envvar as an alternative to --debug-init, and to
+;; make sure startup is sufficiently verbose from this point on.
+(when (getenv-internal "DEBUG")
+  (setq init-file-debug t
+        debug-on-error t))
+
+
+(message "early-init.el done (%.2fs)"
+         (float-time (time-subtract (current-time) before-init-time)))
+
+(provide 'early-init)
+;;; early-init.el ends here
+</pre>
+
+<p>
+;;;; This file is loaded before the package system and GUI is initialized, so
+;;;; in it you can customize variables that affect the package initialization
+;;;; process, such as package-enable-at-startup, package-load-list, and
+;;;; package-user-dir. Note that variables like package-archives which only
+;;;; affect the installation of new packages, and not the process of making
+;;;; already-installed packages available, may be customized in the regular
+;;;; init file.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4e6ce19" class="outline-3">
+<h3 id="org4e6ce19"><span class="section-number-3">6.2.</span> Garbage Collection</h3>
+</div>
+
+
+<div id="outline-container-org313dd47" class="outline-3">
+<h3 id="org313dd47"><span class="section-number-3">6.3.</span> Choice of Package Manager</h3>
+<div class="outline-text-3" id="text-6-3">
+<p>
+;; There are many package managers for Emacs, ranging from simple scripts to download files from EmacsWiki to full-featured package management solutions like straight.el. Here are the most feature-rich alternatives to straight.el:
+</p>
+
+<p>
+;; - package.el: de facto standard, bundled with Emacs.
+;; - Quelpa: allows you to use external sources like GitHub with package.el. Essentially a local MELPA.
+;; - Cask: another package.el wrapper. Specify your dependencies in a Cask file; can be used for project management or an Emacs configuration.
+;; - el-get: ridiculously OP in terms of how many different sources you can pull packages from (package.el, every known VCS, distro package managers, go get(!!)).
+;; - Borg: assimilates packages as Git submodules into .emacs.d, relying on Emacsmirror.
+;; - "Screw package managers! I'll just handle it all myself!"
+</p>
+
+<p>
+`use-package' is a macro that provides convenient syntactic sugar for many
+common tasks related to installing and configuring Emacs packages. Of course,
+it does not actually install the packages, but instead defers to a package
+manager, like straight.el (which comes with use-package integration by
+default).
+</p>
+
+<p>
+;; does Emacs 29 need straight.el anymore ???
+;; <a href="https://github.com/radian-software/straight.el">https://github.com/radian-software/straight.el</a>
+;; Note: straight.el is a replacement for package.el, not use-package. use-package can be used with either package.el or straight.el.
+</p>
+
+
+
+<p>
+; Most customizations for Emacs should be put in the normal init file. See The
+; Emacs Initialization File. However, it is sometimes necessary to have
+; customizations take effect during Emacs startup earlier than the normal init
+; file is processed. Such customizations can be put in the early init file,
+; ~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el. This file is
+; loaded before the package system and GUI is initialized, so in it you can
+; customize variables that affect the package initialization process, such as
+; package-enable-at-startup, package-load-list, and package-user-dir. Note
+; that variables like package-archives which only affect the installation of
+; new packages, and not the process of making already-installed packages
+; available, may be customized in the regular init file. See Package
+; Installation.
+</p>
+
+<p>
+; We do not recommend that you move into early-init.el any customizations that can
+; be left in the normal init files. That is because the early init file is
+; read before the GUI is initialized, so customizations related to GUI
+; features will not work reliably in early-init.el. By contrast, the normal
+; init files are read after the GUI is initialized. If you must have
+; customizations in the early init file that rely on GUI features, make them
+; run off hooks provided by the Emacs startup, such as window-setup-hook or
+; tty-setup-hook. See Hooks.
+</p>
+
+<p>
+; For more information on the early init file, see Init File in The Emacs Lisp
+; Reference Manual.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgea0ae91" class="outline-3">
+<h3 id="orgea0ae91"><span class="section-number-3">6.4.</span> About ~/.emacs.d/init.el</h3>
+<div class="outline-text-3" id="text-6-4">
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 1: </span>~/.emacs.d/init.el</label><pre class="src src-emacs-lisp"><span class="linenr">  1: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">init.el --- Main Configuration File -*- lexical-binding: t; no-byte-compile: t -*-</span>
+<span class="linenr">  2: </span>
+<span class="linenr">  3: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Author: Jeffrey Rush</span>
+<span class="linenr">  4: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Keywords: Emacs configuration</span>
+<span class="linenr">  5: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Homepage: https://github.com/xanalogica/.emacs.d.git</span>
+<span class="linenr">  6: </span>
+<span class="linenr">  7: </span><span style="color: #b22222;">;;; </span><span style="color: #b22222;">Commentary:</span>
+<span class="linenr">  8: </span>
+<span class="linenr">  9: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">My Initialization Flow:</span>
+<span class="linenr"> 10: </span><span style="color: #b22222;">;;   </span><span style="color: #b22222;">1. early-init.el</span>
+<span class="linenr"> 11: </span><span style="color: #b22222;">;;   </span><span style="color: #b22222;">2. init.el</span>
+<span class="linenr"> 12: </span><span style="color: #b22222;">;;   </span><span style="color: #b22222;">3. config.org</span>
+<span class="linenr"> 13: </span>
+<span class="linenr"> 14: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">After `early-init.el` completes its work, this file does the job of</span>
+<span class="linenr"> 15: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">setting many somewhat obscure Emacs settings and frame/window</span>
+<span class="linenr"> 16: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">settings, bootstrapping `straight.el` from the Internet and</span>
+<span class="linenr"> 17: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">declaring which package repos that `straight.el` should pull from.</span>
+<span class="linenr"> 18: </span><span style="color: #b22222;">;;</span>
+<span class="linenr"> 19: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">It then finishes by loading further configuration from a collection</span>
+<span class="linenr"> 20: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">of emacs-lisp source blocks tangled from config.org.  Using</span>
+<span class="linenr"> 21: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">config.org makes it easier for me to document my settings,</span>
+<span class="linenr"> 22: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">providing explanations and links to further learning material.</span>
+<span class="linenr"> 23: </span>
+<span class="linenr"> 24: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Emacs 30.1+ configuration.  (my version of Emacs at the time of composing this file)</span>
+<span class="linenr"> 25: </span>
+<span class="linenr"> 26: </span><span style="color: #b22222;">;;; </span><span style="color: #b22222;">Code:</span>
+<span class="linenr"> 27: </span>
+<span class="linenr"> 28: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">----------------------------------------------------------------------</span>
+<span class="linenr"> 29: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Set various somewhat obscure Emacs variables, for efficient operation.</span>
+<span class="linenr"> 30: </span>
+<span class="linenr"> 31: </span>(<span style="color: #4169e1;">setq</span>
+<span class="linenr"> 32: </span>
+<span class="linenr"> 33: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">I have some larger files and I don't want Emacs to complain about</span>
+<span class="linenr"> 34: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">them so I raised the threshold from 9MB.</span>
+<span class="linenr"> 35: </span>
+<span class="linenr"> 36: </span>  large-file-warning-threshold  20000000 <span style="color: #b22222;">; </span><span style="color: #b22222;">20MB</span>
+<span class="linenr"> 37: </span>
+<span class="linenr"> 38: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Prevent stale byte-code issues in scripts, while saving startup</span>
+<span class="linenr"> 39: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">I/O checks.  Especially relevant when not byte-compiling</span>
+<span class="linenr"> 40: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">everything, to prioritize non-byte-compiled source files to</span>
+<span class="linenr"> 41: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">prevent the use of stale byte-code.</span>
+<span class="linenr"> 42: </span>
+<span class="linenr"> 43: </span>  load-prefer-newer  'noninteractive
+<span class="linenr"> 44: </span>
+<span class="linenr"> 45: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Maximum number of bytes to read from subprocess in a single chunk.</span>
+<span class="linenr"> 46: </span>  <span style="color: #b22222;">;;</span>
+<span class="linenr"> 47: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Enlarge the value only if the subprocess generates very large</span>
+<span class="linenr"> 48: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">(megabytes) amounts of data in one go.  Improves LSP and</span>
+<span class="linenr"> 49: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">subprocess throughput.  Critical for lsp-mode, eglot, etc.</span>
+<span class="linenr"> 50: </span>
+<span class="linenr"> 51: </span>  read-process-output-max  (* 1024 1024 4) <span style="color: #b22222;">; </span><span style="color: #b22222;">4 MB</span>
+<span class="linenr"> 52: </span>
+<span class="linenr"> 53: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Do NOT compact (discard) cached fonts during garbage collection.</span>
+<span class="linenr"> 54: </span>  <span style="color: #b22222;">;;</span>
+<span class="linenr"> 55: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Prevents GC-triggered font redisplay stutter with large fonts.</span>
+<span class="linenr"> 56: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Very useful for multilingual documents or UI-heavy configs.</span>
+<span class="linenr"> 57: </span>
+<span class="linenr"> 58: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Some large fonts cause lots of consing and trigger GC.  If they</span>
+<span class="linenr"> 59: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">are discarded from the font caches during garbage collection,</span>
+<span class="linenr"> 60: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">they will need to be opened AGAIN during redisplay, which slows</span>
+<span class="linenr"> 61: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">down redisplay.</span>
+<span class="linenr"> 62: </span>  <span style="color: #b22222;">;;</span>
+<span class="linenr"> 63: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">If you see font-related delays in displaying some special</span>
+<span class="linenr"> 64: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">characters, and cannot switch to a smaller font for those</span>
+<span class="linenr"> 65: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">characters, set this variable non-nil.  Disabling compaction of</span>
+<span class="linenr"> 66: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">font caches might enlarge the Emacs memory footprint in sessions</span>
+<span class="linenr"> 67: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">that use lots of different fonts.</span>
+<span class="linenr"> 68: </span>
+<span class="linenr"> 69: </span>  inhibit-compacting-font-caches  t
+<span class="linenr"> 70: </span>
+<span class="linenr"> 71: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Maximum number of lines to keep in the *Messages* log buffer.</span>
+<span class="linenr"> 72: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Good practice that prevents runaway *Messages* buffer size while</span>
+<span class="linenr"> 73: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">still allowing debugging.</span>
+<span class="linenr"> 74: </span>
+<span class="linenr"> 75: </span>  message-log-max  16384
+<span class="linenr"> 76: </span>
+<span class="linenr"> 77: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">This disables loading of `site-start.el`, which some distros (like</span>
+<span class="linenr"> 78: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Debian, Arch, etc.) use to inject site-wide behavior into all</span>
+<span class="linenr"> 79: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Emacs sessions.  Use it in personal configs aiming for</span>
+<span class="linenr"> 80: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">reproducibility.</span>
+<span class="linenr"> 81: </span>
+<span class="linenr"> 82: </span>  site-run-file  nil
+<span class="linenr"> 83: </span>)  
+<span class="linenr"> 84: </span>
+<span class="linenr"> 85: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">----------------------------------------------------------------------</span>
+<span class="linenr"> 86: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Set various low-level UI presentation variables for maximum performance.</span>
+<span class="linenr"> 87: </span>
+<span class="linenr"> 88: </span>(<span style="color: #4169e1;">setq</span>
+<span class="linenr"> 89: </span>
+<span class="linenr"> 90: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Prevents rounding errors during font/frame changes. Very useful.</span>
+<span class="linenr"> 91: </span>
+<span class="linenr"> 92: </span>  frame-resize-pixelwise  t
+<span class="linenr"> 93: </span>
+<span class="linenr"> 94: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Resizing the Emacs frame can be a terribly expensive part of</span>
+<span class="linenr"> 95: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">changing the font.  By inhibiting this, we easily halve startup</span>
+<span class="linenr"> 96: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">times with fonts that are larger than the system default.</span>
+<span class="linenr"> 97: </span>  <span style="color: #b22222;">;;</span>
+<span class="linenr"> 98: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Avoids expensive frame resizing during font/theme init. Good for</span>
+<span class="linenr"> 99: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">large fonts or tiling WMs (which I use under Pop_OS! by</span>
+<span class="linenr">100: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">System76).</span>
+<span class="linenr">101: </span>
+<span class="linenr">102: </span>  frame-inhibit-implied-resize  t
+<span class="linenr">103: </span>
+<span class="linenr">104: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Prevents the message that says: "Welcome to GNU Emacs, one</span>
+<span class="linenr">105: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">component of the GNU operating system." that normally appears at</span>
+<span class="linenr">106: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">the top of the *scratch* buffer.</span>
+<span class="linenr">107: </span>
+<span class="linenr">108: </span>  inhibit-startup-message t
+<span class="linenr">109: </span>
+<span class="linenr">110: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Frame customization</span>
+<span class="linenr">111: </span>  default-frame-alist
+<span class="linenr">112: </span>    '((fullscreen . maximized)
+<span class="linenr">113: </span>      (menu-bar-lines . 0)
+<span class="linenr">114: </span>      (tool-bar-lines . 0)
+<span class="linenr">115: </span>      (vertical-scroll-bars . nil)
+<span class="linenr">116: </span>      (bottom-divider-width . 0)
+<span class="linenr">117: </span>      (right-divider-width . 1)
+<span class="linenr">118: </span>      <span style="color: #b22222;">;; </span><span style="color: #b22222;">Uncomment to avoid theme flash:</span>
+<span class="linenr">119: </span>      <span style="color: #b22222;">;; </span><span style="color: #b22222;">(background-color . "#000000")</span>
+<span class="linenr">120: </span>      <span style="color: #b22222;">;; </span><span style="color: #b22222;">(ns-appearance . dark)</span>
+<span class="linenr">121: </span>      <span style="color: #b22222;">;; </span><span style="color: #b22222;">(ns-transparent-titlebar . t)</span>
+<span class="linenr">122: </span>     )
+<span class="linenr">123: </span>
+<span class="linenr">124: </span>  initial-frame-alist  default-frame-alist
+<span class="linenr">125: </span>
+<span class="linenr">126: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">annoyance supressions</span>
+<span class="linenr">127: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">byte-compile-warnings  '(not obsolete)</span>
+<span class="linenr">128: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">warning-suppress-log-types  '((comp) (bytecomp))</span>
+<span class="linenr">129: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">native-comp-async-report-warnings-errors  'silent</span>
+<span class="linenr">130: </span>
+<span class="linenr">131: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Silence message: "For information about GNU Emacs and the GNU system, type C-h C-a."</span>
+<span class="linenr">132: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">inhibit-startup-echo-area-message (user-login-name)</span>
+<span class="linenr">133: </span>)
+<span class="linenr">134: </span>
+<span class="linenr">135: </span>(<span style="color: #4169e1;">setq-default</span>
+<span class="linenr">136: </span>
+<span class="linenr">137: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Avoid flicker or incorrect sizing of child frames</span>
+<span class="linenr">138: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">(e.g. completion popups) under GTK.  `resize-mode` ensures GTK</span>
+<span class="linenr">139: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">resizes them correctly without delays.  Especially helpful in</span>
+<span class="linenr">140: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Wayland, where native resizing behavior differs from X11 and is</span>
+<span class="linenr">141: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">stricter.  It's a no-regret setting under GTK/Wayland.</span>
+<span class="linenr">142: </span>
+<span class="linenr">143: </span>  x-gtk-resize-child-frames  'resize-mode
+<span class="linenr">144: </span>
+<span class="linenr">145: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Control which symbols appear in the left and right fringes of</span>
+<span class="linenr">146: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Emacs windows to indicate things like:</span>
+<span class="linenr">147: </span>  <span style="color: #b22222;">;;</span>
+<span class="linenr">148: </span>  <span style="color: #b22222;">;;  </span><span style="color: #b22222;">- Buffer truncation</span>
+<span class="linenr">149: </span>  <span style="color: #b22222;">;;  </span><span style="color: #b22222;">- Continuation lines (soft-wrapped)</span>
+<span class="linenr">150: </span>  <span style="color: #b22222;">;;  </span><span style="color: #b22222;">- Buffer boundaries</span>
+<span class="linenr">151: </span>  <span style="color: #b22222;">;;  </span><span style="color: #b22222;">- Overlay arrows (e.g. for next-error)</span>
+<span class="linenr">152: </span>  <span style="color: #b22222;">;;  </span><span style="color: #b22222;">- Custom indicators (e.g. for git-gutter, flycheck, etc.)</span>
+<span class="linenr">153: </span>
+<span class="linenr">154: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">fringe-indicator-alist  (assq-delete-all 'truncation fringe-indicator-alist)</span>
+<span class="linenr">155: </span>)
+<span class="linenr">156: </span>
+<span class="linenr">157: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Highly recommended under Wayland/PGTK.  Disables reading X resources</span>
+<span class="linenr">158: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">(e.g., .Xresources), which are irrelevant and possibly harmful</span>
+<span class="linenr">159: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">under Wayland.  Prevents color/font overrides that conflict with your</span>
+<span class="linenr">160: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Emacs config.  Also disables xrdb-related hacks from old X11 setups.</span>
+<span class="linenr">161: </span>
+<span class="linenr">162: </span>(advice-add #'x-apply-session-resources <span style="color: #00008b;">:override</span> #'ignore)
+<span class="linenr">163: </span>
+<span class="linenr">164: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">----------------------------------------------------------------------</span>
+<span class="linenr">165: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Bootstrap straight.el package system from the public Internet</span>
+<span class="linenr">166: </span><span style="color: #b22222;">;;   </span><span style="color: #b22222;">https://github.com/radian-software/straight.el</span>
+<span class="linenr">167: </span>
+<span class="linenr">168: </span>(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">my/online-p</span> ()
+<span class="linenr">169: </span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">test whether network is up before using it to download stuff</span>
+<span class="linenr">170: </span>  (<span style="color: #4169e1;">condition-case</span> nil
+<span class="linenr">171: </span>      (ignore (getaddrinfo <span style="color: #bc8f8f;">"github.com"</span> <span style="color: #bc8f8f;">"https"</span> nil 'numeric))
+<span class="linenr">172: </span>    (<span style="color: #ff0000; font-weight: bold;">error</span> nil)))
+<span class="linenr">173: </span>
+<span class="linenr">174: </span>(<span style="color: #4169e1;">unless</span> (my/online-p)
+<span class="linenr">175: </span>  (message <span style="color: #bc8f8f;">"Emacs sees no network; skipping Straight recipe updates for now"</span>)
+<span class="linenr">176: </span>  (<span style="color: #4169e1;">setq</span> straight-check-for-modifications 'never))
+<span class="linenr">177: </span>
+<span class="linenr">178: </span>(<span style="color: #4169e1;">defvar</span> <span style="color: #b8860b;">bootstrap-version</span>)
+<span class="linenr">179: </span>(<span style="color: #4169e1;">let</span> ((bootstrap-file
+<span class="linenr">180: </span>       (expand-file-name <span style="color: #bc8f8f;">"straight/repos/straight.el/bootstrap.el"</span>
+<span class="linenr">181: </span>                         user-emacs-directory))
+<span class="linenr">182: </span>      (bootstrap-version 6))
+<span class="linenr">183: </span>  (<span style="color: #4169e1;">unless</span> (file-exists-p bootstrap-file)
+<span class="linenr">184: </span>    (<span style="color: #4169e1;">with-current-buffer</span>
+<span class="linenr">185: </span>        (url-retrieve-synchronously
+<span class="linenr">186: </span>         <span style="color: #bc8f8f;">"https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"</span>
+<span class="linenr">187: </span>         'silent 'inhibit-cookies)
+<span class="linenr">188: </span>      (goto-char (point-max))
+<span class="linenr">189: </span>      (eval-print-last-sexp)))
+<span class="linenr">190: </span>  (load bootstrap-file nil 'nomessage))
+<span class="linenr">191: </span>
+<span class="linenr">192: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">----------------------------------------------------------------------</span>
+<span class="linenr">193: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Declare repos to pull from, and configure use-package to use straight.el</span>
+<span class="linenr">194: </span>
+<span class="linenr">195: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Define preferred archive sources</span>
+<span class="linenr">196: </span>(<span style="color: #4169e1;">setq</span> straight-recipe-repositories
+<span class="linenr">197: </span>      '(gnu-elpa-mirror nongnu-elpa melpa))
+<span class="linenr">198: </span>
+<span class="linenr">199: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">NOTE: MELPA-stable is omitted from the above list as very few</span>
+<span class="linenr">200: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">people use MELPA&#8209;stable with straight, because you can pin any</span>
+<span class="linenr">201: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">package to a commit instead.</span>
+<span class="linenr">202: </span>
+<span class="linenr">203: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Defer recipe refresh until idle (lowers startup cost)</span>
+<span class="linenr">204: </span>(run-with-idle-timer 5 nil #'straight-pull-recipe-repositories)
+<span class="linenr">205: </span>
+<span class="linenr">206: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Make use-package rely on straight.el _by default_</span>
+<span class="linenr">207: </span>(<span style="color: #4169e1;">setq</span> straight-use-package-by-default t)
+<span class="linenr">208: </span>
+<span class="linenr">209: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Enable `use-package`'s :ensure, :init, :config etc.</span>
+<span class="linenr">210: </span>(<span style="color: #4169e1;">setq</span> use-package-enable-imenu-support t)
+<span class="linenr">211: </span>
+<span class="linenr">212: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Install use-package using straight.el, and make sure it's available to use in your config.</span>
+<span class="linenr">213: </span>(straight-use-package 'use-package)
+<span class="linenr">214: </span>
+<span class="linenr">215: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">----------------------------------------------------------------------</span>
+<span class="linenr">216: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Install the org package early so I can write the rest of my Emacs</span>
+<span class="linenr">217: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">configuration in org-mode for easier documenting and then tangle</span>
+<span class="linenr">218: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">that configuration into .el files for compilation and loading into</span>
+<span class="linenr">219: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Emacs.</span>
+<span class="linenr">220: </span>
+<span class="linenr">221: </span>(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">org-macs</span>)
+<span class="linenr">222: </span>
+<span class="linenr">223: </span>(<span style="color: #4169e1;">use-package</span> org  <span style="color: #b22222;">;; </span><span style="color: #b22222;">I WANT TO USE THE ORG PACKAGE SHIPPED WITH EMACS</span>
+<span class="linenr">224: </span>  <span style="color: #00008b;">:straight</span> (<span style="color: #00008b;">:type</span> built-in)) <span style="color: #b22222;">;; </span><span style="color: #b22222;">or omit this line to use org from Git</span>
+<span class="linenr">225: </span>
+<span class="linenr">226: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">----------------------------------------------------------------------</span>
+<span class="linenr">227: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Load the rest of my Emacs Configuration from my config.org file.</span>
+<span class="linenr">228: </span>
+<span class="linenr">229: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Load my tangle system</span>
+<span class="linenr">230: </span>(add-to-list 'load-path (expand-file-name <span style="color: #bc8f8f;">"lisp/"</span> user-emacs-directory))
+<span class="linenr">231: </span>(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">init-tangle</span>)
+<span class="linenr">232: </span>(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">init-audit</span>)
+<span class="linenr">233: </span>
+<span class="linenr">234: </span><span style="color: #b22222;">;;;; </span><span style="color: #b22222;">;; Run my audit check Emacs is idle</span>
+<span class="linenr">235: </span><span style="color: #b22222;">;;;; </span><span style="color: #b22222;">(run-with-idle-timer</span>
+<span class="linenr">236: </span><span style="color: #b22222;">;;;;  </span><span style="color: #b22222;">10 nil</span>
+<span class="linenr">237: </span><span style="color: #b22222;">;;;;  </span><span style="color: #b22222;">(lambda ()</span>
+<span class="linenr">238: </span><span style="color: #b22222;">;;;;    </span><span style="color: #b22222;">(init-audit-use-package-missing (expand-file-name "lisp/" user-emacs-directory)</span>
+<span class="linenr">239: </span><span style="color: #b22222;">;;;; </span><span style="color: #b22222;">"~/.emacs.d/config.el")))  ;; variable: init-tangle-output</span>
+<span class="linenr">240: </span>
+<span class="linenr">241: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">Ensure the export backend `</span><span style="color: #5f9ea0;">ox-org</span><span style="color: #b22222;">' is loaded so we can merge my config/*.org</span>
+<span class="linenr">242: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">pieces together and export the result into one common file.</span>
+<span class="linenr">243: </span>(<span style="color: #4169e1;">setq</span> org-export-backends '(ascii html icalendar latex odt org))
+<span class="linenr">244: </span>
+<span class="linenr">245: </span><span style="color: #b22222;">;; </span><span style="color: #b22222;">After initialization completes, tangle and load config.org.</span>
+<span class="linenr">246: </span>(add-hook 'after-init-hook #'init-tangle-config)
+<span class="linenr">247: </span>
+<span class="linenr">248: </span>
+<span class="linenr">249: </span>(message <span style="color: #bc8f8f;">"init.el done (%.2fs)"</span>
+<span class="linenr">250: </span>         (float-time (time-subtract (current-time) before-init-time)))
+<span class="linenr">251: </span>
+<span class="linenr">252: </span><span style="color: #b22222;">;;; </span><span style="color: #b22222;">init.el ends here</span>
+</pre>
+</div>
+
+
+<p>
+### CAPTION: ~/.emacs.d/init.el
+### INCLUDE: "init.el" example emacs-lisp
+</p>
+</div>
+
+<div id="outline-container-org2cc21f6" class="outline-4">
+<h4 id="org2cc21f6"><span class="section-number-4">6.4.1.</span> About <code>use-package</code> Emacs Lisp Macro To More Efficiently Organize Package Settings</h4>
+<div class="outline-text-4" id="text-6-4-1">
+<p>
+There are many ways to provide package settings, from raw Elisp to tidy macros.
+The github:<a href="https://github.com/jwiegley/use-package">use-package</a> Elisp macro allows one to isolate package configuration
+in your Emacs configuration files in a way that is both performance-oriented
+and tidy.
+</p>
+
+<ul class="org-ul">
+<li><a href="https://www.masteringemacs.org/article/spotlight-use-package-a-declarative-configuration-tool">Spotlight: use-package, a declarative configuration tool - Mastering Emacs</a></li>
+<li><a href="http://cachestocaches.com/2015/8/getting-started-use-package/">Getting Started with Use-Package</a></li>
+</ul>
+
+
+<p>
+<a href="https://github.com/emacs-straight/use-package.git">https://github.com/emacs-straight/use-package.git</a>   OFFICIAL ONE
+</p>
+
+<p>
+The <i>straight-use-package-by-default</i> variable in straight.el is a convenience
+setting that allows you to simplify your use-package declarations.  When it is
+enabled (set to t), straight.el automatically manages packages declared via
+use-package without requiring you to explicitly specify :straight t for each
+package.
+</p>
+
+
+<p>
+Use of 'straight' for loading packages is more popular, more robust and better
+at dependency management than 'quelpa'.
+</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="outline-container-org4edffbf" class="outline-3">
+<h3 id="org4edffbf"><span class="section-number-3">6.5.</span> Load helper function for conditional tangling</h3>
+<div class="outline-text-3" id="text-6-5">
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 2: </span>Refresh-Tangle-Load Function</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">xan/load-org-if-exists</span> (file)
+  <span style="color: #bc8f8f;">"Tangle and load FILE if it exists."</span>
+  (<span style="color: #4169e1;">let*</span> ((org-path (expand-file-name file user-emacs-directory))
+         (base-name (file-name-base file))
+         (tangle-path (expand-file-name (concat base-name <span style="color: #bc8f8f;">".el"</span>)
+                                        (expand-file-name <span style="color: #bc8f8f;">"cache/tangled/"</span> user-emacs-directory))))
+    (<span style="color: #4169e1;">if</span> (file-exists-p org-path)
+        (<span style="color: #4169e1;">progn</span>
+          (make-directory (file-name-directory tangle-path) t)
+          (message <span style="color: #bc8f8f;">"[tangle] Tangling %s &#8594; %s"</span> file tangle-path)
+          (<span style="color: #4169e1;">org-element-with-disabled-cache</span>  <span style="color: #b22222;">;; </span><span style="color: #b22222;">in Org v9.7.x many cache issues are still unresolved</span>
+            (org-babel-tangle-file org-path tangle-path <span style="color: #bc8f8f;">"emacs-lisp"</span>))
+          (load-file tangle-path))
+      (message <span style="color: #bc8f8f;">"[tangle] Skipping missing file: %s"</span> file))))
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga6330cf" class="outline-2">
+<h2 id="orga6330cf"><span class="section-number-2">7.</span> Phase 00 – Core system and helper macros</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+Here’s what makes sense to put in 00-core-boot.org after startup has
+begun but before UI and mode config begins:
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 3: </span>Verify what org-mode I'm running</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">xan/check-org-version-min</span> (min-version)
+  <span style="color: #bc8f8f;">"Check Org version is &gt;= MIN-VERSION."</span>
+  (<span style="color: #4169e1;">let*</span> ((org-path (find-library-name <span style="color: #bc8f8f;">"org"</span>))
+         (actual-version (org-version))) <span style="color: #b22222;">;; </span><span style="color: #b22222;">&#8592; no second arg</span>
+    (message <span style="color: #bc8f8f;">"[org-check] Org version: %s"</span> actual-version)
+    (message <span style="color: #bc8f8f;">"[org-check] Org library path: %s"</span> org-path)
+    (<span style="color: #4169e1;">cond</span>
+     ((version&lt; actual-version min-version)
+      (<span style="color: #ff0000; font-weight: bold;">warn</span> <span style="color: #bc8f8f;">"[org-check] &#9940; Org version too old! Require &#8805; %s, but got %s"</span>
+            min-version actual-version))
+     ((string-match-p <span style="color: #bc8f8f;">"/straight/repos/org-mode/"</span> org-path)
+      (message <span style="color: #bc8f8f;">"[org-check] &#9989; Org is installed via straight.el (Git version)."</span>))
+     ((string-match-p <span style="color: #bc8f8f;">"/emacs/[0-9.]+/lisp/org/"</span> org-path)
+      (message <span style="color: #bc8f8f;">"[org-check] &#9989; Org is the built-in Emacs version."</span>))
+     (t
+      (<span style="color: #ff0000; font-weight: bold;">warn</span> <span style="color: #bc8f8f;">"[org-check] &#9888; Org source is non-standard: %s"</span> org-path)))))
+
+  <span style="color: #b22222;">;; </span><span style="color: #b22222;">Automatically run this check after Org is loaded</span>
+  (<span style="color: #4169e1;">with-eval-after-load</span> 'org
+    (xan/check-org-version-min <span style="color: #bc8f8f;">"9.7.11"</span>))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 4: </span>Report Improperly Terminated Variable Blocks</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">defun</span> <span style="color: #0000ff;">xan/check-org-local-variable-blocks</span> (<span style="color: #228b22;">&amp;optional</span> dir)
+  <span style="color: #bc8f8f;">"Check for org files in DIR (default: user-emacs-directory) with invalid Local Variables blocks."</span>
+  (<span style="color: #4169e1;">let*</span> ((root (<span style="color: #4169e1;">or</span> dir user-emacs-directory))
+         (org-files (directory-files-recursively root <span style="color: #bc8f8f;">"\\.org$"</span>))
+         (bad-files '()))
+    (<span style="color: #4169e1;">dolist</span> (file org-files)
+      (<span style="color: #4169e1;">with-temp-buffer</span>
+        (insert-file-contents file)
+        (goto-char (point-min))
+        (<span style="color: #4169e1;">when</span> (re-search-forward <span style="color: #bc8f8f;">"^[#;]+[ \t]*Local Variables&#58;"</span> nil t)
+          (<span style="color: #4169e1;">unless</span> (re-search-forward <span style="color: #bc8f8f;">"^[#;]+[ \t]*End:"</span> nil t)
+            (<span style="color: #4169e1;">push</span> file bad-files)))))
+    (<span style="color: #4169e1;">when</span> bad-files
+      (message <span style="color: #bc8f8f;">"&#9888; Org files with malformed Local Variables block:"</span>)
+      (<span style="color: #4169e1;">dolist</span> (f (reverse bad-files))
+        (message <span style="color: #bc8f8f;">" - %s"</span> f)))
+    bad-files))
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(add-hook 'emacs-startup-hook
+          (<span style="color: #4169e1;">lambda</span> ()
+            (xan/check-org-local-variable-blocks <span style="color: #bc8f8f;">"~/.emacs.d/"</span>)))
+</pre>
+</div>
+</div>
+
+<div id="outline-container-org1a372bd" class="outline-3">
+<h3 id="org1a372bd"><span class="section-number-3">7.1.</span> Directory Setup for a More Organized ~/.emacs.d/ Directory</h3>
+<div class="outline-text-3" id="text-7-1">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">defconst</span> <span style="color: #b8860b;">xan/cache-dir</span> (expand-file-name <span style="color: #bc8f8f;">"cache/"</span> user-emacs-directory))
+(<span style="color: #4169e1;">defconst</span> <span style="color: #b8860b;">xan/data-dir</span>  (expand-file-name <span style="color: #bc8f8f;">"data/"</span>  user-emacs-directory))
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">Create them if they don't exist</span>
+(make-directory xan/cache-dir t)
+(make-directory xan/data-dir t)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdaf69fa" class="outline-3">
+<h3 id="orgdaf69fa"><span class="section-number-3">7.2.</span> Redirect Individual Features</h3>
+<div class="outline-text-3" id="text-7-2">
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 5: </span>places.el (cursor locations)</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> save-place-file (expand-file-name <span style="color: #bc8f8f;">"places"</span> xan/data-dir))
+(save-place-mode 1)
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 6: </span>bookmark.el</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> bookmark-default-file (expand-file-name <span style="color: #bc8f8f;">"bookmarks"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 7: </span>recentf</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> recentf-save-file (expand-file-name <span style="color: #bc8f8f;">"recentf"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 8: </span>tramp</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> tramp-persistency-file-name (expand-file-name <span style="color: #bc8f8f;">"tramp"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 9: </span>nov.el (ePub reader)</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> nov-save-place-file (expand-file-name <span style="color: #bc8f8f;">"nov-places"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 10: </span>transient (magic, etc.)</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> transient-history-file     (expand-file-name <span style="color: #bc8f8f;">"transient/history.el"</span> xan/data-dir)
+      transient-levels-file      (expand-file-name <span style="color: #bc8f8f;">"transient/levels.el"</span> xan/data-dir)
+      transient-values-file      (expand-file-name <span style="color: #bc8f8f;">"transient/values.el"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 11: </span>eshell history and data</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> eshell-directory-name (expand-file-name <span style="color: #bc8f8f;">"eshell/"</span> xan/cache-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 12: </span>eln-cache</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">when</span> (boundp 'native-comp-eln-load-path)
+  (startup-redirect-eln-cache (expand-file-name <span style="color: #bc8f8f;">"eln-cache/"</span> xan/cache-dir)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 13: </span>auto-save and backup files</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> backup-directory-alist `((<span style="color: #bc8f8f;">"."</span> . ,(expand-file-name <span style="color: #bc8f8f;">"backups/"</span> xan/cache-dir)))
+      auto-save-file-name-transforms `((<span style="color: #bc8f8f;">".*"</span> ,(expand-file-name <span style="color: #bc8f8f;">"auto-save/"</span> xan/cache-dir) t)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 14: </span>org-babel library</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> org-babel-library-of-babel-file (expand-file-name <span style="color: #bc8f8f;">"org-babel-library.org"</span> xan/data-dir))
+</pre>
+</div>
+
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 15: </span>Auto-save list</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> auto-save-list-file-prefix (expand-file-name <span style="color: #bc8f8f;">"auto-save-list/#"</span> xan/cache-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 16: </span>Org clock persistence</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> org-clock-persist-file (expand-file-name <span style="color: #bc8f8f;">"org-clock-save.el"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 17: </span>Custom settings file</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> custom-file (expand-file-name <span style="color: #bc8f8f;">"custom-settings.el"</span> xan/data-dir))
+(<span style="color: #4169e1;">when</span> (file-exists-p custom-file)
+  (load custom-file 'noerror))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 18: </span>Request.el</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> request-storage-directory (expand-file-name <span style="color: #bc8f8f;">"request/"</span> xan/cache-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 19: </span>yasnippet</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> yas-snippet-dirs `(,(expand-file-name <span style="color: #bc8f8f;">"snippets/"</span> xan/data-dir)))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 20: </span>cookies/history</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> url-cookie-file (expand-file-name <span style="color: #bc8f8f;">"url/cookies"</span> xan/data-dir)
+      url-history-file (expand-file-name <span style="color: #bc8f8f;">"url/history"</span> xan/data-dir))
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 21: </span>Persistent undo</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> undo-tree-history-directory-alist
+      `((<span style="color: #bc8f8f;">"."</span> . ,(expand-file-name <span style="color: #bc8f8f;">"undo/"</span> xan/cache-dir))))
+(<span style="color: #4169e1;">setq</span> undo-tree-auto-save-history t)
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 22: </span>chatgpt/ and chatgpt-shell.el (from gpt.el or chatgpt-shell)</label><pre class="src src-emacs-lisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">GPT-related package paths</span>
+(<span style="color: #4169e1;">setq</span> chatgpt-shell-history-directory (expand-file-name <span style="color: #bc8f8f;">"chatgpt/"</span> xan/data-dir)
+      chatgpt-shell-configuration-file (expand-file-name <span style="color: #bc8f8f;">"chatgpt-shell.el"</span> xan/data-dir))
+
+(make-directory chatgpt-shell-history-directory t)
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 23: </span>.org-id-locations and .org-generic-id-locations</label><pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> org-id-locations-file (expand-file-name <span style="color: #bc8f8f;">"org-id-locations"</span> xan/data-dir))
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">Optional: if using org-generic-id (less common)</span>
+(<span style="color: #4169e1;">setq</span> org-generic-id-locations-file (expand-file-name <span style="color: #bc8f8f;">"org-generic-id-locations"</span> xan/data-dir))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbf5f617" class="outline-3">
+<h3 id="orgbf5f617"><span class="section-number-3">7.3.</span> Foundational behaviors that affect how Emacs runs and loads, before you load modes or packages.</h3>
+<div class="outline-text-3" id="text-7-3">
+</div>
+<div id="outline-container-org1a6cf59" class="outline-4">
+<h4 id="org1a6cf59"><span class="section-number-4">7.3.1.</span> gcmh – Garbage collection tuning</h4>
+<div class="outline-text-4" id="text-7-3-1">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">use-package</span> gcmh
+  <span style="color: #00008b;">:ensure</span> t
+  <span style="color: #00008b;">:diminish</span>
+  <span style="color: #00008b;">:init</span> (<span style="color: #4169e1;">setq</span> gc-cons-threshold (* 800 1024))
+  <span style="color: #00008b;">:hook</span> (emacs-startup . gcmh-mode))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org5b20531" class="outline-4">
+<h4 id="org5b20531"><span class="section-number-4">7.3.2.</span> benchmark-init – Measures startup time</h4>
+<div class="outline-text-4" id="text-7-3-2">
+<p>
+<a href="https://github.com/dholm/benchmark-init-el">benchmark-init</a> is a simple package that may or may not carry its weight versus
+<code>usepackage-compute-statistics</code>. Run <code>benchmark-init/show-durations-tabulated</code> to
+check this one out.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">use-package</span> benchmark-init
+  <span style="color: #00008b;">:ensure</span> t
+  <span style="color: #00008b;">:demand</span> t
+  <span style="color: #00008b;">:hook</span> (after-init . benchmark-init/deactivate)
+  <span style="color: #00008b;">:config</span>
+  (benchmark-init/activate))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org8f3a0c7" class="outline-4">
+<h4 id="org8f3a0c7"><span class="section-number-4">7.3.3.</span> gnutls – TLS security for downloading packages or HTTPS communication</h4>
+<div class="outline-text-4" id="text-7-3-3">
+<p>
+For the love of all that is holy, do not continue with untrusted connections!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">use-package</span> gnutls
+  <span style="color: #00008b;">:defer</span> t
+  <span style="color: #00008b;">:custom</span>
+  (gnutls-verify-error t))
+</pre>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgaad1b79" class="outline-4">
+<h4 id="orgaad1b79"><span class="section-number-4">7.3.4.</span> diminish – Minor mode modeline cleanup</h4>
+<div class="outline-text-4" id="text-7-3-4">
+<p>
+Add the <code>diminish</code> Plugin to <code>use-package</code> to Hide Selected Minor Modes
+</p>
+
+<p>
+Loading github:<a href="https://github.com/myrjola/diminish.el">diminish</a> Elisp package causes <code>use-package</code> to enable a
+configuration keyword <code>:diminish &lt;SYMBOL&gt;</code> in your <code>use-package</code> invocation.
+This keyword empowers you to remove or change minor mode strings in your
+mode-line.  Such diminished modes are minor modes with no modeline display,
+because we don't want to be reminded of it.
+</p>
+
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">use-package</span> diminish
+  <span style="color: #00008b;">:straight</span> t
+)
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">(use-package diminish)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(diminish 'auto-fill-function)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9f28726" class="outline-4">
+<h4 id="org9f28726"><span class="section-number-4">7.3.5.</span> mouse-wheel-scroll-amount and mwheel – Mouse behavior tweaks, global defaults</h4>
+<div class="outline-text-4" id="text-7-3-5">
+<p>
+ERROR: package mwheel is built-in and should not be loaded via use-package.
+</p>
+
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> mouse-wheel-scroll-amount
+  '(
+     2                  <span style="color: #b22222;">;; </span><span style="color: #b22222;">#lines to normally scroll by</span>
+     ((shift) . 1)      <span style="color: #b22222;">;; </span><span style="color: #b22222;">#lines when shift key pressed</span>
+     ((control) . nil)  <span style="color: #b22222;">;; </span><span style="color: #b22222;">full-screen when control key pressed</span>
+   )
+)
+(<span style="color: #4169e1;">setq</span> mouse-wheel-progressive-speed
+  nil) <span style="color: #b22222;">;; </span><span style="color: #b22222;">t adjusts faster, nil keeps it the same</span>
+</pre>
+</div>
+
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">use-package</span> mwheel
+ <span style="color: #00008b;">:straight</span> nil  <span style="color: #b22222;">; </span><span style="color: #b22222;">Ensure we use the built-in version and not download it</span>
+ <span style="color: #00008b;">:custom</span>
+   (mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+   (mouse-wheel-progressive-speed nil)
+   (mouse-wheel-follow-mouse 't)
+ <span style="color: #00008b;">:config</span>
+   (<span style="color: #4169e1;">setq</span> scroll-step 1)
+   (<span style="color: #4169e1;">setq</span> scroll-conservatively 1000)
+)
+</pre>
+</div>
+
+<p>
+<a href="https://github.com/io12/good-scroll.el">https://github.com/io12/good-scroll.el</a>
+</p>
+
+<p>
+hook &lt;wheel-up&gt; &lt;wheel-down&gt; to the correct good-scroll-up
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(global-set-key [next]   #'good-scroll-up-full-screen)
+(global-set-key [prior]  #'good-scroll-down-full-screen)
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgd46fbcc" class="outline-3">
+<h3 id="orgd46fbcc"><span class="section-number-3">7.4.</span> Additional Small Configuration File</h3>
+<div class="outline-text-3" id="text-7-4">
+</div>
+<div id="outline-container-orga35c9c2" class="outline-4">
+<h4 id="orga35c9c2"><span class="section-number-4">7.4.1.</span> Place for Small Automatic Configuration Settings</h4>
+<div class="outline-text-4" id="text-7-4-1">
+<p>
+Emacs likes to write small tidbits of manual configuration into an .el file so
+I use a small file that I never look into, to keep it separate from my
+<code>config.org</code>.  It also contains my private information like passwords.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> custom-file (expand-file-name <span style="color: #bc8f8f;">"custom-settings.el"</span> xan/data-dir))
+(<span style="color: #4169e1;">when</span> (file-exists-p custom-file)
+  (load custom-file))
+</pre>
+</div>
+<div class="org-src-container">
+<pre class="src src-emacs-lisp"><span style="color: #b22222;">;;; </span><span style="color: #b22222;">config.el --- Tangled master config  -*- lexical-binding: t -*-</span>
+</pre>
+</div>
+
+<p>
+Here's a solid foundation — only include logic that’s secure and environment-specific, or needed before packages use them.
+Isolate sensitive behaviors like GPG, auth sources, secret file locations, and anything tied to credentials.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge7be057" class="outline-3">
+<h3 id="orge7be057"><span class="section-number-3">7.5.</span> Auth Sources</h3>
+<div class="outline-text-3" id="text-7-5">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">setq</span> auth-sources
+      `(,(expand-file-name <span style="color: #bc8f8f;">"authinfo.gpg"</span> xan/data-dir)
+        <span style="color: #bc8f8f;">"~/.authinfo.gpg"</span> <span style="color: #bc8f8f;">"~/.authinfo"</span>))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1da6fe9" class="outline-3">
+<h3 id="org1da6fe9"><span class="section-number-3">7.6.</span> GPG/epa Configuration</h3>
+<div class="outline-text-3" id="text-7-6">
+<p>
+This lets you input GPG passphrases in Emacs minibuffer (or silently if agent is set up).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(<span style="color: #4169e1;">require</span> '<span style="color: #5f9ea0;">epa-file</span>)
+(epa-file-enable)
+
+(<span style="color: #4169e1;">setq</span> epg-pinentry-mode 'loopback
+      epa-file-cache-passphrase-for-symmetric-encryption t
+      epa-file-encrypt-to '(<span style="color: #bc8f8f;">"your@email.com"</span>) <span style="color: #b22222;">;; </span><span style="color: #b22222;">if you use encryption targets</span>
+)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6a5be60" class="outline-3">
+<h3 id="org6a5be60"><span class="section-number-3">7.7.</span> Load Optional Secrets Files</h3>
+<div class="outline-text-3" id="text-7-7">
+<p>
+If you have a file with secrets (not committed), then in data/secrets.el, you
+can define tokens, passwords, etc. (outside version control).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-emacss-lisp">(defconst jlr/secrets-file (expand-file-name "secrets.el" xan/data-dir))
+(when (file-readable-p xan/secrets-file)
+  (load jlr/secrets-file))
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org0487cc9" class="outline-3">
+<h3 id="org0487cc9"><span class="section-number-3">7.8.</span> Optional Vault/GPG agent settings</h3>
+<div class="outline-text-3" id="text-7-8">
+<p>
+If you use gpg-agent, you can remind Emacs where the socket is:
+</p>
+
+<p>
+#+BEGIN_SRC emacs-lisp
+  (setenv "GPG_AGENT_INFO" nil) ;; let gpg-agent manage itself in modern setups
+#END_SRC
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org30676a8" class="outline-2">
+<h2 id="org30676a8"><span class="section-number-2">8.</span> Phase 10 – UI and input system</h2>
+<div class="outline-text-2" id="text-8">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(xan/load-org-if-exists <span style="color: #bc8f8f;">"10-ui-frame-appearance.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"15-ui-modeline-input.org"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc7201d2" class="outline-2">
+<h2 id="orgc7201d2"><span class="section-number-2">9.</span> Phase 20 – Global behavior and editing</h2>
+<div class="outline-text-2" id="text-9">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(xan/load-org-if-exists <span style="color: #bc8f8f;">"20-keybindings-global.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"25-editor-behavior.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"30-core-behavior-tweaks.org"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9efb6cb" class="outline-2">
+<h2 id="org9efb6cb"><span class="section-number-2">10.</span> Phase 40 – Programming environment</h2>
+<div class="outline-text-2" id="text-10">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(xan/load-org-if-exists <span style="color: #bc8f8f;">"40-prog-python.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"45-prog-common.org"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org6cd311b" class="outline-2">
+<h2 id="org6cd311b"><span class="section-number-2">11.</span> Phase 50 – Org-mode environment</h2>
+<div class="outline-text-2" id="text-11">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(xan/load-org-if-exists <span style="color: #bc8f8f;">"50-org-core.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"51-org-capture.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"52-org-refile-archive.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"53-org-links-export.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"54-org-tasks.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"55-org-ui.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"59-org-extensions.org"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgead82f9" class="outline-2">
+<h2 id="orgead82f9"><span class="section-number-2">12.</span> Phase 60 – Personal tooling</h2>
+<div class="outline-text-2" id="text-12">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(xan/load-org-if-exists <span style="color: #bc8f8f;">"60-ai-tools.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"65-writing-knowledge.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"70-communication-email.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"75-web-editing.org"</span>)
+(xan/load-org-if-exists <span style="color: #bc8f8f;">"80-project-vc.org"</span>)
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf0448ad" class="outline-2">
+<h2 id="orgf0448ad"><span class="section-number-2">13.</span> Final – Private overrides</h2>
+<div class="outline-text-2" id="text-13">
+<div class="org-src-container">
+<pre class="src src-emacs-lisp">(xan/load-org-if-exists <span style="color: #bc8f8f;">"99-local-overrides.org"</span>)
+</pre>
+</div>
+
+<ul class="org-ul">
+<li class="off"><code>[&#xa0;]</code> proper indentation in org-mode</li>
+<li class="off"><code>[&#xa0;]</code> red trailing whitespace</li>
+<li class="off"><code>[&#xa0;]</code> faces for TODOs</li>
+<li class="off"><code>[&#xa0;]</code> org-element-at-point: Symbol’s function definition is void: org-element&#x2013;cache-active-p</li>
+<li class="off"><code>[&#xa0;]</code> ability to mark TODOs done</li>
+<li class="off"><code>[&#xa0;]</code> a config file just for org-babel stuff</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>
