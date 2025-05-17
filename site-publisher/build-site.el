@@ -47,8 +47,8 @@
       org-src-preserve-indentation nil  ; ensure consistent indentation
       org-src-tab-acts-natively t
       org-html-number-lines t           ; 👈 enable line numbers
-      org-html-htmlize-output-type 'css  ; embed styles in exported HTML
-      org-html-htmlize-font-prefix "org-" ;; clean class names
+      org-html-htmlize-output-type 'inline-css  ; embed styles in exported HTML
+      org-html-htmlize-font-prefix "org-" ; clean class names
 )
 
 ;; Set your identity
@@ -125,12 +125,17 @@ Supported keywords:
     (let ((default-directory (file-name-directory source-org)))
       (save-excursion
         (xan/expand-include-src-directives))
+      ;; Save the expanded .org for debugging
+      (let ((expanded-path (expand-file-name "expanded-config.org" output-dir)))
+        (write-region (point-min) (point-max) expanded-path nil 'silent)
+        (message "[build-site] 💾 Wrote expanded Org to: %s" expanded-path))
+      ;; Export to HTML
       (org-export-to-file 'html output-html nil nil nil nil
                           '(:with-toc t
                             :section-numbers nil
                             :html-validation-link nil
                             :html-postamble nil
-                            :html-head "<meta charset='utf-8' />"))))
+                            :html-head "<meta charset='utf-8' /><style>.linenr{color:#888;font-family:monospace;padding-right:1em;}</style>"))))
   (message "[build-site] ✅ config.org published to %s" output-html)
 
   (defun xan/publish-and-log-file (plist file pub-dir)
