@@ -99,22 +99,17 @@ Supported keywords:
            ((string-match-p "^tangle=\"\\(yes\\|no\\)\"$" tok)
             (setq tangle (substring tok (length "tangle=\"") -1)))
            ((string-match-p "^lineno=\"\\(yes\\|no\\)\"$" tok)
-            (setq lineno (substring tok (length "lineno=\"") -1)))
+           (setq lineno (substring tok (length "lineno=\"") -1)))
            ((string-match-p "^caption=\"\\([^\"]*\\)\"$" tok)
             (setq caption
                   (substring tok (length "caption=\"") -1)))
            ((not (string-match-p "=" tok))
             (setq lang tok))))
 
-        ;; build header args
-        (setq header
-              (string-join
-               (delq nil
-                     (list
-                      (format ":tangle %s" tangle)
-                      (when (string= lineno "yes")
-                        ":number-lines")))
-               " "))
+        ;; build switches+header-args: use “-n” switch for line-numbers
+        (let ((switches (when (string= lineno "yes") "-n"))
+              (args     (format ":tangle %s" tangle)))
+          (setq header (string-join (delq nil (list switches args)) " ")))
 
         ;; read file or emit error
         (setq code
