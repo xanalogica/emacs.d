@@ -345,8 +345,7 @@ the Emacs startup, such as window-setup-hook or tty-setup-hook. See Hooks.
 For more information on the early init file, see Init File in The Emacs Lisp
 Reference Manual.
 
-#+CAPTION: ~/.emacs.d/early-init.el
-#+INCLUDE: "early-init.el" example emacs-lisp
+#+INCLUDE_SRC: "early-init.el" caption="~/.emacs.d/early-init.el" tangle="no"
 
 ;;;; This file is loaded before the package system and GUI is initialized, so
 ;;;; in it you can customize variables that affect the package initialization
@@ -411,9 +410,6 @@ default).
 
 #+INCLUDE_SRC: "init.el" caption="~/.emacs.d/init.el" tangle="no"
 
-### CAPTION: ~/.emacs.d/init.el
-### INCLUDE: "init.el" example emacs-lisp
-
 *** About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
 
 There are many ways to provide package settings, from raw Elisp to tidy macros.
@@ -476,12 +472,15 @@ at dependency management than 'quelpa'.
 Here’s what makes sense to put in 00-core-boot.org after startup has
 begun but before UI and mode config begins:
 
-#+BEGIN_SRC emacs-lisp :exports none
-(xan/load-org-if-exists "00-core-boot.org")
-(xan/load-org-if-exists "05-security-secrets.org")
-#+END_SRC
+#+INCLUDE:SRC "00-core-boot.org" caption="~/.emacs.d/00-core-boot.org" tangle="yes"
 
-#+INCLUDE: "00-core-boot.org"
+### #+BEGIN_SRC emacs-lisp :exports none
+### (xan/load-org-if-exists "00-core-boot.org")
+### (xan/load-org-if-exists "05-security-secrets.org")
+### #+END_SRC
+
+### INCLUDE: "00-core-boot.org"
+
 #+INCLUDE: "05-security-secrets.org"
 
 * Phase 10 – UI and input system
