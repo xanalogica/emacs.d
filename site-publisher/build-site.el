@@ -55,57 +55,57 @@
 (setq user-full-name "Xanalogica")
 (setq user-mail-address "xanalogica@gmail.com")
 
-
 (defun xan/expand-include-src-directives ()
-  "Expand custom #+INCLUDE_SRC directives into org-mode source blocks.
+  "Replace all #+INCLUDE_SRC: directives in buffer with expanded source blocks.
 
-Recognized directive format:
-  #+INCLUDE_SRC: \"FILENAME\" [LANGUAGE] [keyword=\"value\" ...]
-
-Supported keywords (all optional):
-  - caption=\"string\"       → Adds a #+CAPTION line
-  - tangle=\"yes\" or \"no\"   → Controls :tangle (default = \"yes\")
-  - lineno=\"yes\" or \"no\"   → Adds :number-lines if \"yes\" (default = \"yes\")
+Each directive should look like:
+  #+INCLUDE_SRC: \"filename\" [language] [keyword=\"value\" ...]
 
 Defaults:
-  - LANGUAGE: emacs-lisp
-  - tangle: yes
-  - lineno: yes
+  - language = emacs-lisp
+  - tangle   = yes
+  - lineno   = yes
 
-Examples:
-  #+INCLUDE_SRC: \"init.el\" caption=\"~/.emacs.d/init.el\"
-  #+INCLUDE_SRC: \"early.el\" lineno=\"no\" tangle=\"no\"
-"
-  (goto-char (point-min))
-  (while (re-search-forward "^#\\+INCLUDE_SRC:[ \t]+\"\\([^\"]+\\)\"\\(?:[ \t]+\\([a-zA-Z0-9-]+\\)\\)?\\(.*\\)$" nil t)
-    (let* ((file (match-string 1))
-           (lang (or (match-string 2) "emacs-lisp"))
-           (args (match-string 3))
-           (caption (when (string-match "caption=\"\\([^\"]+\\)\"" args)
-                      (match-string 1 args)))
-           (tangle (if (string-match "tangle=\"\\([^\"]+\\)\"" args)
-                       (match-string 1 args)
-                     "yes"))
-           (lineno (if (string-match "lineno=\"\\([^\"]+\\)\"" args)
-                       (match-string 1 args)
-                     "yes"))
-           (header (string-join
-                    (delq nil
-                          (list
-                           (format ":tangle %s" tangle)
-                           (when (string= lineno "yes") ":number-lines")))
-                    " "))
-           (code
-            (if (file-readable-p file)
-                (with-temp-buffer
-                  (insert-file-contents file)
-                  (buffer-string))
-              (format ";;; ERROR: Cannot read file \"%s\"" file)))
-           (replacement
-            (concat
-             (when caption (format "#+CAPTION: %s\n" caption))
-             (format "#+BEGIN_SRC %s %s\n%s#+END_SRC\n" lang header code))))
-      (replace-match replacement t t))))
+Supported keywords:
+  - caption  = \"text\"
+  - tangle   = \"yes\" | \"no\"
+  - lineno   = \"yes\" | \"no\""
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^#\\+INCLUDE_SRC:[ \t]+\"\\([^\"]+\\)\"\\(?:[ \t]+\\([a-zA-Z0-9-]+\\)\\)?\\(.*\\)$" nil t)
+      (let* ((start (match-beginning 0))
+             (end (match-end 0))
+             (file (match-string 1))
+             (lang (or (match-string 2) "emacs-lisp"))
+             (args (match-string 3))
+             (caption (when (string-match "caption=\"\\([^\"]+\\)\"" args)
+                        (match-string 1 args)))
+             (tangle (if (string-match "tangle=\"\\([^\"]+\\)\"" args)
+                         (match-string 1 args)
+                       "yes"))
+             (lineno (if (string-match "lineno=\"\\([^\"]+\\)\"" args)
+                         (match-string 1 args)
+                       "yes"))
+             (header (string-join
+                      (delq nil
+                            (list
+                             (format ":tangle %s" tangle)
+                             (when (string= lineno "yes") ":number-lines")))
+                      " "))
+             (code
+              (if (file-readable-p file)
+                  (with-temp-buffer
+                    (insert-file-contents file)
+                    (buffer-string))
+                (format ";;; ERROR: Cannot read file \"%s\"" file)))
+             (replacement
+              (concat
+               (when caption (format "#+CAPTION: %s\n" caption))
+               (format "#+BEGIN_SRC %s %s\n%s#+END_SRC\n" lang header code))))
+        ;; Replace the match without re-entering it
+        (goto-char start)
+        (delete-region start end)
+        (insert replacement)))))
 
 ;; Define paths
 (let* ((site-root (expand-file-name "../" default-directory))  ;; .emacs.d/
