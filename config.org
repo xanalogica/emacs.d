@@ -472,7 +472,7 @@ at dependency management than 'quelpa'.
 Here’s what makes sense to put in 00-core-boot.org after startup has
 begun but before UI and mode config begins:
 
-#+INCLUDE:SRC "00-core-boot.org" caption="~/.emacs.d/00-core-boot.org" tangle="yes"
+#+INCLUDE_SRC "00-core-boot.org" caption="~/.emacs.d/00-core-boot.org" tangle="yes"
 
 ### #+BEGIN_SRC emacs-lisp :exports none
 ### (xan/load-org-if-exists "00-core-boot.org")
