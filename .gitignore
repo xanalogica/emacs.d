@@ -1,7 +1,6 @@
 *~
 cache/
 ARCHIVE/
-lisp/
 straight/
 data/
 *.sha1

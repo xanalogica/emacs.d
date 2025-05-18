@@ -449,6 +449,8 @@ at dependency management than 'quelpa'.
 
 ** Load helper function for conditional tangling
 
+#+INCLUDE_SRC: "lisp/init-tangle.el" caption="~/.emacs.d/lisp/init-tangle.el" tangle="no"
+
 #+CAPTION: Refresh-Tangle-Load Function
 #+BEGIN_SRC emacs-lisp
   (defun xan/load-org-if-exists (file)
@@ -467,12 +469,14 @@ at dependency management than 'quelpa'.
         (message "[tangle] Skipping missing file: %s" file))))
 #+END_SRC
 
+#+INCLUDE_SRC: "lisp/init-audit.el" caption="~/.emacs.d/lisp/init-audit.el" tangle="no"
+
 * Phase 00 – Core system and helper macros
 
 Here’s what makes sense to put in 00-core-boot.org after startup has
 begun but before UI and mode config begins:
 
-#+INCLUDE_SRC "00-core-boot.org" caption="~/.emacs.d/00-core-boot.org" tangle="yes"
+#+INCLUDE_SRC: "00-core-boot.org" caption="~/.emacs.d/00-core-boot.org" tangle="yes"
 
 ### #+BEGIN_SRC emacs-lisp :exports none
 ### (xan/load-org-if-exists "00-core-boot.org")
