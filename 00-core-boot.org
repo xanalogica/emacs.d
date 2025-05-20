@@ -6,6 +6,8 @@
 ;;; 00-core-boot.el --- Foundational Emacs config -*- lexical-binding: t -*-
 #+END_SRC
 
+* Insure I'm Running an Acceptable Version of Org
+
 #+CAPTION: Verify what org-mode I'm running
 #+BEGIN_SRC emacs-lisp
 (defun xan/check-org-version-min (min-version)
@@ -30,6 +32,8 @@
     (xan/check-org-version-min "9.7.11"))
 #+END_SRC
 
+* Insure All My Variable Blocks in My Org Files Are Properly Terminated
+
 #+CAPTION: Report Improperly Terminated Variable Blocks
 #+BEGIN_SRC emacs-lisp
 (defun xan/check-org-local-variable-blocks (&optional dir)
@@ -49,23 +53,10 @@
       (dolist (f (reverse bad-files))
         (message " - %s" f)))
     bad-files))
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (xan/check-org-local-variable-blocks "~/.emacs.d/")))
-#+END_SRC
-
-* Directory Setup for a More Organized ~/.emacs.d/ Directory
-
-#+BEGIN_SRC emacs-lisp
-  (defconst xan/cache-dir (expand-file-name "cache/" user-emacs-directory))
-  (defconst xan/data-dir  (expand-file-name "data/"  user-emacs-directory))
-
-  ;; Create them if they don't exist
-  (make-directory xan/cache-dir t)
-  (make-directory xan/data-dir t)
+  (add-hook 'emacs-startup-hook
+    (lambda ()
+      (xan/check-org-local-variable-blocks user-emacs-directory)))
 #+END_SRC
 
 * Redirect Individual Features
@@ -106,12 +97,6 @@
 #+CAPTION: eshell history and data
 #+BEGIN_SRC emacs-lisp
   (setq eshell-directory-name (expand-file-name "eshell/" xan/cache-dir))
-#+END_SRC
-
-#+CAPTION: eln-cache
-#+BEGIN_SRC emacs-lisp
-  (when (boundp 'native-comp-eln-load-path)
-    (startup-redirect-eln-cache (expand-file-name "eln-cache/" xan/cache-dir)))
 #+END_SRC
 
 #+CAPTION: auto-save and backup files
@@ -186,7 +171,7 @@
 * Foundational behaviors that affect how Emacs runs and loads, before you load modes or packages.
 ** gcmh – Garbage collection tuning
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lispDISABLED
   (use-package gcmh
     :ensure t
     :diminish
@@ -200,7 +185,7 @@
 ~usepackage-compute-statistics~. Run ~benchmark-init/show-durations-tabulated~ to
 check this one out.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lispDISABLED
 (use-package benchmark-init
   :ensure t
   :demand t
@@ -233,7 +218,7 @@ because we don't want to be reminded of it.
 
 #+BEGIN_SRC emacs-lisp
   (use-package diminish
-    :straight t
+    ;;; :straight t
   )
 #+END_SRC
 
@@ -263,9 +248,9 @@ ERROR: package mwheel is built-in and should not be loaded via use-package.
 #+END_SRC
 
 
-#+BEGIN_SRC emacs-lisp :results none
+#+BEGIN_SRC emacs-lispDISABLED :results none
   (use-package mwheel
-   :straight nil  ; Ensure we use the built-in version and not download it
+   ;;; :straight nil  ; Ensure we use the built-in version and not download it
    :custom
      (mouse-wheel-scroll-amount '(1 ((shift) . 1)))
      (mouse-wheel-progressive-speed nil)
@@ -302,3 +287,9 @@ I use a small file that I never look into, to keep it separate from my
 
 
 
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '00-core-boot)
+  ;;; 00-core-boot.el ends here
+#+END_SRC
