@@ -1,0 +1,29 @@
+ Add ~general~ Plugin to ~use-package~ to Enhance Key Binding Further
+https://www.masteringemacs.org/article/mastering-key-bindings-emacs
+
+The github:[[https://github.com/noctuid/general.el Elisp package is
+primarily for making key definition more clear and concise.  It adds the
+=:general= keyword to the ~use-package~ macro.
+
+  ;; (use-package general)   ALREADY LOADED
+
+
+** use-package-bind-key.el or bind-key – Use-package support dependency
+
+ Add ~bind-key~ Plugin to ~use-package~ to Enhance Key Binding
+https://www.masteringemacs.org/article/mastering-key-bindings-emacs
+
+This plugin enables additional configuration keywords:
+
+- :bind
+- :bind*
+- :bind-keymap
+- :bind-keymap*
+
+The ~bind-key~ Elisp package is *part of* of the ~use-package~ code
+distribution.  In particular, the logic of the new ~use-package~ configuration
+symbols is in
+[[https://github.com/jwiegley/use-package/blob/master/use-package-bind-key.el]]
+
+  ;; (use-package bind-key)    ALREADY LOADED
+

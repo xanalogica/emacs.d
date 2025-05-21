@@ -1,0 +1,714 @@
+#+TITLE: 20-keybindings-global
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 20-keybindings-global --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Mapping New Keys GLOBALLY
+
+** Keys to Horizontally Scroll
+
+#+BEGIN_SRC emacs-lisp :results none
+  (global-set-key (kbd "<triple-wheel-right>") (lambda () (interactive) (scroll-right 3)))
+  (global-set-key (kbd "<triple-wheel-left>") (lambda () (interactive) (scroll-left 3)))
+
+  (defun scroll-to-column-0 ()
+    "Scroll horizontally back to column 0."
+    (interactive)
+    (set-window-hscroll (selected-window) 0))
+  (global-set-key (kbd "<mouse-9>") 'scroll-to-column-0)
+
+  (defun scroll-to-last-column ()
+    "Scroll horizontally to the last visible column in the current window."
+    (interactive)
+    (let* ((window (selected-window))
+           (max-line-length (apply 'max (mapcar #'length (split-string (buffer-string) "\n"))))
+           (max-hscroll (max 0 (- max-line-length (window-body-width window)))))
+      (set-window-hscroll window max-hscroll)))
+
+  ;; Bind <mouse-8> to scroll horizontally to the last visible column
+  (global-set-key (kbd "<mouse-8>") 'scroll-to-last-column)
+#+END_SRC
+
+
+** COMMENT Key to Display Unbound Keys, as Candidates for Mapping New Keys
+
+And now you can do, the following, issue a complexity level of 5:
+
+  : M-x describe-unbound-keys
+
+** My Global Key Settings
+
+#+BEGIN_SRC emacs-lisp
+  (global-unset-key	[C-z]
+    )					; Disable suspend-frame or iconify-frame key
+#+END_SRC
+
+*** Pop Up a Reference Sheet for My Settings
+
+#+BEGIN_SRC emacs-lisp
+  (defun jrush/popup-refguide() (interactive)
+    "Pop up my reference guide."
+
+    (find-file-read-only-other-frame "~/Dropbox/Documents/refsheet.org")
+
+;;;    (if (file-exists-p "~/Dropbox/Documents/refsheet.org")
+
+;;;    (let
+;;;      ((buf (get-buffer "*Reference Sheet*")))
+;;;      (if (not buf)
+;;;        (with-current-buffer (generate-new-buffer "*Reference Sheet*")
+;;;          (insert-file-contents "~/Dropbox/Documents/refsheet.org")
+;;;          (org-mode)
+;;;        )
+;;;      )
+;;;    )
+
+;;;    (display-buffer-pop-up-frame
+;;;      "*Reference Sheet*"
+;;;      (
+;;;      )
+;;;    )
+
+  )
+  (global-set-key (kbd "C-h z") 'jrush/popup-refguide)
+#+END_SRC
+
+*** capturing new content
+
+#+BEGIN_SRC emacs-lisp
+  ;; Set a default file to receive captures and key to do so.
+  (define-key global-map "\C-cc" 'org-capture)
+
+  ;; Useful org-mode keys that should be available in all buffers, not just org-mode buffers.
+
+  (global-set-key "\C-cl" 'org-store-link)		;; capture a link -to- my current location within a file
+  (global-set-key "\C-cL" 'org-insert-link-global)	;; Prompt for link/desc and insert a hyperlink here
+  (global-set-key "\C-co" 'org-open-at-point-global);; follow a link -from- any Emacs buffer
+  (global-set-key "\C-ca" 'org-agenda)		;; jump into an Agenda view
+  (global-set-key "\C-cb" 'org-iswitchb)		;; ???
+  (global-set-key [f12] 'org-agenda)		;; jump into an Agenda view
+#+END_SRC
+
+*** Hotkey for Quickly Reloading This Configuration After Changes
+The first thing I want is the ability to quickly reload my Emacs configuration
+each time I make a change in this file.
+
+#+BEGIN_SRC emacs-lisp
+  (defun reload() (interactive)
+    "Reload ~/.emacs"
+
+    (if (file-exists-p "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el"))
+  )
+  (global-set-key [f6] 'reload)
+#+END_SRC
+
+*** Useful Function to Rename the Current File and Buffer
+
+#+BEGIN_SRC emacs-lisp
+  (defun rename-file-and-buffer ()
+    "Rename the current buffer and file it is visiting."
+    (interactive)
+    (let ((filename (buffer-file-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (message "Buffer is not visiting a file!")
+        (let ((new-name (read-file-name "New name: " filename)))
+          (cond
+           ((vc-backend filename) (vc-rename-file filename new-name))
+           (t
+            (rename-file filename new-name t)
+            (set-visited-file-name new-name t t)))))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c r")  #'rename-file-and-buffer)
+#+END_SRC
+
+** Auto-Complete ?
+** Templates ?
+
+
+
+* Global Key Mappings
+
+blogpost: [[http://endlessparentheses.com/the-toggle-map-and-wizardry.html][The Toggle-Map and Wizardry]]
+
+The manual recommends C-c for user keys but C-x t is always free, whereas C-c
+t is used by some modes.  Hence, let's use the C-x t prefix for a dedicated
+set of Emacs behavior toggle keys.
+
+#+BEGIN_SRC emacs-lisp
+  (define-prefix-command 'xanalogica/toggle-map)
+  (define-key ctl-x-map "t" 'xanalogica/toggle-map)
+
+  (define-key xanalogica/toggle-map "c" #'column-number-mode)
+  (define-key xanalogica/toggle-map "f" #'auto-fill-mode)
+  (define-key xanalogica/toggle-map "l" #'toggle-truncate-lines)
+  (define-key xanalogica/toggle-map "w" #'whitespace-mode)
+
+  (define-key xanalogica/toggle-map "q" #'toggle-debug-on-quit)
+  (define-key xanalogica/toggle-map "d" #'toggle-debug-on-error)
+  (define-key xanalogica/toggle-map "e" #'toggle-debug-on-error)
+
+  (setq linum-format "%-d   ")
+  (define-key xanalogica/toggle-map "n" #'linum-mode)
+
+  ;;(define-key xanalogica/toggle-map "t" #'endless/toggle-theme)
+
+  ;;; Generalized version of `read-only-mode'.
+  (define-key xanalogica/toggle-map "r" #'dired-toggle-read-only)
+  (autoload 'dired-toggle-read-only "dired" nil t)
+
+#+END_SRC
+
+* Keystroke Input
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+** Of Non-Standard Characters
+
+The =C-q= key allows for quoting of the following key, like a tab or for the
+entry of a numeric value to represent a special character.  By default it is
+decimal but I prefer hexadecimal.
+
+#+BEGIN_SRC emacs-lisp
+  (setq read-quoted-char-radix 16)	;; numeric base for quoting characters
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (defun unicode-insert (char)
+   "Read a unicode code point and insert said character.
+    Input uses `read-quoted-char-radix'.  If you want to copy
+    the values from the Unicode charts, you should set it to 16."
+
+    (interactive (list (read-quoted-char "Char: ")))
+    (ucs-insert char))
+#+END_SRC
+
+** Of Whitespace
+These are the defaults which may be overridden in specific modes.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default tab-width
+    8)	; The default width of a TAB.
+
+  (setq-default indent-tabs-mode
+    nil)	; Whether to insert spaces when the TAB key is pressed.
+
+  (setq-default require-final-newline
+    t)	; Whether to silently force a NL at EOF.
+
+  (setq-default fill-column
+    78)	; Column beyond which automatic line-wrapping should occur.
+#+END_SRC
+
+** Of Recorded Keystrokes
+#+BEGIN_SRC emacs-lisp
+  (global-set-key		[f7]
+    'start-kbd-macro)		; Start recording of keystrokes.
+  (global-set-key		[M-f7]
+    'end-kbd-macro)		; Stop recording of keystrokes.
+
+  (global-set-key		[f8]
+    'call-last-kbd-macro)		; Map the F8 key to play back recording of keystrokes.
+#+END_SRC
+
+* Navigation
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+** Between Buffers
+#+BEGIN_SRC emacs-lisp
+  (autoload 'cycle-buffer				"cycle-buffer"  "Cycle forward." t)
+  (autoload 'cycle-buffer-backward		"cycle-buffer"  "Cycle backward." t)
+  (autoload 'cycle-buffer-permissive		"cycle-buffer"  "Cycle forward allowing *buffers*." t)
+  (autoload 'cycle-buffer-backward-permissive	"cycle-buffer"  "Cycle backward allowing *buffers*." t)
+  (autoload 'cycle-buffer-toggle-interesting	"cycle-buffer"  "Toggle if this buffer will be considered." t)
+
+  (global-set-key		"\M-n"
+    'cycle-buffer)			; Switch to next buffer in internal list
+  (global-set-key		"\M-p"
+    'cycle-buffer-backward)		; Switch to previous buffer in internal list
+  ;; how to REMOVE a buffer and cycle to the next one???
+#+END_SRC
+
+** Within a Buffer
+*** Jumping to a Place
+#+BEGIN_SRC emacs-lisp
+  (define-key global-map	(kbd "M-g")
+    'goto-line)				; Jump to a prompted line number.
+
+  (global-set-key		"\M-[7~"
+    'beginning-of-line)			; [Home] to beginning of line
+
+  (global-set-key		"\M-[8~"
+    'end-of-line)			; [End] to end of line
+#+END_SRC
+
+*** Scrolling Behavior
+#+BEGIN_SRC emacs-lisp
+  (setq-default scroll-margin
+    0)	; #lines of margin at top and bottom of a window.
+
+  (setq-default scroll-conservatively
+    1)	; Scroll up to this many lines, to bring point back into window.
+
+  (setq-default scroll-up-aggressively
+    nil)	; Disable jumpy vertical scrolling.
+
+  (setq-default scroll-down-aggressively
+    nil)	; Disable jumpy vertical scrolling.
+
+  (setq-default scroll-step
+    1)	; #lines to scroll by when point leaves the window.
+
+  (setq-default next-screen-context-lines
+    1)	; #lines of continuity when scrolling by screenfuls.
+
+  (put 'scroll-left 'disabled nil)
+
+  (setq auto-hscroll-mode  ;; only scroll the current line,
+    'current-line)  ;; not the whole frame so I can see Ivy choices
+#+END_SRC
+
+** Among Windows/Frames
+** Across Content: [[https://www.emacswiki.org/emacs/BookMarks][bookmarks]] and links
+
+*** Org-Mode Bookmarks
+- create a header for accumulating unclassified bookmarks
+
+Z
+
+**** Want to Bookmark Stuff within Emacs
+**** Want to Bookmark Stuff from My Web Browser
+**** Want to Bookmark Stuff from My Android Phone
+
+*** Emacs Bookmarks
+
+https://www.emacswiki.org/emacs/BookmarkPlus#BookmarkBasics
+
+Emacs bookmarking makes use of three things that are related but different:
+
+1. a bookmark *list*
+2. a bookmark *file*
+3. a bookmark-list *display* (buffer '*Bookmark List*')
+
+- C-x r m			:: set a bookmark at the current location
+- C-x r b			:: jump to a bookmark
+- C-x r l			:: list your bookmarks
+- M-x bookmark-delete	:: delete a bookmark by name
+
+** Among Org-Mode Headers
+
+Don’t let me accidentally delete text without realizing it in .org ie: point
+is buried in a subtree, but you only see the heading and you accidentally kill
+a line without knowing it.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-catch-invisible-edits 'show-and-error)
+#+END_SRC
+
+** Among Indented Text Like Python and YAML Specifically
+
+The https://gitlab.com/emacs-stuff/indent-tools/ Elisp package is focused on
+making life easier with indented forms of text, specifically Python and YAML.
+
+#+BEGIN_SRC emacs-lisp
+  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/indent-tools")
+  ;;; (require 'indent-tools)
+  (use-package indent-tools)
+
+  ;;;(use-package indent-tools
+  ;;;  :load-path "~/.emacs.d/lisp/indent-tools/" ;; use my Git checkout
+  ;;;  ;;; :bind (
+  ;;;  ;;;   :map python-mode-map
+  ;;;  ;;;     ("C-c >" . indent-tools-hydra/body)
+  ;;;  )
+  ;;;)
+  ;;;(global-set-key (kbd "C-c >") 'indent-tools-hydra/body)
+#+END_SRC
+
+** Back to a Previous Position
+
+#+BEGIN_SRC emacs-lisp
+  (define-key org-mode-map (kbd "C-c &")
+    'org-mark-ring-goto)
+#+END_SRC
+
+* Planning for the System76 Launch Keyboard
+** switch the following to a more convenient key
+
+  (global-set-key		[f2]
+    'delete-trailing-whitespace)	; Remove all trailing whitespace
+** select a better key for the ALT key so I can use it more often
+
+- remove left SUPER key as its too easy to hit SUPER-q (close app) when typing
+  ALT-q (org-fill-paragraph)
+
+remove CAPSLOCK key!
+what to do with 2nd space bar key?
+  - remove left spacebar and see if I miss it
+
+- [X] change left CAPSLOCK to LEFT-CTRL
+- [X] change LEFT-SPACEBAR to LEFT-ALT
+- [ ] change ? to SUPER
+
+where to put DEL key?
+where to put SUPER key?
+where to put CTRL key?
+where to put ALT key?
+where to put FN key? (and what is it for?)
+what to do with each of the FUNCTION keys?
+
+Emacs internal modifiers:
+ * CTRL   (C-)
+ * META   (M-)    ALT key on keyboards issues the META modifier
+ * SHIFT  (S-)
+ * SUPER  (s-)    No one uses in standard Emacs    C-x @ s   adds the SUPER modifier to the next character
+ * HYPER  (H-)    No one uses in standard Emacs    C-x @ h   adds the HYPER modifier to the next character
+ * ALT    (A-)
+
+The ~xnodmap~ command can map physical keys to something that Emacs knows about.
+
+keycast package
+
+Action: "Reuse" versus "None"?
+way to emit a hyper or super key into Emacs?
+way to use layer 3 to send everything with SHIFT, so ALT-: doesn't require a SHIFT modifier too?
+
+** Desktop Keys
+- SUPER               :: pop up laucher panel to launch new and switch among existing apps
+  - ?                   :: display help
+  - file <filename>     :: search filesystem for this file
+  - /                   :: search filesystem starting at the root
+  - ~                   :: search filesystem starting at $HOME
+  - t:                  :: execute a command in a terminal
+  - :                   :: execute a command in sh
+  - =                   :: calculate an equation
+  - ESC                 :: exit launcher panel
+
+- SUPER TAB               :: switch among running apps
+- SUPER SHIFT TAB         :: switch aomng running apps, in reverse order
+- SUPER `                 :: switch among windows of current app
+- SUPER SHIFT `           :: switch among windows of current app, in reverse order
+
+- SUPER d            :: toggle workspace picker
+- SUPER a            :: toggle apps picker
+- SUPER v            :: toggle notifications picker
+- SUPER t            :: open a terminal
+- SUPER f            :: open files
+- SUPER p            :: cycle display layout
+- SUPER SPACE        :: cycle between configured input sources (languages)
+- ALT-F2             :: run command
+- CTRL-ALT-DEL       :: log out
+- SUPER ALT 8        :: toggle magnifier
+  - SUPER ALT +         :: zoom in
+  - SUPER ALT -         :: zoom out
+
+- SUPER + LF CLICK + drag :: *move* window without using title bar drag
+- SUPER + RT CLICK + drag :: *resize* window without using border drag
+
+- SUPER UP/DN/LF/RT   :: switch among desktop windows
+- SUPER ENTER         :: enter window adjustment mode
+  - UP/DN/LF/RT          :: *move* window (while in adjustment mode)
+  - SHIFT RT/DN          :: *increase* window size (while in adjustment mode)
+  - SHIFT LF/UP          :: *decrease* window size (while in adjustment mode)
+  - CTL UP/DN/LF/RT      :: *swap* windows (while in adjustment mode)
+  - ENTER                :: *apply* changes (exit adjustment mode)
+  - ESC                  :: cancel changes (exit adjustment moode)
+- SUPER HOME          :: jump to first workspace
+- SUPER END           :: jump to last workspace
+- SUPER ESC           :: lock the screen
+- SUPER SHIFT UP      :: move window up one =workspace=
+- SUPER SHIFT DN      :: move window down one =workspace=
+- SUPER CTRL UP       :: shift focus up one =workspace=
+- SUPER CTRL DN       :: shift focus down one =workspace=
+- SUPER SHIFT LF      :: move window to leftward monitor
+- SUPER SHIFT RT      :: move window to righward monitor
+- SUPER SHIFT CTRL UP :: move window to upper monitor
+- SUPER SHIFT CTRL DN :: move window to lower monitor
+- SUPER o             :: change window orientation (while stacking) ?????????????????????????
+- SUPER g             :: toggle floating mode (while stacking) ??????????????????????????????
+- SUPER y             :: toggle auto-tiling    ??????????????????????????????????????????????
+- SUPER s             :: toggle stacking mode  ??????????????????????????????????????????????
+- SUPER q             :: close window
+- SUPER m             :: toggle maximize
+
+- ???                 :: start terminal shell
+- ???                 :: start LibreOffice
+- ???                 :: start Firefox/Chrome
+
+- ESC SHIFT >         :: goto beginning of buffer =STOP USING THIS=
+- C-HOME              :: goto beginning of buffer
+
+- ESC SHIFT <         :: goto end of buffer       =STOP USING THIS=
+- C-END               :: goto end of buffer
+
+* Of Automatic Texts (abbreviations and templates)
+"abbreviations, templates, and other ways to expand or transform text"
+http://sachachua.com/blog/2015/01/developing-emacs-micro-habits-text-automation/
+
+Emacs has a separate manual for [[http://www.gnu.org/software/emacs/manual/html_mono/autotype.html][autotyping]], which I had never read before. The
+short manual covers:
+
+- abbrev
+- skeleton
+- auto-insert
+- copyright messages
+- timestamps
+- temp
+
+** Templates
+*** About the YASnippet Package
+
+[[http://capitaomorte.github.com/yasnippet/][YASnippet]] is a template system for Emacs, an Emacs package for easily
+inserting textual templates for any emacs-mode (programming language).  It
+allows you to type an abbreviation, followed by a trigger key and have it
+automatically expand into a block of text.  It comes bundled with templates
+for languages like C, C++, Python, SQL, LaTeX, HTML, CSS and more.  You do not
+need to know Emacs ELisp to create your own.
+
+YASnippet supports templates with parameters and the ability to place the
+cursor within the inserted text for quick filling in of the template.  If all
+you want is inserting static text, without parameters or moving cursor, then
+use Emacs package "abbrev".
+
+*** Activating YASnippet
+
+YASnippet can be activated globally or for specific Emacs modes.  I choose to
+activate it for individual modes.
+
+#+BEGIN_SRC emacs-lisp
+;;;  (require 'yasnippet)
+;;;;;  (use-package yasnippet)
+;;; (require 'yasnippet-snippets)   ;; a rich collection of pre-written snippets
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+;;;;;  (yas-global-mode 0)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+;;; (yas-recompile-all)
+;;;;;  (yas-reload-all)   ;; rescan snippet definitions into memory
+;;;;;  (add-hook 'text-mode-hook #'yas-minor-mode)
+;;;;;  (add-hook 'python-mode-hook #'yas-minor-mode)
+;;;;;  (add-hook 'org-mode-hook #'yas-minor-mode)
+;;;;;  (add-hook #'org-mode-hook #'org-special-block-extras-mode)
+#+END_SRC
+
+*** My Catalog of Template Definitions
+
+Some of the useful snippets I have created are:
+
+**** for Org-Mode (in directory [[~/.emacs.d/snippets/org-mode/]])
+- block    :: block
+- el       :: elisp block
+- email    :: #+email
+- title    :: #+title
+- sourceblock :: source block
+- options  :: #+OPTIONS ${0}
+- figure   :: captioned figure
+
+**** for Python-Mode (in directory [[~/.emacs.d/snippets/python-mode/]])
+
+***** Group: statements
+****** def<TAB>		Function Definition, with prompted fields
+****** defm<TAB>		Method Definition, with prompted fields
+
+****** class<TAB>	Class Definition, with prompted fields
+
+****** for<TAB>		For-Loop, with prompted fields
+****** ifmain<TAB>	If-Main Conditional
+****** while<TAB>	While-Loop
+
+***** Code Fragments
+****** nspace<TAB>	__init__ for a Python Namespace
+****** pysetup<TAB>	setup.py Skeleton
+****** idir		Iterate over a Single Directory
+****** args		Args Parsing
+****** itree		Iterate over a Directory Tree
+****** prop		Property Descriptor
+****** iplace		Modifying Files In-Place
+
+***** Licenses
+****** GPL<TAB>		GPL-license comment
+****** ZPL<TAB>		Zope license comment
+****** ZEL<TAB>		ZeOmega license comment
+(add to the license files automatic insertion of the date)
+
+***** TO BE DEVELOPED
+****** pygame		PyGame Skeleton
+****** buildout		Buildout Skeleton
+
+***** ZCML
+****** ZCML<TAB>		expands into an empty ZCML configuration file
+
+*** Where I Store My Template Definitions
+
+There are snippets stored in a system directory that comes with the package,
+and there are snippets stored under my home directory in a naming hierarchy
+based on Emacs modenames.
+
+- ~/.emacs.d/snippets/
+- ~/.emacs.d/.cask/25.3/elpa/stan-snippets-9.2.0/snippets/
+
+#+BEGIN_SRC emacs-lisp
+;;;  (setq yas/root-directory "~/.emacs.d/snippets")
+;;;  (yas/load-directory yas/root-directory)
+#+END_SRC
+
+To have the menu show only the tables for the currently active mode, set
+=yas/use-menu= to =abbreviate=.
+
+#+BEGIN_SRC emacs-lisp
+;;;  '(yas/use-menu (quote abbreviate))
+#+END_SRC
+
+*** Developing New Template Definitions
+
+At the Emacs prompt, invoke "yas/new-snippet" to reload a snippet you are
+developing.  If you specify a name that is not yet defined, it will prompt
+you and guide you through creating it.
+
+Snippets hang off of various Emacs modes, like python-mode or html-mode.
+
+Snippets are inserted when the "trigger key" (TAB) is pressed after a textual
+key.
+
+Two commands are defined in this mode:
+
+    - =M-x yas/load-snippet-buffer=
+
+        When editing a snippet, this loads the snippet into the correct mode
+        and menu. Bound to *C-c C-c* by default while in snippet-mode.
+
+    - =M-x yas/tryout-snippet=
+
+        When editing a snippet, this opens a new empty buffer, sets it to the
+        appropriate major mode and inserts the snippet there, so you can see
+        what it looks like. This is bound to *C-c C-t* while in snippet-mode.
+
+[[http://capitaomorte.github.com/yasnippet/snippet-development.html][Snippet Development]]
+
+- =M-x yas/new-snipper=           (to create a new one)
+
+** Auto-Completion
+*** Emacs Completion Engines:
+- manual:[[https://www.gnu.org/software/emacs/manual/html_mono/ido.html][IDO]]
+
+ - iswitchb
+ - The package [[http://emacswiki.org/emacs/InteractivelyDoThings][InteractivelyDoThings]] (IDO) is part of Emacs, starting with release 22.
+   - ido + ido-ubiquitous + ido-vertical-mode
+   - matches anywhere, narrows down set, has fuzzy matching
+ - Helm
+   helm-descbinds
+   helm-show-kill-ring
+   helm-completing-read-handlers-alist
+ - Ivy    ivy + counsel
+ - projectile
+
+#+BEGIN_SRC emacs-lisp
+(use-package counsel
+  :config
+    (global-set-key (kbd "M-x") 'counsel-M-x)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    ;;; (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+    ;;; (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+    ;;; (global-set-key (kbd "<f1> l") 'counsel-find-library)
+    ;;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+    ;;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+
+    ;;; (global-set-key (kbd "C-c g") 'counsel-git)
+    ;;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
+    ;;; (global-set-key (kbd "C-c a") 'counsel-ag)
+    ;;; (global-set-key (kbd "C-x l") 'counsel-locate)
+
+    ;;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+
+    ;;; (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history))
+)
+(use-package counsel-tramp
+)
+#+END_SRC
+
+*** Places to Use Completion Engines:
+- open files   C-x C-f :: find-file -> ido-find-file
+   - can use bookmarks instead
+   - can open many files at once using wildcards
+   - open a directory using dired and then open files in it with C-o
+
+- switch buffers  C-x b :: switch-to-buffer -> ido-switch-buffer
+
+- navigate directories
+- C-h f
+- C-h v
+- M-x NAME
+- org-capture
+- org-file    browse all attachments
+
+*** Configuring Auto-Completion
+
+install package: Ivy
+install package: Swiper (alternative to isearch interface)
+install package: Counsel
+
+git-grep
+
+#+BEGIN_SRC emacs-lisp :exports code
+  (ivy-mode 1)
+
+;;; (setq ivy-use-virtual-buffers t)
+;;; (setq ivy-count-format "(%d/%d) ")
+
+  (global-set-key (kbd "C-s") 'swiper)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (setq org-completion-use-ido nil)
+
+  ;; Enable IDO Everywhere
+  (setq ido-enable-flex-matching t)
+  (setq ido-everywhere t)
+  (ido-mode 1)
+
+  (setq ido-use-filename-at-point 'guess)
+  (setq ido-file-extensions-order  ;; customize the display order of files
+    '(".org" ".txt" ".py" ".xml" ".el" ".ini" ".cfg"))
+
+  (autoload 'idomenu "idomenu" nil t)
+#+END_SRC
+
+*** IDO Auto-Completion Keys at a Prompt
+- C-f		:: revert to the old find-file completion engine
+- C-b		:: revert to the old switch-buffer completion engine
+- C-d		:: Opens a dired buffer in the current directory
+
+- C-a           :: toggles the showing of ignored files
+- C-c           :: toggles the ignoring of case in buffer and file names
+- C-p           :: toggles anchoring prefix matching at the beginning of a name
+
+- C-s		:: move to next item in list
+- C-r		:: move to previous item in list
+
+- C-SPC	:: restrict list of options to what I've typed so far
+
+- //		:: go to the root directory
+- ~/		:: go to your home directory
+
+- M-d           :: searches for the input in all subdirectories
+
+- C-k           :: kills the currently focused buffer or deletes the file
+
+- C-j		:: create a new file named with the text you entered
+- M-m		:: creates a new subdirectory to the directory you're in
+  
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '20-keybindings-global)
+  ;;; 20-keybindings-global.el ends here
+#+END_SRC

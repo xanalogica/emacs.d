@@ -1,0 +1,18 @@
+#+TITLE: 45-prog-common
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 45-prog-common.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '45-prog-common)
+  ;;; 45-prog-common.el ends here
+#+END_SRC
+
+

@@ -1,0 +1,143 @@
+#+TITLE: 17-ui-mouse-inputs
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 17-ui-mouse-inputs.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Set Up My Mouse-Wheel
+
+** Support for Pixel-Level Scrolling Built into Emacs 29+
+#+CAPTION: ???
+#+BEGIN_SRC emacs-lisp
+  (pixel-scroll-mode 1)
+  (pixel-scroll-precision-mode 1)
+
+  (setq pixel-scroll-precision-interpolation-factor-alist
+    '((0    . 3)    ;; tiny scrolls use 3 steps
+      (200  . 5)    ;; moderate → 5 steps
+      (1000 . 8)))  ;; large → 8 steps
+#+END_SRC
+
+Then tweak these pixel-scroll-precision-* variables until it feels right.
+
+pixel-scroll-precision-interpolation-factor
+    What: how many “sub‐steps” each native scroll event is broken into.
+    Default: 1 (i.e. one jump per event)
+    Higher → smoother animation (more intermediate frames), at the cost of CPU/time.
+    Lower → snappier but more “jumpy” scroll.
+
+pixel-scroll-precision-delay
+    What: delay in seconds between each interpolation step.
+    Default: 0.01
+    Higher → slower, languid scroll.
+    Lower (e.g. 0.005) → faster, but may feel too abrupt or overwhelm the event queue.
+
+pixel-scroll-precision-large-scroll-height
+    What: if a scroll event requests “more than this many pixels,” treat it as a full-page scroll (and interpolate across that full height).
+    Default: your frame’s pixel height
+    Lowering it makes SHIFT-wheel or other “big” scrolls animate in more manageable chunks.
+
+pixel-scroll-precision-interpolation-factor-alist (Emacs 30+)
+    What: a plist mapping scroll heights to custom interpolation factors.
+    Example:
+
+        (setq pixel-scroll-precision-interpolation-factor-alist
+              '((0    . 3)    ;; tiny scrolls use 3 steps
+                (200  . 5)    ;; moderate → 5 steps
+                (1000 . 8)))  ;; large → 8 steps
+
+    pixel-scroll-precision-interpolation-function
+
+        What: the easing function to use between steps (linear by default). You could write your own for ease-in/out curves.
+
+** Add In the `good-scroll` Package for Inertia and Speed Up/Down Scrolling
+
+#+CAPTION: ?
+#+BEGIN_SRC emacs-lispDISABLED
+  (use-package good-scroll
+    :init
+      ;; 1. Disable Emacs’s built-in wheel & pixel scroll modes
+      ;;    Turn off the built-in pixel scrolls so Good-Scroll can take over
+      (when (fboundp 'pixel-scroll-mode)          
+        (pixel-scroll-mode -1))
+      (when (fboundp 'pixel-scroll-precision-mode)
+        (pixel-scroll-precision-mode -1))
+      (mouse-wheel-mode -1)        ;; disable the old mouse-wheel handlers
+
+      ;; 2. Tweak Good-Scroll parameters (optional)
+      ;;    • good-scroll-render-rate controls how often (in seconds) the frame updates  
+      ;;    • good-scroll-scroll-step    is pixels to move per wheel “tick”
+      (setq good-scroll-render-rate 0.01    ;  20 ms between frames
+            good-scroll-scroll-step  8)    ; 10px per wheel tick
+    :config
+      ;; 3. Enable it globally
+      (good-scroll-mode 1)
+
+      ;; 4. Bind Page-Up / Page-Down to the Good-Scroll full-screen commands
+
+     :bind
+       (
+         ([wheel-down] . good-scroll-up)
+         ([wheel-up]   . good-scroll-down)
+         ([next]       . good-scroll-up-full-screen)
+         ([prior]      . good-scroll-down-full-screen)
+
+         ;; ;; shift = smaller/larger or same as plain
+         ;; ([S-wheel-up]   . good-scroll-down)
+         ;; ([S-wheel-down] . good-scroll-up)
+
+         ;; ;; control = same as plain
+         ;; ([C-wheel-up]   . good-scroll-down)
+         ;; ([C-wheel-down] . good-scroll-up)
+
+         ;; ;; double-click = full-screen scroll
+         ;; ([double-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([double-wheel-down] . good-scroll-down-full-screen)
+         ;; ;; with modifiers too
+         ;; ([S-double-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([S-double-wheel-down] . good-scroll-down-full-screen)
+         ;; ([C-double-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([C-double-wheel-down] . good-scroll-down-full-screen)
+
+         ;; ;; triple-click = full-screen as well
+         ;; ([triple-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([triple-wheel-down] . good-scroll-down-full-screen)
+         ;; ([S-triple-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([S-triple-wheel-down] . good-scroll-down-full-screen)
+         ;; ([C-triple-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([C-triple-wheel-down] . good-scroll-down-full-screen)
+
+       )
+  )
+#+END_SRC
+
+- `good-scroll-scroll-step` controls “pixels per detent.”
+- `good-scroll-render-rate` controls frame‐update frequency.
+
+* Emacs's Mouse-Wheel Variables
+
+#+BEGIN_SRC emacs-lisp
+  (setq mouse-wheel-scroll-amount
+    '(
+       2                  ;; #lines to normally scroll by
+       ((shift) . 1)      ;; #lines when shift key pressed
+       ((control) . nil)  ;; full-screen when control key pressed
+     )
+  )
+  (setq mouse-wheel-progressive-speed
+    nil) ;; t adjusts faster, nil keeps it the same
+
+  (setq mouse-wheel-follow-mouse
+    t)  ;; Scroll the window under the pointer rather than the selected window
+
+  ;; Prevent your middle‐click from yanking immediately after a scroll
+  (setq mouse-wheel-click-event 'mouse-2
+      mouse-wheel-inhibit-click-time 0.3)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '17-ui-mouse-inputs)
+  ;;; 17-ui-mouse-inputs.el ends here
+#+END_SRC

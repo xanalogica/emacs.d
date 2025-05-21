@@ -1,0 +1,8 @@
+
+#+BEGIN_SRC emacs-lisp :results none
+  (pixel-scroll-mode 1)
+  ;;;UNDEFINED-NOW   (pixel-scroll-precision-mode 1)
+  (setq pixel-scroll-precision-interpolate-page t)  ;; so PgUp PgDn give a visual slide too.
+  ;;;UNDEFINED-NOW   (native-comp-available-p)
+#+END_SRC
+

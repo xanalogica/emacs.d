@@ -1,0 +1,72 @@
+#+TITLE: 25-editor-behavior
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 25-editor-behavior --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+Focused on: in-editor behavior e.g.undo, whitespace highlighting, cursor line, etc.
+
+* Managing Undo Operations                                             :UNDO:
+
+The ~undo-tree~ Emacs package is great for visualizing the undo tree.
+~undo-tree-mode~ replaces Emacs’ standard undo feature with a more powerful
+yet easier to use version, that treats the undo history as what it is: a tree.
+
+I use =C-x u= to run undo-tree-visualize.
+
+
+#+BEGIN_SRC emacs-lisp
+  (use-package undo-tree
+    :init
+      ;; Enable auto-save of undo history
+      (setq undo-tree-auto-save-history t
+        undo-tree-history-directory-alist
+        `((".*" . ,(expand-file-name "undo/" xan/cache-dir))))
+    :config
+      ;; Activate everywhere
+      (global-undo-tree-mode 1)
+  )
+
+
+  (global-undo-tree-mode 1)   ;; turn on everywhere
+  ;;; (diminish 'undo-tree-mode)  ;; but do not show its name on UI modeline
+
+  ;; Prevent undo tree files from polluting your git repo
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+#+END_SRC
+
+* Undo System Settings
+
+Undo system settings (the built-in undo-limit, or global undo-tree
+config) are really editor behavior—they control how you backtrack in
+the buffer.
+
+#+CAPTION: Undo-System Settings
+#+BEGIN_SRC emacs-lisp
+
+;;#AI ;; Tune the built-in undo limits
+;;#AI (setq undo-limit         800000
+;;#AI       undo-strong-limit 12000000
+;;#AI       undo-outer-limit  120000000)
+
+#+END_SRC
+
+#+CAPTION: Persistent undo
+#+BEGIN_SRC emacs-lisp
+  (setq undo-tree-auto-save-history t
+        undo-tree-history-directory-alist `((".*" . ,(expand-file-name "undo/" xan/cache-dir))))
+#+END_SRC
+
+* Whitespace Highlighting
+
+* Cursor Line
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '25-editor-behavior)
+  ;;; 25-editor-behavior.el ends here
+#+END_SRC

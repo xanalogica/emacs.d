@@ -1,0 +1,18 @@
+#+TITLE: 80-project-vc
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 80-project-vc.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '80-project-vc)
+  ;;; 80-projectg-vc.el ends here
+#+END_SRC
+
+

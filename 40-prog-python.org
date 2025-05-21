@@ -1,0 +1,18 @@
+#+TITLE: 40-prog-python
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 40-prog-python.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '40-prog-python)
+  ;;; 40-prog-python.el ends here
+#+END_SRC
+
+

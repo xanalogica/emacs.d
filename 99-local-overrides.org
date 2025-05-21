@@ -1,0 +1,25 @@
+#+TITLE: 99-local-overrides.org
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 99-local-overrides.el --- ??Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Additional Small Configuration File `M-x customize` Changes
+
+Emacs users like to write small tidbits of manual configuration into an .el file so
+I use a small file that I never look into, to keep it separate from my
+=config.org=.
+
+#+CAPTION: Custom Ad-Hoc Settings
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (expand-file-name "custom-settings.el" xan/data-dir))
+  (when (file-exists-p custom-file)
+    (load custom-file 'noerror))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '99-local-overrides)
+  ;;; 99-local-overrides.el ends here
+#+END_SRC

@@ -1,0 +1,314 @@
+#+TITLE: 10-ui-frame-appearance
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 10-ui-frame-appearance.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* UI Performance Tweaks
+
+;; ----------------------------------------------------------------------
+;; Set various low-level UI presentation variables for maximum performance.
+
+(setq
+
+  ;; Prevents rounding errors during font/frame changes. Very useful.
+
+  frame-resize-pixelwise  t
+
+  ;; Resizing the Emacs frame can be a terribly expensive part of
+  ;; changing the font.  By inhibiting this, we easily halve startup
+  ;; times with fonts that are larger than the system default.
+  ;;
+  ;; Avoids expensive frame resizing during font/theme init. Good for
+  ;; large fonts or tiling WMs (which I use under Pop_OS! by
+  ;; System76).
+
+  frame-inhibit-implied-resize  t
+
+  ;; Prevents the message that says: "Welcome to GNU Emacs, one
+  ;; component of the GNU operating system." that normally appears at
+  ;; the top of the *scratch* buffer.
+
+  inhibit-startup-message t
+
+  ;; Frame customization
+  default-frame-alist
+    '((fullscreen . maximized)
+      (menu-bar-lines . 0)
+      (tool-bar-lines . 0)
+      (vertical-scroll-bars . nil)
+      (bottom-divider-width . 0)
+      (right-divider-width . 1)
+      ;; Uncomment to avoid theme flash:
+      ;; (background-color . "#000000")
+      ;; (ns-appearance . dark)
+      ;; (ns-transparent-titlebar . t)
+     )
+
+  initial-frame-alist  default-frame-alist
+
+  ;; annoyance supressions
+  ;; byte-compile-warnings  '(not obsolete)
+  ;; warning-suppress-log-types  '((comp) (bytecomp))
+  ;; native-comp-async-report-warnings-errors  'silent
+
+  ;; Silence message: "For information about GNU Emacs and the GNU system, type C-h C-a."
+  ;; inhibit-startup-echo-area-message (user-login-name)
+)
+
+(setq-default
+
+  ;; Avoid flicker or incorrect sizing of child frames
+  ;; (e.g. completion popups) under GTK.  `resize-mode` ensures GTK
+  ;; resizes them correctly without delays.  Especially helpful in
+  ;; Wayland, where native resizing behavior differs from X11 and is
+  ;; stricter.  It's a no-regret setting under GTK/Wayland.
+
+  x-gtk-resize-child-frames  'resize-mode
+
+  ;; Control which symbols appear in the left and right fringes of
+  ;; Emacs windows to indicate things like:
+  ;;
+  ;;  - Buffer truncation
+  ;;  - Continuation lines (soft-wrapped)
+  ;;  - Buffer boundaries
+  ;;  - Overlay arrows (e.g. for next-error)
+  ;;  - Custom indicators (e.g. for git-gutter, flycheck, etc.)
+
+  ;; fringe-indicator-alist  (assq-delete-all 'truncation fringe-indicator-alist)
+)
+
+;; Highly recommended under Wayland/PGTK.  Disables reading X resources
+;; (e.g., .Xresources), which are irrelevant and possibly harmful
+;; under Wayland.  Prevents color/font overrides that conflict with your
+;; Emacs config.  Also disables xrdb-related hacks from old X11 setups.
+
+(advice-add #'x-apply-session-resources :override #'ignore)
+
+
+
+
+
+
+
+
+
+
+
+
+
+** Top Bar of Emacs Screen
+
+#+CAPTION: ???TBD
+#+BEGIN_SRC emacs-lisp
+  (menu-bar-mode
+    -1)	; Whether to show the menu bar along the top.
+
+  ;;;; (defun new-frame-setup (frame)
+  ;;;;   (if (display-graphic-p frame)
+  ;;;;       (progn
+  ;;;;          (message "This is a windowing system.")
+
+  ;;;;          ;; Don't want a toolbar in GUI mode (errs in invoke in text mode)
+  ;;;;          (tool-bar-mode -1)
+
+  ;;;;          ;; Set the default size of the new frame
+  ;;;;          (set-frame-size (selected-frame) 150 50)
+  ;;;;       )
+  ;;;;       (message "This is a non-windowing system.")
+  ;;;;   )
+  ;;;; )
+
+  ;;;; ;; Run across all already-existing frames, to catch 1st frame
+  ;;;; (mapc 'new-frame-setup (frame-list))
+
+  ;;;; ;; But also run when a new frame is created
+  ;;;; (add-hook 'after-make-frame-functions 'new-frame-setup)
+
+  ;--(tool-bar-mode
+  ;--    nil)
+
+  (setq frame-title-format
+    "Emacs: %b")	; Displays the name of the file being edited in the title bar along the top.
+#+END_SRC
+
+** Along the Left/Right Sides of the Emacs Screen
+
+#+CAPTION: ???TBD
+#+BEGIN_SRC emacs-lisp
+  ;;  (setq-default scroll-bar-mode
+  ;;    nil)	; Whether to show the scroll bar at all.
+  (set-scroll-bar-mode nil)
+
+  ;;  (setq-default set-scroll-bar-mode
+  ;;    'right)	; Where to show the scroll bar, left or right side.
+#+END_SRC
+
+* Preferred UI Behavior
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+** Make the "Active Region" Visible
+
+There are two controls over whether the region is highlighted or not:
+
+- transient-mark-mode (variable)
+- transient-mark-mode (function)   a global minor mode
+
+By default the =transient-mark-mode= variable is non-nil, so the region *is*
+highlighted, using the =region= face.
+
+** Make Trailing Whitespace Visible
+
+I like to highlight trailing whitespace as it bothers me when it exists
+invisibly, although sometimes I use this highlighting to mark important TODO
+headlines in ~org-mode~.
+
+The face used to indicate trailing whitespace is ‘trailing-whitespace’.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default show-trailing-whitespace
+    t)	; Visually indicate presence of whitespace at end-of-lines.
+
+  (global-set-key		[f2]
+    'delete-trailing-whitespace)	; Remove all trailing whitespace
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default default-indicate-empty-lines
+    t)	; Visually indicate presence of blank lines at EOBs.
+#+END_SRC
+
+** Highlight the Entire Current Line
+
+I like to highlight the entire current line, for better visibility while
+navigating.  The face =hl-line-face= is used to do the highlight, and I just
+change the background to my choice of color.
+
+#+BEGIN_SRC emacs-lisp
+  (global-hl-line-mode +1)
+
+  (set-face-attribute 'hl-line  ; of hl-line-face
+    nil :inherit nil :background "darkred")
+#+END_SRC
+
+
+* Bell Indicator
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+https://www.emacswiki.org/emacs/AlarmBell
+
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell
+    nil		; play the bell sound
+    ;; t		; quietly flash the top and bottom lines of the Emacs frame
+  )
+#+END_SRC
+
+** Lowest Level of Control
+
+At the *lowest level* of Emacs there is a variable defining a custom function
+to ring the bell, or (usually) left nil to allow the ring to occur naturally.
+To *globally* disable the bell do the following:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ring-bell-function 'ignore)
+#+END_SRC
+
+or provide a function that uses your choice of sound playing mechanism:
+
+#+BEGIN_SRC ZZZemacs-lisp :tangle no
+  (setq ring-bell-function (lambda ()
+    (play-sound-file "/this/is/my/errorsound.au")))
+#+END_SRC
+
+** High Level of Control
+- https://emacs.stackexchange.com/questions/34746/how-to-get-an-audible-feedback-when-the-current-task-is-overrun
+- https://emacs.stackexchange.com/questions/17796/emacs-tea-time-is-supposed-to-be-integrated-in-org-mode-but-apparently-its-no/17849#17849
+
+At a high level of beep decision making, there is in the file =org-clock.el= a
+variable indicating which sound to use when ~org-mode~ wants to notify you of
+overrunning the time estimate for a task you are working on.
+
+  #+BEGIN_SRC ZZZemacs-lisp :tangle no
+    (setq org-clock-sound nil) ;; no sound
+    (setq org-clock-sound t) ;; Standard Emacs beep
+    (setq org-clock-sound "/path/to/my/sound") ;; Play this sound file, fall back to beep
+  #+END_SRC
+
+  #+BEGIN_SRC emacs-lisp
+    (setq org-clock-sound "~/bell-meditation-75335.mp3")
+
+    (defun org-clock-play-sound (&optional clock-sound)
+      "Play sound as configured by `org-clock-sound'.
+    Use mpg123 tool if available.
+    If CLOCK-SOUND is non-nil, it overrides `org-clock-sound'."
+      (let
+        (
+          (org-clock-sound (or clock-sound org-clock-sound))
+        )
+        (cond
+          ( (not org-clock-sound)
+                                   )
+          ( (eq org-clock-sound t)
+              (beep t) (beep t)    )
+
+          ( (stringp org-clock-sound)
+            (let
+              (
+                (file (expand-file-name org-clock-sound))
+              )
+              (if (file-exists-p file)
+                (if (executable-find "mpg123")
+                  (start-process "org-clock-play-notification" nil "mpg123" file)
+                    (condition-case nil
+                      (play-sound-file file)
+                      (error (beep t) (beep t))
+                    )
+                ) ; end of if
+              ) ; end of if
+            ) ; end of let
+          )
+        )
+      )
+    )
+  #+END_SRC
+
+  ; (defun org-notify (notification &optional play-sound)
+  ;   "Send a NOTIFICATION and maybe PLAY-SOUND.
+  ; If PLAY-SOUND is non-nil, it overrides `org-clock-sound'."
+  ;   (org-show-notification notification)
+  ;   (if play-sound (org-clock-play-sound play-sound)))
+
+  ; (defun my/play-sound (orgin-fn sound)
+  ;   (cl-destructuring-bind (_ _ file) sound
+  ;     (make-process :name (concat "play-sound-" file)
+  ;                   :connection-type 'pipe
+  ;                   :command `("mpg123" ,file))))
+  ; (advice-add 'play-sound :around 'my/play-sound)
+
+In org-mode when a task is overrun - when the clocked time is bigger than the
+effort, there is a visual feedback in the mode-line.  This variable can be
+used to get an audible one as well.
+
+
+
+
+
+
+
+
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '10-ui-frame-appearance)
+  ;;; 10-ui-frame-appearance.el ends here
+#+END_SRC

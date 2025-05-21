@@ -82,6 +82,14 @@
 (straight-use-package 'use-package)
 
 ;; ----------------------------------------------------------------------
+;; Enhance use-package with :delight keyword argument, to allow hiding
+;; and rearranging modes, by major and minor versions.
+
+(use-package delight
+  :defer t      ;; only load when a :delight is needed
+  )
+
+;; ----------------------------------------------------------------------
 ;; Install the org package early so I can write the rest of my Emacs
 ;; configuration in org-mode for easier documenting and then tangle
 ;; that configuration into .el files for compilation and loading into

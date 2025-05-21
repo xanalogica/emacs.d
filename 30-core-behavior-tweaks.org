@@ -1,0 +1,296 @@
+#+TITLE: 30-core-behavior-tweaks
+#+DESCRIPTION: File-level persistence e.g. auto-save, backups, cache
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 30-core-behavior-tweaks.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+Focused on file-level persistence e.g. auto-save, backups, cache
+
+* Obscure Emacs Variables
+
+#+BEGIN_SRC emacs-lisp
+  ;; ----------------------------------------------------------------------
+  ;; Set various somewhat obscure Emacs variables, for efficient operation.
+
+  (setq
+
+    ;; I have some larger files and I don't want Emacs to complain about
+    ;; them so I raised the threshold from 9MB.
+
+    large-file-warning-threshold  20000000 ; 20MB
+
+    ;; Prevent stale byte-code issues in scripts, while saving startup
+    ;; I/O checks.  Especially relevant when not byte-compiling
+    ;; everything, to prioritize non-byte-compiled source files to
+    ;; prevent the use of stale byte-code.
+
+    load-prefer-newer  'noninteractive
+
+    ;; Maximum number of bytes to read from subprocess in a single chunk.
+    ;;
+    ;; Enlarge the value only if the subprocess generates very large
+    ;; (megabytes) amounts of data in one go.  Improves LSP and
+    ;; subprocess throughput.  Critical for lsp-mode, eglot, etc.
+
+    read-process-output-max  (* 1024 1024 4) ; 4 MB
+
+    ;; Do NOT compact (discard) cached fonts during garbage collection.
+    ;;
+    ;; Prevents GC-triggered font redisplay stutter with large fonts.
+    ;; Very useful for multilingual documents or UI-heavy configs.
+
+    ;; Some large fonts cause lots of consing and trigger GC.  If they
+    ;; are discarded from the font caches during garbage collection,
+    ;; they will need to be opened AGAIN during redisplay, which slows
+    ;; down redisplay.
+    ;;
+    ;; If you see font-related delays in displaying some special
+    ;; characters, and cannot switch to a smaller font for those
+    ;; characters, set this variable non-nil.  Disabling compaction of
+    ;; font caches might enlarge the Emacs memory footprint in sessions
+    ;; that use lots of different fonts.
+
+    inhibit-compacting-font-caches  t
+
+    ;; Maximum number of lines to keep in the *Messages* log buffer.
+    ;; Good practice that prevents runaway *Messages* buffer size while
+    ;; still allowing debugging.
+
+    message-log-max  16384
+
+    ;; This disables loading of `site-start.el`, which some distros (like
+    ;; Debian, Arch, etc.) use to inject site-wide behavior into all
+    ;; Emacs sessions.  Use it in personal configs aiming for
+    ;; reproducibility.
+
+    site-run-file  nil
+  )  
+#+END_SRC
+
+* Automate the Garbage-Collection Thresholds
+
+#+CAPTION: Automate Garbage-Collection Thresholds
+#+BEGIN_SRC emacs-lisp
+  (use-package gcmh
+    :demand t   ; load immediately during init
+    :commands (gcmh-mode)  ;; ← this line makes gcmh-mode an autoload
+    :config
+    ;; GCMH Mode will dynamically swap thresholds:
+    ;;   - `gcmh-high-cons-threshold` when idle
+    ;;   - `gcmh-low-cons-threshold` (default 20MB) when in use
+    (setq gcmh-idle-delay           5         ; seconds of idle before GC
+          gcmh-high-cons-threshold  most-positive-fixnum
+          gcmh-verbose              nil)      ; no echo messages
+    (gcmh-mode 1))
+#+END_SRC
+
+* Revised Layout
+
+In order to declutter my ~/.emacs.d/ directory I've adopted a layout
+of putting anything that is cache related under ~/.emacs.d/cache/ and
+anything that is dynamically generated data under ~/.emacs.d/data/.
+
+"Work Protection"
+
+** Auto-Saves
+
+#+CAPTION: Auto-save list
+#+BEGIN_SRC emacs-lisp
+  (dolist (sub '("auto-save/" "auto-save-list/"))
+    (make-directory (expand-file-name sub xan/cache-dir) t))
+
+  (setq auto-save-list-file-prefix (expand-file-name "auto-save-list/#" xan/cache-dir))
+  (setq auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" xan/cache-dir) t)))
+#+END_SRC
+
+* Backups
+
+#+CAPTION: File Backups
+#+BEGIN_SRC emacs-lisp
+  (dolist (sub '("backups/"))
+    (make-directory (expand-file-name sub xan/cache-dir) t))
+
+  (setq-default make-backup-files
+    t)                                  ;; Whether to make backup files at all or not.
+
+  (setq version-control t                ;; Use version numbers for backups
+        kept-new-versions 16             ;; Number of newest versions to keep
+        kept-old-versions 2              ;; Number of oldest versions to keep
+        delete-old-versions t            ;; Ask to delete excess backup versions?
+        backup-by-copying-when-linked t) ;; Copy linked files, don't rename.
+        ;;#AI  backup-by-copying      t)  ; don’t symlink
+
+  (setq
+    ;; Keep all backup files in one place
+    backup-directory-alist `((".*" . ,(expand-file-name "backups/" xan/cache-dir)))
+
+  )
+#+END_SRC
+
+Emacs offers two related variables to control whether it makes backups by
+renaming vs. copying:
+
+ 1. backup-by-copying (default nil):
+     - If non–nil, always copy the original file to the backup, then write your edits into a fresh file.
+     - Pros: never breaks hard links, preserves owner/group, safer for “precious” files.
+     - Cons: copying can be slightly slower and use more I/O.
+
+ 2. backup-by-copying-when-linked (default nil):
+     - Has effect only if backup-by-copying is nil.
+     - If non–nil and the file has multiple names (i.e. its link count > 1), then copy instead of rename.
+     - Otherwise (single link), Emacs will rename (the default) to save a bit of I/O.
+
+* Backups in a World of VC
+
+1. vc-make-backup-files
+
+    - What it does: by default, Emacs skips making file~ backups for files
+      under version control (Git, SVN, etc.).
+
+    - Setting vc-make-backup-files = t tells Emacs to treat VC-managed files
+      just like any other file and still create numbered backups.
+
+    - Concepts: version-controlled files, VC integration, backup policy.
+
+#+BEGIN_SRC emacs-lispDISABLED
+;; Even VC-managed files get backup~ files
+(setq vc-make-backup-files t)
+#+END_SRC
+
+2. file-precious-flag
+
+    - What it does: when non-nil, Emacs writes your changes to a fresh temp
+      file and only swaps it in place of the original if the write completes
+      successfully.
+
+    - This prevents data loss if Emacs crashes or the disk fills up mid-save.
+
+    - Concepts: atomic save, write-temp-file safety, precious files.
+
+;; In 30-core-behavior-tweaks.org
+#+BEGIN_SRC emacs-lisp
+;; Use atomic, “precious” saves to avoid corrupting the original
+(setq file-precious-flag t)
+#+END_SRC
+
+* Keeping Last N Editions of Files Edited
+
+#+BEGIN_SRC emacs-lisp
+
+   (defun force-backup-of-buffer ()
+     (let ((buffer-backed-up nil))
+       (backup-buffer)))
+
+   (add-hook 'before-save-hook  'force-backup-of-buffer)
+   (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;;; (add-hook 'before-save-hook 'time-stamp)
+#+END_SRC
+
+
+
+
+
+
+
+
+* Location Identifiers
+
+#+CAPTION: .org-id-locations and .org-generic-id-locations
+#+BEGIN_SRC emacs-lisp
+  (setq org-id-locations-file (expand-file-name "org-id-locations" xan/data-dir))
+
+  ;; Optional: if using org-generic-id (less common)
+  (setq org-generic-id-locations-file (expand-file-name "org-generic-id-locations" xan/data-dir))
+#+END_SRC
+
+* Cached or Small Items Persistence
+
+#+CAPTION: Org clock persistence
+#+BEGIN_SRC emacs-lisp
+  (setq org-clock-persist-file (expand-file-name "org-clock-save.el" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: eshell history and data
+#+BEGIN_SRC emacs-lisp
+  (setq eshell-directory-name (expand-file-name "eshell/" xan/cache-dir))
+#+END_SRC
+
+#+CAPTION: cookies/history
+#+BEGIN_SRC emacs-lisp
+  (setq url-cookie-file (expand-file-name "url/cookies" xan/data-dir)
+        url-history-file (expand-file-name "url/history" xan/data-dir))
+#+END_SRC
+
+* Redirect Individual Features
+
+To organize my ~/.emacs.d/ directory I group various little storage areas under data or cache.
+
+#+CAPTION: places.el (cursor locations)
+#+BEGIN_SRC emacs-lisp
+  (setq save-place-file (expand-file-name "places" xan/data-dir))
+  (save-place-mode 1)
+#+END_SRC
+
+#+CAPTION: bookmark.el
+#+BEGIN_SRC emacs-lisp
+  (setq bookmark-default-file (expand-file-name "bookmarks" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: recentf
+#+BEGIN_SRC emacs-lisp
+  (setq recentf-save-file (expand-file-name "recentf" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: transient (magic, etc.)
+#+BEGIN_SRC emacs-lisp
+(setq transient-history-file     (expand-file-name "transient/history.el" xan/data-dir)
+      transient-levels-file      (expand-file-name "transient/levels.el" xan/data-dir)
+      transient-values-file      (expand-file-name "transient/values.el" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: tramp
+#+BEGIN_SRC emacs-lisp
+  (setq tramp-persistency-file-name (expand-file-name "tramp" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: nov.el (ePub reader)
+#+BEGIN_SRC emacs-lisp
+(setq nov-save-place-file (expand-file-name "nov-places" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: org-babel library
+#+BEGIN_SRC emacs-lisp
+  (setq org-babel-library-of-babel-file (expand-file-name "org-babel-library.org" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: Request.el
+#+BEGIN_SRC emacs-lisp
+  (setq request-storage-directory (expand-file-name "request/" xan/cache-dir))
+#+END_SRC
+
+#+CAPTION: yasnippet
+#+BEGIN_SRC emacs-lisp
+  (setq yas-snippet-dirs `(,(expand-file-name "snippets/" xan/data-dir)))
+#+END_SRC
+
+
+
+#+CAPTION: chatgpt/ and chatgpt-shell.el (from gpt.el or chatgpt-shell)
+#+BEGIN_SRC emacs-lisp
+  ;; GPT-related package paths
+  (setq chatgpt-shell-history-directory (expand-file-name "chatgpt/" xan/data-dir)
+        chatgpt-shell-configuration-file (expand-file-name "chatgpt-shell.el" xan/data-dir))
+
+  (make-directory chatgpt-shell-history-directory t)
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '30-core-behavior-tweaks)
+  ;;; 30-core-behavior-tweaks.el ends here
+#+END_SRC

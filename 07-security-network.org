@@ -1,0 +1,30 @@
+#+TITLE: 07-security-network
+#+DESCRIPTION: TLS encryption enforcement
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :tangle yes :exports none
+;;; 07-security-network.el --- ??Tangled master config  -*- lexical-binding: t -*-
+#+END_SRC
+
+* gnutls – TLS security for downloading packages or HTTPS communication
+
+For the love of all that is holy, do not continue with untrusted connections!
+
+By default Emacs will try to verify an HTTPS/TLS server’s certificate
+but _quietly fall back to “allow” on certain errors_ (expired, mismatched name, unknown CA).
+
+Here I turn on _strict certificate checking_ — Emacs will refuse any
+connection whose cert can’t be fully validated, protecting you from
+MITM attacks or bad mirrors.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package gnutls
+    :defer t
+    :custom
+    (gnutls-verify-error t))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '07-security-network)
+  ;;; 07-security-network.el ends here
+#+END_SRC
