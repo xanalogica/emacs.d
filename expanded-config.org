@@ -1,0 +1,3710 @@
+#+DESCRIPTION: Tangle + load functionally organized config files
+#+TITLE: Modular Emacs Configuration Loader
+#+SUBTITLE: Structured Using Org-Babel
+#+AUTHOR:	Jeffrey Rush
+#+EMAIL:	mailto:jeff@thoughtamps.info
+#+CATEGORY:     emacs
+#+HTML_HEAD:    <link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/htmlize.css"/>
+#+HTML_HEAD:    <link rel="stylesheet" type="text/css" href="webstyling/src/readtheorg_theme/css/readtheorg.css"/>
+#+HTML_HEAD:    <link rel="stylesheet" type="text/css" href="webstyling/src/custom/css/default.css"/>
+#+HTML_HEAD:    <script type="text/javascript" src="webstyling/src/lib/js/jquery.min.js"></script>
+#+HTML_HEAD:    <script type="text/javascript" src="webstyling/src/lib/js/bootstrap.min.js"></script>
+#+HTML_HEAD:    <script type="text/javascript" src="webstyling/src/lib/js/jquery.stickytableheaders.min.js"></script>
+#+HTML_HEAD:    <script type="text/javascript" src="webstyling/src/readtheorg_theme/js/readtheorg.js"></script>
+#+HTML_HEAD:    <script> var HS_STARTUP_FOLDED = true; </script>
+#+OPTIONS:	author:t creator:t email:t title:t
+#+OPTIONS:	toc:t title:t tasks:nil todo:nil tags:nil prop:nil num:t broken-links:mark
+#+OPTIONS:	^:{}
+#+STARTUP:	overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; config.el --- Tangled master config  -*- lexical-binding: t -*-
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; Tell the byte-compiler these vars will exist at runtime:
+  ;;; (defvar straight-check-for-modifications)
+  ;;; (defvar straight-recipe-repositories)
+  ;;; (defvar straight-use-package-by-default)
+  ;;; (defvar use-package-enable-imenu-support)
+
+;  (defvar save-place-file)
+;  (defvar bookmark-default-file)
+;  (defvar recentf-save-file)
+;  (defvar tramp-persistency-file-name)
+;  (defvar nov-save-place-file)
+;  (defvar transient-history-file)
+;  (defvar transient-levels-file)
+;  (defvar transient-values-file)
+;  (defvar eshell-directory-name)
+;  (defvar org-babel-library-of-babel-file)
+;  (defvar org-clock-persist-file)
+;  (defvar request-storage-directory)
+;  (defvar yas-snippet-dirs)
+;  (defvar undo-tree-history-directory-alist)
+;  (defvar undo-tree-auto-save-history)
+;  (defvar chatgpt-shell-history-directory)
+;  (defvar chatgpt-shell-configuration-file)
+;  (defvar chatgpt-shell-history-directory)
+;  (defvar org-generic-id-locations-file)
+
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/early-init.el
+#+BEGIN_SRC emacs-lisp -n :tangle no
+;;; early-init.el --- Tweaks that must run *before* package.el  -*- lexical-binding: t; -*-
+
+;; Author: Jeffrey Rush
+;; Keywords: Emacs configuration
+;; Homepage: https://github.com/xanalogica/emacs.d.git
+
+;;; Commentary:
+
+;; My Initialization Flow:
+;;   1. early-init.el
+;;   2. init.el
+;;   3. config.org
+
+;; The idea of a `early-init.el` file was introduced in Emacs 27.1.  It is
+;; loaded BEFORE the Emacs package system and GUI is initialized.  This is a
+;; great place for *startup optimization*, because only here can you *prevent*
+;; things from loading, rather than turn them off after-the-fact.
+
+;; NOTE: `early-init.el` is meant to disable features, NOT initialize systems.  Since
+;; this file is read by Emacs before the GUI is initialized, before a package system
+;; is established and before the network is fully up, do NOT include your customizations
+;; that are best left in the normal `init.el` file.
+
+;; Emacs 30.1+ configuration.  (my version of Emacs at the time of composing this file)
+
+;;; Code:
+
+;; Require Emacs 30+
+(when (< emacs-major-version 30)
+  (user-error "This config requires Emacs 30+ (you have %s)" emacs-version))
+
+;; ----------------------------------------------------------------------
+;; For a more organized `user-emacs-directory` (~/.emacs.d/ for me)
+
+(defconst xan/cache-dir (expand-file-name "cache/" user-emacs-directory))
+(defconst xan/data-dir  (expand-file-name "data/"  user-emacs-directory))
+
+;; Create them if they don't exist
+(make-directory xan/cache-dir t)
+(make-directory xan/data-dir t)
+
+;; Redirect native-comp .eln files into our cache *before* anything loads
+(when (boundp 'native-comp-eln-load-path)
+  (startup-redirect-eln-cache (expand-file-name "eln-cache/" xan/cache-dir)))
+
+;; ----------------------------------------------------------------------
+;; Prevent initialization of the Emacs built-in `package.el` system until we
+;; get to the `init.el` file where I use the `straight.el` package manager
+;; instead.  I rely on the `use-package` which calls into `straight.el` for
+;; the *downloading* and *installation* of packages and then `use-package`
+;; *loads* and *configures* those packages.  A very clear division of labor.
+;;
+;; Since `straight.el` requires networking, loading files, and setting up load
+;; paths — this is too early to do reliably in `early-init.el` before Emacs
+;; initializes its GUI, environment variables, and process subsystems.
+
+(setq package-enable-at-startup nil
+      package-quickstart        nil)
+
+;; ----------------------------------------------------------------------
+;; To speed up the Emacs startup process, temporarily loosen the garbage
+;; collector behavior so it does not compact memory during initialization.
+;; Add a hook function to restore sane garbage collector behavior after
+;; Emacs startup is complete.
+;;
+;; And disable the file-name-handler-alist so it finds boot files faster with
+;; less searching.
+
+(defvar xan/file-name-handler-alist file-name-handler-alist)
+
+(setq file-name-handler-alist  nil
+      gc-cons-threshold        most-positive-fixnum
+      gc-cons-percentage       0.6)
+
+;; Restore sane GC & file‑handler settings after init
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold (* 64 1024 1024) ; 64 MB
+                  gc-cons-percentage 0.1
+                  file-name-handler-alist xan/file-name-handler-alist)))
+
+;; ----------------------------------------------------------------------
+;; Disable UI elements to prevent flickering during startup and to load faster.
+;; We'll restore them later in the initialization process.  Also don't load
+;; any custom.el settings that might disrupt initialization because everything
+;; is not yet configured to accept it.
+
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+
+;; Disable the fancy graphical splash screen in its own buffer,
+;; typically named *GNU Emacs*.
+;;
+;; That screen normally shows:
+;;
+;;   - Emacs logo
+;;   - Keybinding cheatsheet
+;;   - Link to the Emacs tutorial
+
+(setq inhibit-startup-screen t)
+
+;; Don't load any custom.el automatically by redirecting it to an empty temp file
+(setq custom-file (make-temp-file "emacs-custom-"))
+
+;; ----------------------------------------------------------------------
+;; Retain commented out variables needed when debugging the Emacs
+;; initialization process.
+
+; (setq debug-on-error t)
+; (setq stack-trace-on-error t)
+; (debug-on-entry 'integerp)
+
+;; Respect DEBUG envvar as an alternative to --debug-init, and to
+;; make sure startup is sufficiently verbose from this point on.
+(when (getenv-internal "DEBUG")
+  (setq init-file-debug t
+        debug-on-error t))
+
+(message "early-init.el done (%.2fs)"
+         (float-time (time-subtract (current-time) before-init-time)))
+
+(provide 'early-init)
+;;; early-init.el ends here
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/init.el
+#+BEGIN_SRC emacs-lisp -n :tangle no
+;; init.el --- Main Configuration File -*- lexical-binding: t; no-byte-compile: t -*-
+
+;; Author: Jeffrey Rush
+;; Keywords: Emacs configuration
+;; Homepage: https://github.com/xanalogica/.emacs.d.git
+
+;;; Commentary:
+
+;; My Initialization Flow:
+;;   1. load early-init.el
+;;   2. load init.el
+;;   3. tangle config.org into config.el and load
+;;   4. tangle various NN-category-function.el files
+
+;; Emacs 30.1+ configuration.  (my version of Emacs at the time of composing this file)
+
+;;; Code:
+
+;; ----------------------------------------------------------------------
+;; Bootstrap straight.el package system from the public Internet
+;;   https://github.com/radian-software/straight.el
+
+(defun my/online-p ()
+  "Test whether network is up before using it to download stuff."
+  (condition-case _err
+      (progn
+        (url-retrieve-synchronously
+         "https://github.com/"
+         'silent 'inhibit-cookies)
+        t)
+    (error nil)))
+
+(unless (my/online-p)
+  (message "Emacs sees no network; skipping Straight recipe updates for now")
+  (setq straight-check-for-modifications 'never))
+
+(eval-when-compile  ;; to eliminate a warning about unknown func during compile
+  (declare-function straight-pull-recipe-repositories "straight"))
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el"
+                         user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage)
+)
+
+;; ----------------------------------------------------------------------
+;; Declare repos to pull from, and configure use-package to use straight.el
+
+;; Define preferred archive sources
+;; Replace the Savannah git remote for nongnu with the HTTP tarball mirror:
+(setq straight-recipe-repositories
+      '(gnu-elpa-mirror nongnu-elpa melpa))
+
+;; NOTE: MELPA-stable is omitted from the above list as very few
+;; people use MELPA‑stable with straight, because you can pin any
+;; package to a commit instead.
+
+(run-with-idle-timer
+  5 nil
+  (lambda ()
+    (condition-case e
+        (straight-pull-recipe-repositories)
+      (error
+        (message "[straight] recipe refresh failed: %S" e)))))
+
+;; Make use-package rely on straight.el _by default_
+(setq straight-use-package-by-default t)
+
+;; Enable `use-package`'s :ensure, :init, :config etc.
+(setq use-package-enable-imenu-support t)
+
+;; Install use-package using straight.el, and make sure it's available to use in your config.
+(straight-use-package 'use-package)
+
+;; ----------------------------------------------------------------------
+;; Enhance use-package with :delight keyword argument, to allow hiding
+;; and rearranging modes, by major and minor versions.
+
+(use-package delight
+  :defer t      ;; only load when a :delight is needed
+  )
+
+;; ----------------------------------------------------------------------
+;; Install the org package early so I can write the rest of my Emacs
+;; configuration in org-mode for easier documenting and then tangle
+;; that configuration into .el files for compilation and loading into
+;; Emacs.
+
+(require 'org-macs)
+
+(use-package org  ;; I WANT TO USE THE ORG PACKAGE SHIPPED WITH EMACS
+  :straight (:type built-in)) ;; or omit this line to use org from Git
+
+;; Ensure the export backend `ox-org' is loaded so we can merge my config/*.org
+;; pieces together and export the result into one common file.
+(setq org-export-backends '(ascii html icalendar latex odt org))
+
+;; ----------------------------------------------------------------------
+;; Load the rest of my Emacs Configuration from my config.org file.
+
+;; Load my tangle system
+(add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
+(require 'init-tangle)
+
+(init-tangle-config-org-to-el)
+
+(message "init.el done (%.2fs)"
+         (float-time (time-subtract (current-time) before-init-time)))
+
+;;; init.el ends here
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/lisp/init-tangle.el
+#+BEGIN_SRC emacs-lisp -n :tangle no
+;;; init-tangle.el --- Robust line-by-line tangling -*- lexical-binding: t; -*-
+
+(require 'subr-x) ;; string-trim
+(require 'org)    ;; org-babel-tangle-file
+(require 'ob-tangle)
+
+(defvar init-tangle-cache-dir
+  (expand-file-name "tangled/" xan/cache-dir)
+  "Directory for tangled .el files and their SHA1 sidecars.")
+
+(defvar init-tangle-logfile "/tmp/emacs-init.log"
+  "Log file for init-tangle debug messages.")
+
+(defun init-tangle--log (fmt &rest args)
+  "Append a timestamped message to `init-tangle-logfile`."
+  (with-temp-file init-tangle-logfile
+    (insert (format-time-string "[%Y-%m-%d %H:%M:%S] "))
+    (insert (apply #'format fmt args) "\n")))
+
+(defun init-tangle--ensure-cache ()
+  "Create `init-tangle-cache-dir` if needed and add it to `load-path`."
+  (init-tangle--log "ensure-cache %s" init-tangle-cache-dir)
+  (unless (file-directory-p init-tangle-cache-dir)
+    (make-directory init-tangle-cache-dir t))
+  (add-to-list 'load-path init-tangle-cache-dir))
+
+(defun init-tangle--sha1 (file)
+  "Return SHA1 of FILE’s contents, or nil if unreadable."
+  (when (file-readable-p file)
+    (with-temp-buffer
+      (insert-file-contents-literally file)
+      (secure-hash 'sha1 (current-buffer)))))
+
+(defun init-tangle--tangle-phase (path)
+  "Tangle a single Org PATH (relative to `user-emacs-directory`).
+Caches to `init-tangle-cache-dir` with a SHA1 sidecar.  Returns BASE."
+  (let* ((org-path  (expand-file-name path user-emacs-directory))
+         (base      (file-name-base path))
+         (el-path   (expand-file-name (concat base ".el") init-tangle-cache-dir))
+         (hash-path (concat el-path ".sha1"))
+         (new-hash  (init-tangle--sha1 org-path))
+         (old-hash  (when (file-exists-p hash-path)
+                      (string-trim
+                       (with-temp-buffer
+                         (insert-file-contents hash-path)
+                         (buffer-string))))))
+    (init-tangle--log "phase %s old=%s new=%s" path old-hash new-hash)
+    (when (not (string= old-hash new-hash))
+      (init-tangle--log "tangling %s → %s" path el-path)
+      (condition-case err
+          (progn
+            (org-babel-tangle-file org-path el-path "\\`emacs-lisp\\'")
+            (with-temp-file hash-path (insert (or new-hash "")))
+            (when (fboundp 'native-compile)
+              (ignore-errors (native-compile el-path)))
+            (init-tangle--log "tangled %s" path))
+        (error
+         (init-tangle--log "ERROR tangling %s: %S" path err))))
+    base))
+
+(defun init-tangle--expand-includes (infile outfile)
+  "Read INFILE line-by-line, handle all #+INCLUDE_SRC, and write to OUTFILE."
+  (init-tangle--log "expand-includes %s → %s" infile outfile)
+  (with-temp-buffer
+    (insert-file-contents infile)
+    (goto-char (point-min))
+    (while (not (eobp))
+      (let ((line (buffer-substring-no-properties
+                   (point) (line-end-position))))
+        (if (string-prefix-p "#+INCLUDE_SRC:" line)
+            (let* ((fields (split-string line "[ \t]+" t))
+                   (path   (string-trim (nth 1 fields) "\"" "\""))
+                   (args   (mapconcat #'identity (nthcdr 2 fields) " "))
+                   (tangle (when (string-match "tangle=\"\\(yes\\|no\\)\"" args)
+                             (match-string 1 args))))
+              (cond
+               ((string= tangle "yes")
+                (let ((base (init-tangle--tangle-phase path)))
+                  (delete-region (point) (1+ (line-end-position)))
+                  (insert
+                   "#+BEGIN_SRC emacs-lisp\n"
+                   "(message \"[tangle] Loading " base ".el\")\n"
+                   "(require '" base ")\n"
+                   "(message \"[tangle] Loading " base ".el...done\")\n"
+                   "#+END_SRC\n")))
+               ((string= tangle "no")
+                (delete-region (point) (1+ (line-end-position))))
+               (t
+                (forward-line 1))))
+          (forward-line 1)))
+    (write-region (point-min) (point-max) outfile)
+    (init-tangle--log "wrote expanded org %s" outfile))))
+
+(defun init-tangle--final-tangle (expanded-org final-el)
+  "Tangle all emacs-lisp src blocks from EXPANDED-ORG into FINAL-EL."
+  (init-tangle--log "final-tangle %s → %s" expanded-org final-el)
+  (condition-case err
+      (progn
+        (org-babel-tangle-file expanded-org final-el "\\`emacs-lisp\\'")
+        (when (fboundp 'native-compile)
+          (ignore-errors (native-compile final-el)))
+        (init-tangle--log "final tangle done"))
+    (error
+     (init-tangle--log "ERROR final tangle: %S" err))))
+
+;;;###autoload
+(defun init-tangle-config-org-to-el ()
+  "Expand includes, tangle phases, final tangle, then load config.el."
+  (init-tangle--ensure-cache)
+  (let* ((orgfile  (expand-file-name "config.org"    user-emacs-directory))
+         (expanded (expand-file-name "config--expanded.org" init-tangle-cache-dir))
+         (final-el (expand-file-name "config.el"           init-tangle-cache-dir)))
+    (init-tangle--log "[START] %s" orgfile)
+    (init-tangle--expand-includes orgfile expanded)
+    (init-tangle--final-tangle   expanded final-el)
+    (init-tangle--log "loading %s" final-el)
+    (load-file final-el)
+    (init-tangle--log "[DONE] loaded %s" final-el)))
+
+(provide 'init-tangle)
+;;; init-tangle.el ends here
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/lisp/init-audit.el
+#+BEGIN_SRC emacs-lisp -n :tangle no
+;;; init-audit.el --- Audit missing use-package targets  -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;; This module checks `use-package` declarations in a given file
+;; to see if the referenced packages are installed by straight.el.
+
+;;; Code:
+
+(require 'cl-lib)
+(require 'subr-x)
+
+(defun init-audit-use-package-missing (file)
+  "Check which `use-package` declarations in FILE are not installed via straight.el."
+  (interactive "fAudit use-package declarations in file: ")
+  (let ((missing-packages '()))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (while (re-search-forward "^(use-package\\s-+\\([^ \n)]+\\)" nil t)
+        (let ((pkg (intern (match-string 1))))
+          (unless (or (featurep pkg)
+                      (locate-library (symbol-name pkg))
+                      (straight--installed-p pkg))
+            (push pkg missing-packages)))))
+    (if missing-packages
+        (progn
+          (message "[init-audit] Missing packages: %s"
+                   (mapconcat #'symbol-name (cl-remove-duplicates missing-packages) ", "))
+          (cl-remove-duplicates missing-packages))
+      (message "[init-audit] All use-package targets are present.")
+      nil)))
+
+(provide 'init-audit)
+;;; init-audit.el ends here
+#+END_SRC
+
+
+#### #+CAPTION: Refresh-Tangle-Load Function
+#### #+BEGIN_SRC emacs-lisp
+####   (defun xan/load-org-if-exists (file)
+####     "Tangle and load FILE if it exists."
+####     (let* ((org-path (expand-file-name file user-emacs-directory))
+####            (base-name (file-name-base file))
+####            (tangle-path (expand-file-name (concat base-name ".el")
+####                                           (expand-file-name "cache/tangled/" user-emacs-directory))))
+####       (if (file-exists-p org-path)
+####           (progn
+####             (make-directory (file-name-directory tangle-path) t)
+####             (message "[tangle] Tangling %s → %s" file tangle-path)
+####             (org-element-with-disabled-cache  ;; in Org v9.7.x many cache issues are still unresolved
+####               (org-babel-tangle-file org-path tangle-path "\\`emacs-lisp\\'"))
+####             (load-file tangle-path))
+####         (message "[tangle] Skipping missing file: %s" file))))
+#### #+END_SRC
+
+
+### This is a current copy of my Emacs configuration, annotated with explanations.
+### I've learned a lot by studying other people's Emacs configurations and I
+### wanted to share what I've ended up with.
+### 
+### Other Emacs files I've studied:
+### 
+###   - https://github.com/redguardtoo/emacs.d
+###   - https://github.com/purcell/emacs.d/blob/master/README.md
+###   - This is a VERY good example of a custom org-mode .emacs.d file.
+###     https://github.com/mwfogleman/.emacs.d/
+###   - ~/.emacs.d/michael.org]] (local copy)
+### 
+###   - https://github.com/jagot/emacs/blob/master/home/.emacs.d/init.org
+###   - https://github.com/bbatsov/emacs.d/blob/master/init.el
+###   - https://github.com/weavejester/dotfiles/blob/master/emacs.d/init.el
+### 
+### My Emacs configuration is divided into two files:
+### 
+###   - ~/.emacs.d/init.el
+###   - ~/.emacs.d/config.org (automatically tangled into config.el)
+### 
+### The =init.el= file is the first one executed by Emacs, and in it I do initial
+### set up of my choice of package management, and then if =config.org= has been
+### modified, tangle it into =config.el=, which is then loaded into Emacs by
+### =init.el= to make those configuration settings take effect.
+
+### - [ ] INCLUDE: "config/config-emacs-work-protection.org"
+
+### - [ ] INCLUDE: "config/config-global-syntax-checking.org"
+### - [ ] INCLUDE: "config/config-emacs-use-of-ai.org"
+### - [ ] INCLUDE: "config/config-emacs-to-be-merged.org"
+### - [ ] INCLUDE: "config/config-filetype-epub.org"
+
+### - [ ] ??#+INCLUDE: "config/config-content-mobile-sync.org"
+### - [ ] Emacs Configuration for Personal Memory Retention
+### - [ ] Export Org-Mode Outlines as an Anki Knowledgebase
+### - [ ] INCLUDE: "config/config-emacs-use-of-cloning.org"
+### - [ ] INCLUDE: "config/config-helpful-notes.org"
+
+### * My Emacs Directory Layout
+### 
+### When Emacs is started, it tries to load a ELisp program from an init file,
+### looking in the following places in this order:
+### 
+###     - ~/.emacs              -- I don't use this file
+###     - ~/.emacs.el           -- I don't use this file
+###     - ~/.emacs.d/init.el    -- This is the *start of my Emacs configuration*
+### 
+### In case of problems with =init.el=, you can use the command-line switch '-q'
+### to prevent it being loaded or '--debug-init' to get a traceback of the first
+### error encountered.
+### 
+### TIP: It is NOT recommendeed to byte-compile your init file as it does not
+###      speed up startup very much and often leads to problems when you forget
+###      to recompile the file.
+
+### #+BEGIN_EXAMPLE
+### ~/.emacs.d/
+### .
+### ├── README.org	;; light introduction to my setup
+### ├── init.el		;; my init file for Emacs (versus ~/.emacs)
+### ├── agenda-files.py     ????????????????????????????????????????
+### ├── org-clock-save.el   ????????????????????????????????????????
+### ├── ARCHIVE/		;; modules that I retired using and will someday delete
+### ├── auto-save-list      ????????????????????????????????????????
+### ├── %backup%~           ????????????????????????????????????????
+### ├── backups/		;; backup copies of ANY edited files
+### ├── bookmarks           ????????????????????????????????????????
+### ├── Cask		;; installed modules list read by Cask and maintained by Pallet
+### ├── config.el		;; auto-built from my config.org each time Emacs starts
+### ├── config.org	;; my Emacs configuration in org-mode 'literate' format
+### ├── config.org~
+### ├── config-XXX.org
+### ├── custom-settings.el	;; tiny custom settings auto-edited by Emacs itself
+### ├── elpa
+### │   ├── PACKAGE-A-YYYYMMDD.HHMM/
+### │   ├── PACKAGE-B-YYYYMMDD.HHMM/
+### │   ├── archives/
+### │   │   ├── gnu/
+### │   │   │   ├── archive-contents
+### │   │   │   └── archive-contents.signed
+### │   │   ├── melpa/
+### │   │   │   └── archive-contents
+### │   │   └── melpa-stable/
+### │   │       └── archive-contents
+### ├── eshell/
+### │   ├── alias
+### │   ├── history
+### │   └── lastdir
+### ├── quelpa/
+### │   ├── build/
+### │   │   └── PACKAGE-A/
+### ├── ido.last
+### ├── library.org
+### ├── LICENSE
+### ├── lisp/			;; individual .el files I create or work on
+### ├── jeff-light-theme.el
+### ├── michael.org
+### ├── network-security.data
+### ├── places
+### ├── pymd5-1c2b62349aded4d3a40a729148cbd68c.py
+### ├── recentf
+### ├── request
+### │   └── curl-cookie-jar
+### ├── session.1012cc9dcd52891180156817838919458300000018020070
+### ├── session.106f8e8df9fad6f21c156806759412428700000015480070
+### ├── snippets		;; my library of text fragments for use by the snippet library
+### ├── templates 	;; my library of text fragments for use by org-capture
+### │   ├── PACKAGE-A/
+### │   ├── PACKAGE-B/
+### ├── tramp
+### ├── transient
+### │   └── history.el
+### └── url
+###     └── cookies
+### 
+### ;;      .cask/
+### ;;         25.3/		;; cache/collection of modules pulled down by package manager
+### ;;      ac-dict/		;; auto-complete dictionary for various modes/languages
+### ;;   ~/.cask/
+### ;;      Cask			;; specification file of dependencies of the Cask pgm
+### ;;      bin/
+### ;;         cask			;; command-line tool for invoking Cask outside of Emacs
+### ;;      cask.el			;; ELisp source of the Cask library
+### #+END_EXAMPLE
+
+### * MISC TO CONSIDER
+### 
+### ;; Automatically reread from disk if the underlying file changes
+### (setopt auto-revert-avoid-polling t)  ;; save power by avoiding polling when possible
+### 
+### ;; Fix archaic defaults
+### (setopt sentence-end-double-space nil)
+### 
+### ;; Make right-click do something sensible
+### (when (display-graphic-p)
+###   (context-menu-mode))
+### 
+### ;; Show the help buffer after startup
+### (add-hook 'after-init-hook 'help-quick)
+### 
+### ;; which-key: shows a popup of available keybindings when typing a long key
+### ;; sequence (e.g. C-x ...)
+### (use-package which-key
+###   :ensure t
+###   :config
+###   (which-key-mode))
+### 
+### (setopt x-underline-at-descent-line nil)           ; Prettier underlines
+
+### ;; Enable horizontal scrolling
+### (setopt mouse-wheel-tilt-scroll t)
+### (setopt mouse-wheel-flip-direction t)
+### 
+### * Initialization Sequence
+### 
+### 1. ~/.emacs.d/early-init.el
+### 2. ~/.emacs.d/init.el
+### 3. ~/.emacs.d/config.org
+### 
+### ** About ~/.emacs.d/early-init.el
+### 
+### Most customizations for Emacs should be put in the normal init file.  See The
+### Emacs Initialization File.  However, it is sometimes necessary to have
+### customizations take effect during Emacs startup earlier than the normal init
+### file is processed.  Such customizations can be put in the early init file,
+### ~/.config/emacs/early-init.el or ~/.emacs.d/early-init.el.  This file is loaded
+### before the package system and GUI is initialized, so in it you can customize
+### variables that affect the package initialization process, such as
+### package-enable-at-startup, package-load-list, and package-user-dir.  Note that
+### variables like package-archives which only affect the installation of new
+### packages, and not the process of making already-installed packages available,
+### may be customized in the regular init file. See Package Installation.
+### 
+### We do not recommend that you move into early-init.el customizations that can
+### be left in the normal init files.  That is because the early init file is read
+### before the GUI is initialized, so customizations related to GUI features will
+### not work reliably in early-init.el.  By contrast, the normal init files are
+### read after the GUI is initialized.  If you must have customizations in the
+### early init file that rely on GUI features, make them run off hooks provided by
+### the Emacs startup, such as window-setup-hook or tty-setup-hook. See Hooks.
+### 
+### For more information on the early init file, see Init File in The Emacs Lisp
+### Reference Manual.
+### 
+### ---
+### 
+### This file is loaded before the package system and GUI is initialized,
+### so in it you can customize variables that affect the package
+### initialization process, such as package-enable-at-startup,
+### package-load-list, and package-user-dir. Note that variables like
+### package-archives which only affect the installation of new packages,
+### and not the process of making already-installed packages available,
+### may be customized in the regular init file.
+### 
+### ** Garbage Collection
+### ** Choice of Package Manager
+### 
+### There are many package managers for Emacs, ranging from simple scripts
+### to download files from EmacsWiki to full-featured package management
+### solutions like straight.el. Here are the most feature-rich
+### alternatives to straight.el:
+### 
+###  - package.el: de facto standard, bundled with Emacs.
+### 
+###  - Quelpa: allows you to use external sources like GitHub with
+###    package.el. Essentially a local MELPA.
+### 
+###  - Cask: another package.el wrapper. Specify your dependencies in a
+###    Cask file; can be used for project management or an Emacs
+###    configuration.
+### 
+###  - el-get: ridiculously OP in terms of how many different sources you
+###    can pull packages from (package.el, every known VCS, distro package
+###    managers, go get(!!)).
+### 
+###  - Borg: assimilates packages as Git submodules into .emacs.d, relying on Emacsmirror.
+### 
+###  - "Screw package managers! I'll just handle it all myself!"
+### 
+### `use-package' is a macro that provides convenient syntactic sugar for
+### many common tasks related to installing and configuring Emacs
+### packages. Of course, it does not actually install the packages, but
+### instead defers to a package manager, like straight.el (which comes
+### with use-package integration by default).
+### 
+### - does Emacs 29 need straight.el anymore ???
+### - https://github.com/radian-software/straight.el
+### 
+### - Note: straight.el is a replacement for package.el, not
+###   use-package. use-package can be used with either package.el or
+###   straight.el.
+### 
+### Most customizations for Emacs should be put in the normal init
+### file. See The Emacs Initialization File. However, it is sometimes
+### necessary to have customizations take effect during Emacs startup
+### earlier than the normal init file is processed. Such customizations
+### can be put in the early init file, ~/.config/emacs/early-init.el or
+### ~/.emacs.d/early-init.el. This file is loaded before the package
+### system and GUI is initialized, so in it you can customize variables
+### that affect the package initialization process, such as
+### package-enable-at-startup, package-load-list, and
+### package-user-dir. Note that variables like package-archives which only
+### affect the installation of new packages, and not the process of making
+### already-installed packages available, may be customized in the regular
+### init file. See Package Installation.
+### 
+### We do not recommend that you move into early-init.el any
+### customizations that can be left in the normal init files. That is
+### because the early init file is read before the GUI is initialized, so
+### customizations related to GUI features will not work reliably in
+### early-init.el. By contrast, the normal init files are read after the
+### GUI is initialized. If you must have customizations in the early init
+### file that rely on GUI features, make them run off hooks provided by
+### the Emacs startup, such as window-setup-hook or tty-setup-hook. See
+### Hooks.
+### 
+### For more information on the early init file, see Init File in The
+### Emacs Lisp Reference Manual.
+### 
+### ** About ~/.emacs.d/init.el
+### *** About ~use-package~ Emacs Lisp Macro To More Efficiently Organize Package Settings
+### 
+### There are many ways to provide package settings, from raw Elisp to tidy macros.
+### The github:[[https://github.com/jwiegley/use-package][use-package]] Elisp macro allows one to isolate package configuration
+### in your Emacs configuration files in a way that is both performance-oriented
+### and tidy.
+### 
+### - [[https://www.masteringemacs.org/article/spotlight-use-package-a-declarative-configuration-tool][Spotlight: use-package, a declarative configuration tool - Mastering Emacs]]
+### - [[http://cachestocaches.com/2015/8/getting-started-use-package/][Getting Started with Use-Package]]
+### 
+### 
+### https://github.com/emacs-straight/use-package.git   OFFICIAL ONE
+### 
+### The /straight-use-package-by-default/ variable in straight.el is a convenience
+### setting that allows you to simplify your use-package declarations.  When it is
+### enabled (set to t), straight.el automatically manages packages declared via
+### use-package without requiring you to explicitly specify :straight t for each
+### package.
+### 
+### 
+### Use of 'straight' for loading packages is more popular, more robust and better
+### at dependency management than 'quelpa'.
+### 
+
+* Phase 00 – Core system and helper macros
+
+This phase occurs after Emacs has started up but before the user
+interface and mode-specific configuration takes place.
+
+** Core Boot Configuration
+#+CAPTION: ~/.emacs.d/00-core-boot.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 00-core-boot
+#+DESCRIPTION: Core config for startup, secrets, runtime defaults
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 00-core-boot.el --- Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Insure I'm Running an Acceptable Version of Org
+
+#+CAPTION: Verify what Org Version I'm Running
+#+BEGIN_SRC emacs-lisp
+(defun xan/check-org-version-min (min-version)
+  "Check Org version is >= MIN-VERSION."
+  (let* ((org-path (find-library-name "org"))
+         (actual-version (org-version))) ;; ← no second arg
+    (message "[org-check] Org version: %s" actual-version)
+    (message "[org-check] Org library path: %s" org-path)
+    (cond
+     ((version< actual-version min-version)
+      (warn "[org-check] ⛔ Org version too old! Require ≥ %s, but got %s"
+            min-version actual-version))
+     ((string-match-p "/straight/repos/org-mode/" org-path)
+      (message "[org-check] ✅ Org is installed via straight.el (Git version)."))
+     ((string-match-p "/emacs/[0-9.]+/lisp/org/" org-path)
+      (message "[org-check] ✅ Org is the built-in Emacs version."))
+     (t
+      (warn "[org-check] ⚠ Org source is non-standard: %s" org-path)))))
+
+  ;; Automatically run this check after Org is loaded
+  (with-eval-after-load 'org
+    (xan/check-org-version-min "9.7.11"))
+#+END_SRC
+
+* Insure All My Variable Blocks in My Org Files Are Properly Terminated
+
+#+CAPTION: Report Improperly Terminated Variable Blocks
+#+BEGIN_SRC emacs-lisp
+(defun xan/check-org-local-variable-blocks (&optional dir)
+  "Check for org files in DIR (default: user-emacs-directory) with invalid Local Variables blocks."
+  (let* ((root (or dir user-emacs-directory))
+         (org-files (directory-files-recursively root "\\.org$"))
+         (bad-files '()))
+    (dolist (file org-files)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (goto-char (point-min))
+        (when (re-search-forward "^[#;]+[ \t]*Local Variables:" nil t)
+          (unless (re-search-forward "^[#;]+[ \t]*End:" nil t)
+            (push file bad-files)))))
+    (when bad-files
+      (message "⚠ Org files with malformed Local Variables block:")
+      (dolist (f (reverse bad-files))
+        (message " - %s" f)))
+    bad-files))
+
+  (add-hook 'emacs-startup-hook
+    (lambda ()
+      (xan/check-org-local-variable-blocks user-emacs-directory)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '00-core-boot)
+  ;;; 00-core-boot.el ends here
+#+END_SRC
+#+END_SRC
+
+- verify I'm running a good version of Org
+- audit if my variables blocks in *.org files are properly terminated
+
+- mouse wheel setup ???
+
+
+** Foundational Security for Emacs
+
+Anything that deals with authentication or secret-handling, such as
+GnuPG, password stores, auth-sources, .netrc, pinentry, tls-program.
+
+#+CAPTION: ~/.emacs.d/05-security-secrets.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 05-security-secrets
+#+DESCRIPTION: Secrets, encryption, authentication file paths, and GPG integration
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 05-security-secrets.el --- ??Tangled master config  -*- lexical-binding: t -*-
+#+END_SRC
+
+Here's a solid foundation — only include logic that’s secure and environment-specific, or needed before packages use them.
+Isolate sensitive behaviors like GPG, auth sources, secret file locations, and anything tied to credentials.
+
+
+* Auth Sources
+
+#+BEGIN_SRC emacs-lisp
+  (setq auth-sources
+        `(,(expand-file-name "authinfo.gpg" xan/data-dir)
+          "~/.authinfo.gpg" "~/.authinfo"))
+#+END_SRC
+
+* GPG/epa Configuration
+
+This lets you input GPG passphrases in Emacs minibuffer (or silently if agent is set up).
+
+#+BEGIN_SRC emacs-lisp
+  (require 'epa-file)
+  (epa-file-enable)
+
+  (setq epg-pinentry-mode 'loopback
+        epa-file-cache-passphrase-for-symmetric-encryption t
+        epa-file-encrypt-to '("your@email.com") ;; if you use encryption targets
+  )
+#+END_SRC
+
+* Load Optional Secrets Files
+
+If you have a file with secrets (not committed), then in data/secrets.el, you
+can define tokens, passwords, etc. (outside version control).
+
+#+BEGIN_SRC emacss-lisp
+  (defconst xan/secrets-file (expand-file-name "secrets.el" xan/data-dir))
+  (when (file-readable-p xan/secrets-file)
+    (load xan/secrets-file))
+#+END_SRC
+
+* Optional Vault/GPG agent settings
+
+If you use gpg-agent, you can remind Emacs where the socket is:
+
+#+BEGIN_SRC emacs-lisp
+  (setenv "GPG_AGENT_INFO" nil) ;; let gpg-agent manage itself in modern setups
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '05-security-secrets)
+  ;;; 05-security-secrets.el ends here
+#+END_SRC
+
+* Disabling Backups of Files Containing Encrypted Content
+Article: [[http://anirudhsasikumar.net/blog/2005.01.21.html][Controlling Backups]] of Sensitive Files
+
+With org-crypt, if you have autosave turned on and decrypt the entries within
+Emacs, the autosave file will contain the entries in plain text.  For this
+reason let's define a minor-mode we'll call "sensitive-mode" which can can
+place onto files containing encrypted content.
+
+#+BEGIN_SRC emacs-lisp
+  (define-minor-mode sensitive-mode
+    "For sensitive files like password lists.
+     It disables backup creation and auto saving.
+
+     With no argument, this command toggles the mode.
+     Non-null prefix argument turns on the mode.
+     Null prefix argument turns off the mode."
+
+    ;; The initial value.
+    nil
+
+    ;; The indicator for the mode line.
+    " Sensitive"
+
+    ;; The minor mode bindings.
+    nil
+
+    (if (symbol-value sensitive-mode)
+        (progn
+
+            ;; disable backups
+            (set (make-local-variable 'backup-inhibited) t)
+
+            ;; disable auto-save
+            (if auto-save-default
+                (auto-save-mode -1)))
+
+            ;resort to default value of backup-inhibited
+            (kill-local-variable 'backup-inhibited)
+
+            ;resort to default auto save setting
+            (if auto-save-default
+                (auto-save-mode 1))))
+#+END_SRC
+
+Set sensitive mode to turn on by default for files having the =.gpg=
+extension.  The following code does exactly that:
+
+#+BEGIN_SRC emacs-lisp
+  (setq auto-mode-alist
+    (append
+      '(("\\.org\\.gpg$" . org-mode))
+      '(("\\.gpg$" . sensitive-mode))
+      auto-mode-alist)
+  )
+#+END_SRC
+
+* TODO Using Encryption to Hide Files/Sections
+
+There is encryption of entire files and there is encryption of sections of
+Org-mode outlines.
+
+*** Encrypting *Entire Files* within Emacs
+
+Emacs comes with the [[http://www.gnu.org/software/emacs/manual/html_mono/epa.html][EasyPG]] Assistant, the all-in-one GnuPG interface for
+Emacs.  EasyPG also contains the library interface called _EasyPG Library_.
+
+EasyPG Assistant provides the following features.
+
+- Key management
+- Cryptographic operations on regions
+- Cryptographic operations on files
+- Dired integration
+- Mail-mode integration
+- Automatic encryption/decryption of *.gpg files
+
+By default, every file whose extension is ‘.gpg’ will be treated as encrypted.
+That is, when you attempt to open such a file which already exists, the
+decrypted text is inserted in the buffer rather than encrypted one.  On the
+other hand, when you attempt to save the buffer to a file whose extension is
+‘.gpg’, encrypted data is written.
+
+https://www.gnu.org/software/emacs/manual/html_mono/epa.html
+
+#+BEGIN_SRC emacs-lisp
+  (defadvice epg--start (around advice-epg-disable-agent activate)
+    "Make epg--start not able to find a gpg-agent"
+    (let ((agent (getenv "GPG_AGENT_INFO")))
+      (setenv "GPG_AGENT_INFO" nil)
+      ad-do-it
+      (setenv "GPG_AGENT_INFO" agent)))
+
+  (defun epg-disable-agent ()
+    "Make EasyPG bypass any gpg-agent"
+    (interactive)
+    (ad-enable-advice 'epg--start 'around 'advice-epg-disable-agent)
+    (ad-activate 'epg--start)
+    (message "EasyPG gpg-agent bypassed"))
+
+  (defun epg-enable-agent ()
+    "Make EasyPG use a gpg-agent after having been disabled with
+    epg-disable-agent"
+    (interactive)
+    (ad-disable-advice 'epg--start 'around 'advice-epg-disable-agent)
+    (ad-activate 'epg--start)
+    (message "EasyPG gpg-agent re-enabled"))
+#+END_SRC
+
+To set up Emacs for transparent encryption and decryption our need the add the
+following to your .emacs.
+
+#+BEGIN_SRC emacs-lisp
+;;NOT NEEDED?  (epa-file-enable)
+
+  ;; If non-nil, always asks user to select recipients.
+  ;;  (setq epa-file-select-keys
+  ;;      nil)
+
+  ;; *Recipient(s) used for encrypting files.
+  ;;  (setq epa-file-encrypt-to
+  ;;      ("jeff@taupro.com"))
+
+  ;;  )
+#+END_SRC
+
+If you want to temporarily disable this behavior, use =M-x epa-file-disable=,
+and then to enable this behavior use =M-x epa-file-enable=.
+
+At file-save time you are prompted to select recipients but this prompt can be
+suppressed by putting the following line on the first line of the text being
+encrypted.
+
+#+BEGIN_SRC example
+  ;; -*- epa-file-encrypt-to: ("ueno@unixuser.org") -*-
+#+END_SRC
+
+Some useful functions are:
+
+- M-x epa-list-keys         :: browse your pub keyring, e.g. 'gpg --list-keys'
+- M-x epa-list-secret-keys  :: browse your pvt keyring, e.g. 'gpg --list-secret-keys'
+- M-x epa-sign-region       :: create a cleartext signature of the region
+- M-x epa-encrypt-file     :: encrypt a file
+
+In the '*Keys*' buffer, several commands are available:
+
+- m	:: select (mark) keys
+- o	:: output marked key(s) to prompted filename
+
+*** Encrypting *Specific Entries* in an org-mode Outline Hierarchy with org-crypt.
+
+Tagging Subtrees for Encryption
+
+If you just want to encrypt the text of an entry, but not the headline, or
+properties you can use ~org-crypt~.  In order to use ~org-crypt~ you need to
+add something like the following to your Emacs startup.  In my case, I added
+it to my ~init.el~ file like this:
+
+The package ~org-crypt~ is bundled with the ~org~ package so the following
+will activate and configure it.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :straight nil
+    :config
+      (require 'org-crypt)
+
+      (org-crypt-use-before-save-magic)
+
+      ;; Prevent having encrypted text inside encrypted text, by turning off tag inheritance.
+      (setq org-tags-exclude-from-inheritance (quote ("crypt")))
+
+      ;; GPG key to use for encryption
+      ;; Either the Key ID or set to nil to use symmetric encryption.
+      (setq org-crypt-key "jrush@taupro.com")
+  )
+#+END_SRC
+
+Now any text below a headline that has a :crypt: tag will be automatically be
+encrypted when the file is saved.  If you want to use a different tag just
+customize the =org-crypt-tag-matcher= variable.
+
+To decrypt the text just call =M-x org-decrypt-entry= and the encrypted text
+where the point is will be replaced with the plain text.  If you use this
+feature a lot, you will probably want to bind =M-x org-decrypt-entry= to a
+key.
+
+Entries with a =:crypt:= tag will be automatically be encrypted when you save
+the file.
+
+If you have autosave turned on and decrypt the files encrypted entries, the
+autosave file will contain the entries in plain text.  For this reason your
+should disable autosave for encrypted files.
+
+Note that if you encrypt the whole file, its content won't appear in the
+agenda view.  But, encrypting a header section won't exclude itself from
+agenda view as long as you put time settings on the header not in its content
+because its content is encrypted.
+#+END_SRC
+
+###     GPG / epa-file settings: where to store .gpg temp files
+### 
+###     auth-sources (e.g. ~/.authinfo.gpg)
+### 
+###     Pinentry/pinentry-curses vs GUI pinentry config
+### 
+###     TLS cert dirs, API-key variables marked :noexport: or via
+###     custom-file
+### 
+
+#+CAPTION: ~/.emacs.d/07-security-network.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 07-security-network
+#+DESCRIPTION: TLS encryption enforcement
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :tangle yes :exports none
+;;; 07-security-network.el --- ??Tangled master config  -*- lexical-binding: t -*-
+#+END_SRC
+
+* gnutls – TLS security for downloading packages or HTTPS communication
+
+For the love of all that is holy, do not continue with untrusted connections!
+
+By default Emacs will try to verify an HTTPS/TLS server’s certificate
+but _quietly fall back to “allow” on certain errors_ (expired, mismatched name, unknown CA).
+
+Here I turn on _strict certificate checking_ — Emacs will refuse any
+connection whose cert can’t be fully validated, protecting you from
+MITM attacks or bad mirrors.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package gnutls
+    :defer t
+    :custom
+    (gnutls-verify-error t))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '07-security-network)
+  ;;; 07-security-network.el ends here
+#+END_SRC
+#+END_SRC
+
+
+
+* Phase 10 – UI and input system
+
+#+CAPTION: ~/.emacs.d/10-ui-frame-appearance.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 10-ui-frame-appearance
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 10-ui-frame-appearance.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* UI Performance Tweaks
+
+;; ----------------------------------------------------------------------
+;; Set various low-level UI presentation variables for maximum performance.
+
+(setq
+
+  ;; Prevents rounding errors during font/frame changes. Very useful.
+
+  frame-resize-pixelwise  t
+
+  ;; Resizing the Emacs frame can be a terribly expensive part of
+  ;; changing the font.  By inhibiting this, we easily halve startup
+  ;; times with fonts that are larger than the system default.
+  ;;
+  ;; Avoids expensive frame resizing during font/theme init. Good for
+  ;; large fonts or tiling WMs (which I use under Pop_OS! by
+  ;; System76).
+
+  frame-inhibit-implied-resize  t
+
+  ;; Prevents the message that says: "Welcome to GNU Emacs, one
+  ;; component of the GNU operating system." that normally appears at
+  ;; the top of the *scratch* buffer.
+
+  inhibit-startup-message t
+
+  ;; Frame customization
+  default-frame-alist
+    '((fullscreen . maximized)
+      (menu-bar-lines . 0)
+      (tool-bar-lines . 0)
+      (vertical-scroll-bars . nil)
+      (bottom-divider-width . 0)
+      (right-divider-width . 1)
+      ;; Uncomment to avoid theme flash:
+      ;; (background-color . "#000000")
+      ;; (ns-appearance . dark)
+      ;; (ns-transparent-titlebar . t)
+     )
+
+  initial-frame-alist  default-frame-alist
+
+  ;; annoyance supressions
+  ;; byte-compile-warnings  '(not obsolete)
+  ;; warning-suppress-log-types  '((comp) (bytecomp))
+  ;; native-comp-async-report-warnings-errors  'silent
+
+  ;; Silence message: "For information about GNU Emacs and the GNU system, type C-h C-a."
+  ;; inhibit-startup-echo-area-message (user-login-name)
+)
+
+(setq-default
+
+  ;; Avoid flicker or incorrect sizing of child frames
+  ;; (e.g. completion popups) under GTK.  `resize-mode` ensures GTK
+  ;; resizes them correctly without delays.  Especially helpful in
+  ;; Wayland, where native resizing behavior differs from X11 and is
+  ;; stricter.  It's a no-regret setting under GTK/Wayland.
+
+  x-gtk-resize-child-frames  'resize-mode
+
+  ;; Control which symbols appear in the left and right fringes of
+  ;; Emacs windows to indicate things like:
+  ;;
+  ;;  - Buffer truncation
+  ;;  - Continuation lines (soft-wrapped)
+  ;;  - Buffer boundaries
+  ;;  - Overlay arrows (e.g. for next-error)
+  ;;  - Custom indicators (e.g. for git-gutter, flycheck, etc.)
+
+  ;; fringe-indicator-alist  (assq-delete-all 'truncation fringe-indicator-alist)
+)
+
+;; Highly recommended under Wayland/PGTK.  Disables reading X resources
+;; (e.g., .Xresources), which are irrelevant and possibly harmful
+;; under Wayland.  Prevents color/font overrides that conflict with your
+;; Emacs config.  Also disables xrdb-related hacks from old X11 setups.
+
+(advice-add #'x-apply-session-resources :override #'ignore)
+
+
+
+
+
+
+
+
+
+
+
+
+
+** Top Bar of Emacs Screen
+
+#+CAPTION: ???TBD
+#+BEGIN_SRC emacs-lisp
+  (menu-bar-mode
+    -1)	; Whether to show the menu bar along the top.
+
+  ;;;; (defun new-frame-setup (frame)
+  ;;;;   (if (display-graphic-p frame)
+  ;;;;       (progn
+  ;;;;          (message "This is a windowing system.")
+
+  ;;;;          ;; Don't want a toolbar in GUI mode (errs in invoke in text mode)
+  ;;;;          (tool-bar-mode -1)
+
+  ;;;;          ;; Set the default size of the new frame
+  ;;;;          (set-frame-size (selected-frame) 150 50)
+  ;;;;       )
+  ;;;;       (message "This is a non-windowing system.")
+  ;;;;   )
+  ;;;; )
+
+  ;;;; ;; Run across all already-existing frames, to catch 1st frame
+  ;;;; (mapc 'new-frame-setup (frame-list))
+
+  ;;;; ;; But also run when a new frame is created
+  ;;;; (add-hook 'after-make-frame-functions 'new-frame-setup)
+
+  ;--(tool-bar-mode
+  ;--    nil)
+
+  (setq frame-title-format
+    "Emacs: %b")	; Displays the name of the file being edited in the title bar along the top.
+#+END_SRC
+
+** Along the Left/Right Sides of the Emacs Screen
+
+#+CAPTION: ???TBD
+#+BEGIN_SRC emacs-lisp
+  ;;  (setq-default scroll-bar-mode
+  ;;    nil)	; Whether to show the scroll bar at all.
+  (set-scroll-bar-mode nil)
+
+  ;;  (setq-default set-scroll-bar-mode
+  ;;    'right)	; Where to show the scroll bar, left or right side.
+#+END_SRC
+
+* Preferred UI Behavior
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+** Make the "Active Region" Visible
+
+There are two controls over whether the region is highlighted or not:
+
+- transient-mark-mode (variable)
+- transient-mark-mode (function)   a global minor mode
+
+By default the =transient-mark-mode= variable is non-nil, so the region *is*
+highlighted, using the =region= face.
+
+** Make Trailing Whitespace Visible
+
+I like to highlight trailing whitespace as it bothers me when it exists
+invisibly, although sometimes I use this highlighting to mark important TODO
+headlines in ~org-mode~.
+
+The face used to indicate trailing whitespace is ‘trailing-whitespace’.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default show-trailing-whitespace
+    t)	; Visually indicate presence of whitespace at end-of-lines.
+
+  (global-set-key		[f2]
+    'delete-trailing-whitespace)	; Remove all trailing whitespace
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default default-indicate-empty-lines
+    t)	; Visually indicate presence of blank lines at EOBs.
+#+END_SRC
+
+** Highlight the Entire Current Line
+
+I like to highlight the entire current line, for better visibility while
+navigating.  The face =hl-line-face= is used to do the highlight, and I just
+change the background to my choice of color.
+
+#+BEGIN_SRC emacs-lisp
+  (global-hl-line-mode +1)
+
+  (set-face-attribute 'hl-line  ; of hl-line-face
+    nil :inherit nil :background "darkred")
+#+END_SRC
+
+
+* Bell Indicator
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+https://www.emacswiki.org/emacs/AlarmBell
+
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell
+    nil		; play the bell sound
+    ;; t		; quietly flash the top and bottom lines of the Emacs frame
+  )
+#+END_SRC
+
+** Lowest Level of Control
+
+At the *lowest level* of Emacs there is a variable defining a custom function
+to ring the bell, or (usually) left nil to allow the ring to occur naturally.
+To *globally* disable the bell do the following:
+
+#+BEGIN_SRC emacs-lisp
+  (setq ring-bell-function 'ignore)
+#+END_SRC
+
+or provide a function that uses your choice of sound playing mechanism:
+
+#+BEGIN_SRC ZZZemacs-lisp :tangle no
+  (setq ring-bell-function (lambda ()
+    (play-sound-file "/this/is/my/errorsound.au")))
+#+END_SRC
+
+** High Level of Control
+- https://emacs.stackexchange.com/questions/34746/how-to-get-an-audible-feedback-when-the-current-task-is-overrun
+- https://emacs.stackexchange.com/questions/17796/emacs-tea-time-is-supposed-to-be-integrated-in-org-mode-but-apparently-its-no/17849#17849
+
+At a high level of beep decision making, there is in the file =org-clock.el= a
+variable indicating which sound to use when ~org-mode~ wants to notify you of
+overrunning the time estimate for a task you are working on.
+
+  #+BEGIN_SRC ZZZemacs-lisp :tangle no
+    (setq org-clock-sound nil) ;; no sound
+    (setq org-clock-sound t) ;; Standard Emacs beep
+    (setq org-clock-sound "/path/to/my/sound") ;; Play this sound file, fall back to beep
+  #+END_SRC
+
+  #+BEGIN_SRC emacs-lisp
+    (setq org-clock-sound "~/bell-meditation-75335.mp3")
+
+    (defun org-clock-play-sound (&optional clock-sound)
+      "Play sound as configured by `org-clock-sound'.
+    Use mpg123 tool if available.
+    If CLOCK-SOUND is non-nil, it overrides `org-clock-sound'."
+      (let
+        (
+          (org-clock-sound (or clock-sound org-clock-sound))
+        )
+        (cond
+          ( (not org-clock-sound)
+                                   )
+          ( (eq org-clock-sound t)
+              (beep t) (beep t)    )
+
+          ( (stringp org-clock-sound)
+            (let
+              (
+                (file (expand-file-name org-clock-sound))
+              )
+              (if (file-exists-p file)
+                (if (executable-find "mpg123")
+                  (start-process "org-clock-play-notification" nil "mpg123" file)
+                    (condition-case nil
+                      (play-sound-file file)
+                      (error (beep t) (beep t))
+                    )
+                ) ; end of if
+              ) ; end of if
+            ) ; end of let
+          )
+        )
+      )
+    )
+  #+END_SRC
+
+  ; (defun org-notify (notification &optional play-sound)
+  ;   "Send a NOTIFICATION and maybe PLAY-SOUND.
+  ; If PLAY-SOUND is non-nil, it overrides `org-clock-sound'."
+  ;   (org-show-notification notification)
+  ;   (if play-sound (org-clock-play-sound play-sound)))
+
+  ; (defun my/play-sound (orgin-fn sound)
+  ;   (cl-destructuring-bind (_ _ file) sound
+  ;     (make-process :name (concat "play-sound-" file)
+  ;                   :connection-type 'pipe
+  ;                   :command `("mpg123" ,file))))
+  ; (advice-add 'play-sound :around 'my/play-sound)
+
+In org-mode when a task is overrun - when the clocked time is bigger than the
+effort, there is a visual feedback in the mode-line.  This variable can be
+used to get an audible one as well.
+
+
+
+
+
+
+
+
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '10-ui-frame-appearance)
+  ;;; 10-ui-frame-appearance.el ends here
+#+END_SRC
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/12-ui-font-face.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 12-ui-font-face
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 12-ui-font-face.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Choice of Font for the Emacs Work Area
+
+I purchased a nice font from https://fsd.it/shop/fonts/pragmatapro/ and then
+told Emacs to use it by doing the following.
+
+To install the new font into Ubuntu Linux, I downloaded the .zip file and
+unpacked it under the directory /usr/share/fonts/truetype/PragmataPro0.829/.
+I then rebuild the font cache usng =fc-cache -f -v=.  Note that the =fc-cache=
+executable is available using =apt-get install fontconfig=.
+
+I can confirm they are installed correctly by running =fc-list | grep
+Pragmata=.  I can view them by using the "Font Manager" program on my Linux
+desktop or the "Font Matrix" program which is better.
+
+In my case, the PragmataPro fonts are divided up into:
+
+ - Family: PragmataPro
+   - Style: Regular      PragmataPro
+   - Style: Italic       PragmataPro Italic
+   - Style: Bold         PragmataPro Bold
+   - Style: Bold Italic  PragmagaPro Bold Italic
+ - Family: PragmataPro Liga
+   - Style: Regular      PragmataPro Liga
+   - Style: Italic       PragmataPro Liga Italic
+   - Style: Bold         PragmataPro Liga Bold
+   - Style: Bold Italic  PragmagaPro Liga Bold Italic
+ - Family: PragmataPro Mono
+   - Style: Regular      PragmataPro Mono
+   - Style: Italic       PragmataPro Mono Italic
+   - Style: Bold         PragmataPro Mono Bold
+   - Style: Bold Italic  PragmagaPro Mono Bold Italic
+ - Family: PragmataPro Mono Liga
+   - Style: Regular      PragmataPro Mono Liga
+   - Style: Italic       PragmataPro Mono Liga Italic
+   - Style: Bold         PragmataPro Mono Liga Bold
+   - Style: Bold Italic  PragmagaPro Mono Liga Bold Italic
+
+#+BEGIN_SRC emacs-lisp
+;; 12-ui-font-face.org
+
+(defun xan/choose-frame-font ()
+  "Pick the best installed font from a preferred list."
+  (or
+   (car (x-list-fonts "PragmataPro Mono Liga-14"))
+   (car (x-list-fonts "PragmataPro Mono-14"))
+   (car (x-list-fonts "PragmataPro-14"))
+   (car (x-list-fonts "monospace-14"))
+   (face-attribute 'default :family)))
+
+(let ((font (xan/choose-frame-font)))
+  (when font
+    (set-frame-font font nil t)
+    (message "[font] Using frame font: %s" font)))
+#+END_SRC
+
+### #+BEGIN_SRC emacs-lispER
+###   (let* ((preferred '("PragmataPro Mono Liga" "PragmataPro Mono" "PragmataPro Liga" "PragmataPro"))
+###          (picked (seq-find (lambda (f) (member f (font-family-list))) preferred)))
+###     (if picked
+###         (progn
+###           (message "[font] Found font: %s" picked)
+###           (set-frame-font (format "%s-14" picked) nil t)
+###           ;; confirm what got applied
+###           (run-with-idle-timer
+###            0.5 nil
+###            (lambda ()
+###              (message "[font] Actual frame font: %s"
+###                       (frame-parameter nil 'font)))))
+###       (message "⚠ No preferred PragmataPro fonts found in font-family-list")))
+### #+END_SRC
+
+  (when (member "PragmataPro Mono Liga" (font-family-list))
+    (set-frame-font "PragmataPro Mono Liga-14" nil t))
+
+  (set-frame-font
+    "PragmataPro Mono Liga 14"    ;; FONT (namestring, object, entity or spec)
+    nil                      ;; KEEP-SIZE
+    t                        ;; FRAMES (t means to all frames)
+  )
+;;  (set-frame-font "PragmataPro Liga 14" nil t)
+
+
+
+
+In Emacs Lisp, fonts are represented using three different Lisp object types:
+
+  - font object :: a Lisp object that represents a font that Emacs has
+    opened.  Font objects cannot be modified in Lisp, but they can be
+    inspected.
+
+  - font spec  :: a font spec creating using font specifications args
+
+  - font entity :: a reference to a font that need not be open.  Its
+    properties are intermediate between a font object and a font spec: like a
+    font object, and unlike a font spec, it refers to a single, specific font.
+
+or just simply a string:
+
+  - font name :: a string in the *fontconfig* format
+
+To display the complete list of available fonts, execute the following in the
+*Scratch Buffer*.
+
+### #+BEGIN_SRC emacs-lispER
+###   (dolist (font (x-list-fonts "*"))
+###     (insert (format "%s\n" font)))-GOOG-Noto Sans CJK KR-normal-normal-normal-*-*-*-*-*
+### #+END_SRC
+
+https://github.com/lumiknit/emacs-pragmatapro-ligatures
+
+### #+BEGIN_SRC emacs-lispER
+###   (use-package pragmatapro-lig
+###     :quelpa
+###       (pragmatapro-lig
+###         :fetcher url
+###         :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
+###       )
+###   )
+### #+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;; (quelpa
+  ;;   '(pragmatapro-lig
+  ;;      :fetcher url
+  ;;      :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
+  ;;    )
+  ;; )
+
+  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/pragmatapro-lig")
+  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/")
+  ;;; (use-package pragmatapro-lig)
+  (require 'pragmatapro-lig)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (load-file "~/.emacs.d/lisp/pragmatapro-prettify-symbols-v0.829.el")
+#+END_SRC
+
+* Colors
+
+- M-x list-colors-display RET  :: display an annotated rainbox of colors
+
+To see the set of possible color names for X:
+    /usr/lib/X11/rgb.txt
+
+(distinguish btw colors for Emacs in X and colors for Emacs in an xterm)
+
+#+BEGIN_SRC emacs-lisp
+;;;NEEDED?  (set-background-color "White")
+;;;NEEDED?  (set-foreground-color "Black")  ;; don't these duplicate the below?
+;;;NEEDED?  (set-cursor-color     "Red")
+;;;NEEDED?  (set-mouse-color      "Black")
+;;;NEEDED?  (set-border-color     "Blue")
+#+END_SRC
+
+* Faces for Emacs Text            =faces vs colors vs themes=
+
+To see the various faces:
+    M-x list-faces-display
+
+??? are the following needed to use faces or themes ???
+
+#+BEGIN_SRC emacs-lisp
+  (global-font-lock-mode
+    t)	; Enable colorized text everywhere.
+
+  (setq font-lock-maximum-decoration
+    t)	; Enable colorized text everywhere.
+#+END_SRC
+
+** Default Face for Specific Kinds of Text
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Standard-Faces.html
+
+- default :: This face is used for ordinary text that doesn’t specify any
+  face. Its background color is used as the frame’s background color.
+
+M-x customize-face mode-line RET
+#+BEGIN_SRC emacs-lisp :results none
+  (custom-set-faces
+    '(default
+      (
+        (t
+          (:stipple nil
+;;           :background "white"
+;;           :foreground "black"
+           :inverse-video nil
+           :box nil
+           :strike-through nil
+           :overline nil
+           :underline nil
+           :slant normal
+           :weight normal
+           :height 130
+           :width normal
+           :family "PragmataPro"
+          )
+        )
+      )
+    )
+  )
+#+END_SRC
+
+** org-mode face elements
+
+*** Visual Test of Typefaces in Org-Mode
+
+- *Testing*   boldface
+- /Testing/   italics
+- ~Testing~   verbatim
+- -Testing-
+- +Testing+   strikethru
+- =Testing=   code
+ - Testing :: description list
+
+??? (add-to-list 'custom-theme-load-path "<themefolder>")
+
+#+BEGIN_SRC emacs-lisp
+  ; Text surrounded by =TEXT=
+  ;;; (set-face-attribute 'org-verbatim nil :foreground "LightGrey" :box "Orange" :inverse-video t)
+
+  ; Text surrounded by ~TEXT~
+  (set-face-attribute 'org-code nil :foreground "Purple")
+
+  ; Text representing the definition term in a description list   - TERM  :: DEFINITION
+  (set-face-attribute 'org-list-dt nil :foreground "Orange" :box "White" :inverse-video t)
+
+  ;font-lock-builtin-face (dark blue on grey)
+  ;font-lock-comment-face (red on grey)
+  ;font-lock-constant-face (pink on grey)
+  ;font-lock-doc-face (black on green)
+  ;font-lock-function-name-face (bright blue on grey)
+  ;font-lock-keyword-face (bright cyan on grey)
+  ;font-lock-string-face (black on green)
+  ;font-lock-type-face (FAINT green on grey)
+  ;font-lock-variable-name-face (orange on grey HARD TO READ)
+  ;font-lock-warning-face red on grey)
+
+  ;(set-face-foreground 'font-lock-builtin-face "White")
+  ;(set-face-foreground 'font-lock-comment-face "White")
+  ;(set-face-foreground 'font-lock-function-name-face "White")
+  ;(set-face-foreground 'font-lock-string-face "White")
+  ;(set-face-foreground 'font-lock-variable-name-face "White")
+
+  ;bold (black on grey)
+  ;bold-italic (black on grey)
+  ;border (black on black UNREADABLE)
+  ;cursor (black on black UNREADABLE)
+  ;default (black on grey)
+  ;fixed-pitch (black on grey)
+  ;fringe (black on grey)
+  ;header-line (underlined black on grey)
+  ;highlight (black-on-green)
+  ;isearch (UNREADABLE cyan-on-purple)
+  ;isearch-lazy-highlight-face (black-on-cyan)
+  ;italic (black-on-grey)
+  ;menu  (grey-on-black)
+  ;mode-line  (grey-on-black)
+  ;mouse
+  ;region
+  ;scroll-bar
+  ;secondary-selection
+  ;show-paren-match-face
+  ;tool-bar
+  ;tooltip
+  ;underline
+  ;variable-pitch
+#+END_SRC
+
+** Themes
+
+A popular way of customizing Emacs colors is the use the #color-theme#
+package, of which a number of those these are aware of Org-mode.
+
+For my Gentoo Linux distribution I run, I had to emerge (install):
+
+   $ emerge app-emacs/color-theme
+
+There is also a newer approach called *custom themes* but custom themes do not
+replace color themes, as each approach has its advantages.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package grandshell-theme)
+  (setq custom-enabled-themes '(grandshell))
+  (load-theme 'grandshell t)
+#+END_SRC
+
+#+RESULTS:
+: t
+
+#+BEGIN_SRC DISABLEDemacs-lisp
+;;;  (use-package color-theme)
+;;  (setq color-theme-is-global t)
+;;  (color-theme-initialize)
+
+;;  (load "org-beautify-theme")
+;;  (load "color-theme-github")
+;;  (load "color-theme-cobalt")  ;; looks normal
+;;  (load "color-theme-sanityinc-solarized")  ;; looks normal
+;;  (load "color-theme-sanityinc-tomorrow")  ;; looks normal
+
+;;  (load "grandshell-theme")  ;; on black but not bad
+
+;; cyberpunk          ;; on black but not bad
+;; grandshell-theme   ;; on black but not bad
+;; deeper-blue        ;; on black but not bad
+;; leuven             ;; on white but NICE!
+;; manoj-dark         ;; on black but VERY CLEAR
+
+#+END_SRC
+
+
+* SHOULD DISPLAY of BELL GO IN HERE ???  OR IN 10-ui-frame-appearance.org ???
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '12-ui-font-face)
+  ;;; 12-ui-font-face.el ends here
+#+END_SRC
+
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/15-ui-modeline-input.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 15-ui-modeline-input
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 15-ui-modeline-input.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+CAPTION: Verify what org-mode I'm running
+** Along the Bottom, in the Mode Line
+#+BEGIN_SRC emacs-lisp
+  (setq-default line-number-mode
+    t)	; Enable the display, in the mode line along the bottom, of the current line number.
+  (setq-default column-number-mode
+    t)	; Enable the display, in the mode line along the bottom , of the current column number.
+#+END_SRC
+
+The Emacs modeline is a complex beast.
+
+Define the Elements to Be Part of the Modeline
+
+*** Defining My Own Face and a Property Clause to Conditionally Display It
+
+#+BEGIN_SRC emacs-lispER
+  (defface jeff-mode-line-client-face
+    `( ;; spec
+      (t (:background "red"))
+    )
+    "Used for displaying the region." ;; doc
+  )
+
+  (defface jeff-mode-line-client-face-inactive
+    `( ;; spec
+      (t (:background "gray"))
+    )
+    "Used for displaying the region." ;; doc
+  )
+#+END_SRC
+
+;;  (set-face-attribute 'org-list-dt
+;;    nil :foreground "Orange" :box "White" :inverse-video t)
+
+#+BEGIN_SRC emacs-lispER
+  (defun jeff-window-active-p ()
+    (eq (frame-selected-window) (selected-window))
+  )
+
+  (setq jeff2-mode-line-client
+    `(""
+      (:propertize
+        (""
+          (:eval
+            (if (frame-parameter nil 'client)
+              (
+                "🠵x"
+                'face (if (jeff-window-active-p)
+                  'jeff-mode-line-client-face
+                  'jeff-mode-line-client-face-inactive)
+              )
+
+              "")
+          )
+        )
+        help-echo ,(purecopy "emacsclient frame"))
+     )
+  )
+#+END_SRC
+
+*** Define My Custom Set of Widgets to Display on the Modeline
+
+#+BEGIN_SRC emacs-lispER
+
+  (setq-default mode-line-format
+    (list
+      "%e"                         ;; print error msg about full memory
+       mode-line-front-space       ;; (:eval (if (display-graphic-p) " " "-"))
+       ;; mode-line-mule-info
+
+       jeff2-mode-line-client
+       mode-line-modified
+       mode-line-remote                ;; indicate a remote buffer
+;;;🔒 🔓
+       ;; mode-line-frame-identification  ;; (:eval (mode-line-frame-control))
+       mode-line-buffer-identification
+       " "
+       mode-line-position              ;; (very long expr)
+       ;; (vc-mode vc-mode)
+       " "
+       mode-line-modes             ;; (very long expr)
+       mode-line-misc-info         ;; ((global-mode-string ("" global-mode-string " ")))
+       mode-line-end-spaces        ;; (:eval (unless (display-graphic-p) "-%-"))
+    )
+  )
+;;              (list
+;;
+;;               '(:eval (propertize (if (eq 'emacs evil-state) "  " "  ")
+;;                                   'face (cogent/evil-state-face)))
+;;
+;;               " "
+;;               mode-line-misc-info ; for eyebrowse
+;;
+;;               '(:eval (when-let (vc vc-mode)
+;;                         (list " "
+;;                               (propertize (substring vc 5)
+;;                                           'face 'font-lock-comment-face)
+;;                               " ")))
+;;
+;;               '(:eval (list
+;;                        ;; the buffer name; the file name as a tool tip
+;;                        (propertize " %b" 'face 'font-lock-type-face
+;;                                    'help-echo (buffer-file-name))
+;;                        (when (buffer-modified-p)
+;;                          (propertize
+;;                           " "
+;;                           'face (if (cogent-line-selected-window-active-p)
+;;                                     'cogent-line-modified-face
+;;                                   'cogent-line-modified-face-inactive)))
+;;                        (when buffer-read-only
+;;                          (propertize
+;;                           ""
+;;                           'face (if (cogent-line-selected-window-active-p)
+;;                                     'cogent-line-read-only-face
+;;                                   'cogent-line-read-only-face-inactive)))
+;;                        " "))
+;;
+;;               ;; relative position in file
+;;               '(:eval (list (nyan-create))) ;; from the nyan-mode package
+;;               (propertize "%p" 'face 'font-lock-constant-face)
+;;
+;;               ;; spaces to align right
+;;               '(:eval (propertize
+;;                        " " 'display
+;;                        `((space :align-to (- (+ right right-fringe right-margin)
+;;                                              ,(+ 3 (string-width mode-name)))))))
+;;
+;;               ;; the current major mode
+;;               (propertize " %m " 'face 'font-lock-string-face)))
+#+END_SRC
+
+*** Define My Desired Appearance of Selected Modeline Widgets
+**** Defining the Appearance of the "Org-Mode Clock"
+
+#+BEGIN_SRC emacs-lisp
+
+  (set-face-attribute 'org-mode-line-clock
+    nil :foreground "green2" :weight 'bold)
+
+  (set-face-attribute 'org-mode-line-clock-overrun
+    nil :foreground "red2" :background "black" :weight 'bold)
+
+#+END_SRC
+
+
+** Along the Bottom, inside the Minibuffer
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'minibuffer-setup-hook 'my-minibuffer-setup)
+
+  (defun my-minibuffer-setup ()
+    (set (make-local-variable 'face-remapping-alist)
+        '((default :height 1.8)) ;; use a larger font for my presentations
+    )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-clock-mode-line-total
+      'today) ;; show on modeline all time clocked into this task today
+
+  (setq org-clock-clocked-in-display
+      'mode-line) ;; show task name and clocked time on modeline but NOT frame title
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (require 'org-element)
+  (require 'org-clock)
+
+  (defvar org-clock-running-ol nil
+    "Overlay for the running clock.")
+
+  (defface org-clock-running-face
+    '((t :foreground "Red" :weight bold))
+    "Face for highlighting the running clock.")
+
+  (defun org-clock-add-running-ol ()
+    "Highlight the running clock."
+    (save-excursion
+      (when (org-clock-is-active)
+        (org-clock-remove-running-ol)
+        (goto-char org-clock-marker)
+        (setq org-clock-running-ol (make-overlay (point) (scan-sexps (point) -1)))
+        (overlay-put org-clock-running-ol 'face 'org-clock-running-face)
+        )))
+
+  (defun org-clock-remove-running-ol ()
+    (when (overlayp org-clock-running-ol)
+      (delete-overlay org-clock-running-ol)
+      (setq org-clock-running-ol nil)))
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '15-ui-modeline-input)
+  ;;; 15-ui-modeline-input.el ends here
+#+END_SRC
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/17-ui-mouse-inputs.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 17-ui-mouse-inputs
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 17-ui-mouse-inputs.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Set Up My Mouse-Wheel
+
+** Support for Pixel-Level Scrolling Built into Emacs 29+
+#+CAPTION: ???
+#+BEGIN_SRC emacs-lisp
+  (pixel-scroll-mode 1)
+  (pixel-scroll-precision-mode 1)
+
+  (setq pixel-scroll-precision-interpolation-factor-alist
+    '((0    . 3)    ;; tiny scrolls use 3 steps
+      (200  . 5)    ;; moderate → 5 steps
+      (1000 . 8)))  ;; large → 8 steps
+#+END_SRC
+
+Then tweak these pixel-scroll-precision-* variables until it feels right.
+
+pixel-scroll-precision-interpolation-factor
+    What: how many “sub‐steps” each native scroll event is broken into.
+    Default: 1 (i.e. one jump per event)
+    Higher → smoother animation (more intermediate frames), at the cost of CPU/time.
+    Lower → snappier but more “jumpy” scroll.
+
+pixel-scroll-precision-delay
+    What: delay in seconds between each interpolation step.
+    Default: 0.01
+    Higher → slower, languid scroll.
+    Lower (e.g. 0.005) → faster, but may feel too abrupt or overwhelm the event queue.
+
+pixel-scroll-precision-large-scroll-height
+    What: if a scroll event requests “more than this many pixels,” treat it as a full-page scroll (and interpolate across that full height).
+    Default: your frame’s pixel height
+    Lowering it makes SHIFT-wheel or other “big” scrolls animate in more manageable chunks.
+
+pixel-scroll-precision-interpolation-factor-alist (Emacs 30+)
+    What: a plist mapping scroll heights to custom interpolation factors.
+    Example:
+
+        (setq pixel-scroll-precision-interpolation-factor-alist
+              '((0    . 3)    ;; tiny scrolls use 3 steps
+                (200  . 5)    ;; moderate → 5 steps
+                (1000 . 8)))  ;; large → 8 steps
+
+    pixel-scroll-precision-interpolation-function
+
+        What: the easing function to use between steps (linear by default). You could write your own for ease-in/out curves.
+
+** Add In the `good-scroll` Package for Inertia and Speed Up/Down Scrolling
+
+#+CAPTION: ?
+#+BEGIN_SRC emacs-lispDISABLED
+  (use-package good-scroll
+    :init
+      ;; 1. Disable Emacs’s built-in wheel & pixel scroll modes
+      ;;    Turn off the built-in pixel scrolls so Good-Scroll can take over
+      (when (fboundp 'pixel-scroll-mode)          
+        (pixel-scroll-mode -1))
+      (when (fboundp 'pixel-scroll-precision-mode)
+        (pixel-scroll-precision-mode -1))
+      (mouse-wheel-mode -1)        ;; disable the old mouse-wheel handlers
+
+      ;; 2. Tweak Good-Scroll parameters (optional)
+      ;;    • good-scroll-render-rate controls how often (in seconds) the frame updates  
+      ;;    • good-scroll-scroll-step    is pixels to move per wheel “tick”
+      (setq good-scroll-render-rate 0.01    ;  20 ms between frames
+            good-scroll-scroll-step  8)    ; 10px per wheel tick
+    :config
+      ;; 3. Enable it globally
+      (good-scroll-mode 1)
+
+      ;; 4. Bind Page-Up / Page-Down to the Good-Scroll full-screen commands
+
+     :bind
+       (
+         ([wheel-down] . good-scroll-up)
+         ([wheel-up]   . good-scroll-down)
+         ([next]       . good-scroll-up-full-screen)
+         ([prior]      . good-scroll-down-full-screen)
+
+         ;; ;; shift = smaller/larger or same as plain
+         ;; ([S-wheel-up]   . good-scroll-down)
+         ;; ([S-wheel-down] . good-scroll-up)
+
+         ;; ;; control = same as plain
+         ;; ([C-wheel-up]   . good-scroll-down)
+         ;; ([C-wheel-down] . good-scroll-up)
+
+         ;; ;; double-click = full-screen scroll
+         ;; ([double-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([double-wheel-down] . good-scroll-down-full-screen)
+         ;; ;; with modifiers too
+         ;; ([S-double-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([S-double-wheel-down] . good-scroll-down-full-screen)
+         ;; ([C-double-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([C-double-wheel-down] . good-scroll-down-full-screen)
+
+         ;; ;; triple-click = full-screen as well
+         ;; ([triple-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([triple-wheel-down] . good-scroll-down-full-screen)
+         ;; ([S-triple-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([S-triple-wheel-down] . good-scroll-down-full-screen)
+         ;; ([C-triple-wheel-up]   . good-scroll-up-full-screen)
+         ;; ([C-triple-wheel-down] . good-scroll-down-full-screen)
+
+       )
+  )
+#+END_SRC
+
+- `good-scroll-scroll-step` controls “pixels per detent.”
+- `good-scroll-render-rate` controls frame‐update frequency.
+
+* Emacs's Mouse-Wheel Variables
+
+#+BEGIN_SRC emacs-lisp
+  (setq mouse-wheel-scroll-amount
+    '(
+       2                  ;; #lines to normally scroll by
+       ((shift) . 1)      ;; #lines when shift key pressed
+       ((control) . nil)  ;; full-screen when control key pressed
+     )
+  )
+  (setq mouse-wheel-progressive-speed
+    nil) ;; t adjusts faster, nil keeps it the same
+
+  (setq mouse-wheel-follow-mouse
+    t)  ;; Scroll the window under the pointer rather than the selected window
+
+  ;; Prevent your middle‐click from yanking immediately after a scroll
+  (setq mouse-wheel-click-event 'mouse-2
+      mouse-wheel-inhibit-click-time 0.3)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '17-ui-mouse-inputs)
+  ;;; 17-ui-mouse-inputs.el ends here
+#+END_SRC
+#+END_SRC
+
+
+* Phase 20 – Global behavior and editing
+
+** Keybindings - Global
+#+CAPTION: ~/.emacs.d/20-keybindings-global.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 20-keybindings-global
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 20-keybindings-global --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Mapping New Keys GLOBALLY
+
+** Keys to Horizontally Scroll
+
+#+BEGIN_SRC emacs-lisp :results none
+  (global-set-key (kbd "<triple-wheel-right>") (lambda () (interactive) (scroll-right 3)))
+  (global-set-key (kbd "<triple-wheel-left>") (lambda () (interactive) (scroll-left 3)))
+
+  (defun scroll-to-column-0 ()
+    "Scroll horizontally back to column 0."
+    (interactive)
+    (set-window-hscroll (selected-window) 0))
+  (global-set-key (kbd "<mouse-9>") 'scroll-to-column-0)
+
+  (defun scroll-to-last-column ()
+    "Scroll horizontally to the last visible column in the current window."
+    (interactive)
+    (let* ((window (selected-window))
+           (max-line-length (apply 'max (mapcar #'length (split-string (buffer-string) "\n"))))
+           (max-hscroll (max 0 (- max-line-length (window-body-width window)))))
+      (set-window-hscroll window max-hscroll)))
+
+  ;; Bind <mouse-8> to scroll horizontally to the last visible column
+  (global-set-key (kbd "<mouse-8>") 'scroll-to-last-column)
+#+END_SRC
+
+
+** COMMENT Key to Display Unbound Keys, as Candidates for Mapping New Keys
+
+And now you can do, the following, issue a complexity level of 5:
+
+  : M-x describe-unbound-keys
+
+** My Global Key Settings
+
+#+BEGIN_SRC emacs-lisp
+  (global-unset-key	[C-z]
+    )					; Disable suspend-frame or iconify-frame key
+#+END_SRC
+
+*** Pop Up a Reference Sheet for My Settings
+
+#+BEGIN_SRC emacs-lisp
+  (defun jrush/popup-refguide() (interactive)
+    "Pop up my reference guide."
+
+    (find-file-read-only-other-frame "~/Dropbox/Documents/refsheet.org")
+
+;;;    (if (file-exists-p "~/Dropbox/Documents/refsheet.org")
+
+;;;    (let
+;;;      ((buf (get-buffer "*Reference Sheet*")))
+;;;      (if (not buf)
+;;;        (with-current-buffer (generate-new-buffer "*Reference Sheet*")
+;;;          (insert-file-contents "~/Dropbox/Documents/refsheet.org")
+;;;          (org-mode)
+;;;        )
+;;;      )
+;;;    )
+
+;;;    (display-buffer-pop-up-frame
+;;;      "*Reference Sheet*"
+;;;      (
+;;;      )
+;;;    )
+
+  )
+  (global-set-key (kbd "C-h z") 'jrush/popup-refguide)
+#+END_SRC
+
+*** capturing new content
+
+#+BEGIN_SRC emacs-lisp
+  ;; Set a default file to receive captures and key to do so.
+  (define-key global-map "\C-cc" 'org-capture)
+
+  ;; Useful org-mode keys that should be available in all buffers, not just org-mode buffers.
+
+  (global-set-key "\C-cl" 'org-store-link)		;; capture a link -to- my current location within a file
+  (global-set-key "\C-cL" 'org-insert-link-global)	;; Prompt for link/desc and insert a hyperlink here
+  (global-set-key "\C-co" 'org-open-at-point-global);; follow a link -from- any Emacs buffer
+  (global-set-key "\C-ca" 'org-agenda)		;; jump into an Agenda view
+  (global-set-key "\C-cb" 'org-iswitchb)		;; ???
+  (global-set-key [f12] 'org-agenda)		;; jump into an Agenda view
+#+END_SRC
+
+*** Hotkey for Quickly Reloading This Configuration After Changes
+The first thing I want is the ability to quickly reload my Emacs configuration
+each time I make a change in this file.
+
+#+BEGIN_SRC emacs-lisp
+  (defun reload() (interactive)
+    "Reload ~/.emacs"
+
+    (if (file-exists-p "~/.emacs.d/init.el")
+        (load-file "~/.emacs.d/init.el"))
+  )
+  (global-set-key [f6] 'reload)
+#+END_SRC
+
+*** Useful Function to Rename the Current File and Buffer
+
+#+BEGIN_SRC emacs-lisp
+  (defun rename-file-and-buffer ()
+    "Rename the current buffer and file it is visiting."
+    (interactive)
+    (let ((filename (buffer-file-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (message "Buffer is not visiting a file!")
+        (let ((new-name (read-file-name "New name: " filename)))
+          (cond
+           ((vc-backend filename) (vc-rename-file filename new-name))
+           (t
+            (rename-file filename new-name t)
+            (set-visited-file-name new-name t t)))))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c r")  #'rename-file-and-buffer)
+#+END_SRC
+
+** Auto-Complete ?
+** Templates ?
+
+
+
+* Global Key Mappings
+
+blogpost: [[http://endlessparentheses.com/the-toggle-map-and-wizardry.html][The Toggle-Map and Wizardry]]
+
+The manual recommends C-c for user keys but C-x t is always free, whereas C-c
+t is used by some modes.  Hence, let's use the C-x t prefix for a dedicated
+set of Emacs behavior toggle keys.
+
+#+BEGIN_SRC emacs-lisp
+  (define-prefix-command 'xanalogica/toggle-map)
+  (define-key ctl-x-map "t" 'xanalogica/toggle-map)
+
+  (define-key xanalogica/toggle-map "c" #'column-number-mode)
+  (define-key xanalogica/toggle-map "f" #'auto-fill-mode)
+  (define-key xanalogica/toggle-map "l" #'toggle-truncate-lines)
+  (define-key xanalogica/toggle-map "w" #'whitespace-mode)
+
+  (define-key xanalogica/toggle-map "q" #'toggle-debug-on-quit)
+  (define-key xanalogica/toggle-map "d" #'toggle-debug-on-error)
+  (define-key xanalogica/toggle-map "e" #'toggle-debug-on-error)
+
+  (setq linum-format "%-d   ")
+  (define-key xanalogica/toggle-map "n" #'linum-mode)
+
+  ;;(define-key xanalogica/toggle-map "t" #'endless/toggle-theme)
+
+  ;;; Generalized version of `read-only-mode'.
+  (define-key xanalogica/toggle-map "r" #'dired-toggle-read-only)
+  (autoload 'dired-toggle-read-only "dired" nil t)
+
+#+END_SRC
+
+* Keystroke Input
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+** Of Non-Standard Characters
+
+The =C-q= key allows for quoting of the following key, like a tab or for the
+entry of a numeric value to represent a special character.  By default it is
+decimal but I prefer hexadecimal.
+
+#+BEGIN_SRC emacs-lisp
+  (setq read-quoted-char-radix 16)	;; numeric base for quoting characters
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (defun unicode-insert (char)
+   "Read a unicode code point and insert said character.
+    Input uses `read-quoted-char-radix'.  If you want to copy
+    the values from the Unicode charts, you should set it to 16."
+
+    (interactive (list (read-quoted-char "Char: ")))
+    (ucs-insert char))
+#+END_SRC
+
+** Of Whitespace
+These are the defaults which may be overridden in specific modes.
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default tab-width
+    8)	; The default width of a TAB.
+
+  (setq-default indent-tabs-mode
+    nil)	; Whether to insert spaces when the TAB key is pressed.
+
+  (setq-default require-final-newline
+    t)	; Whether to silently force a NL at EOF.
+
+  (setq-default fill-column
+    78)	; Column beyond which automatic line-wrapping should occur.
+#+END_SRC
+
+** Of Recorded Keystrokes
+#+BEGIN_SRC emacs-lisp
+  (global-set-key		[f7]
+    'start-kbd-macro)		; Start recording of keystrokes.
+  (global-set-key		[M-f7]
+    'end-kbd-macro)		; Stop recording of keystrokes.
+
+  (global-set-key		[f8]
+    'call-last-kbd-macro)		; Map the F8 key to play back recording of keystrokes.
+#+END_SRC
+
+* Navigation
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+** Between Buffers
+#+BEGIN_SRC emacs-lisp
+  (autoload 'cycle-buffer				"cycle-buffer"  "Cycle forward." t)
+  (autoload 'cycle-buffer-backward		"cycle-buffer"  "Cycle backward." t)
+  (autoload 'cycle-buffer-permissive		"cycle-buffer"  "Cycle forward allowing *buffers*." t)
+  (autoload 'cycle-buffer-backward-permissive	"cycle-buffer"  "Cycle backward allowing *buffers*." t)
+  (autoload 'cycle-buffer-toggle-interesting	"cycle-buffer"  "Toggle if this buffer will be considered." t)
+
+  (global-set-key		"\M-n"
+    'cycle-buffer)			; Switch to next buffer in internal list
+  (global-set-key		"\M-p"
+    'cycle-buffer-backward)		; Switch to previous buffer in internal list
+  ;; how to REMOVE a buffer and cycle to the next one???
+#+END_SRC
+
+** Within a Buffer
+*** Jumping to a Place
+#+BEGIN_SRC emacs-lisp
+  (define-key global-map	(kbd "M-g")
+    'goto-line)				; Jump to a prompted line number.
+
+  (global-set-key		"\M-[7~"
+    'beginning-of-line)			; [Home] to beginning of line
+
+  (global-set-key		"\M-[8~"
+    'end-of-line)			; [End] to end of line
+#+END_SRC
+
+*** Scrolling Behavior
+#+BEGIN_SRC emacs-lisp
+  (setq-default scroll-margin
+    0)	; #lines of margin at top and bottom of a window.
+
+  (setq-default scroll-conservatively
+    1)	; Scroll up to this many lines, to bring point back into window.
+
+  (setq-default scroll-up-aggressively
+    nil)	; Disable jumpy vertical scrolling.
+
+  (setq-default scroll-down-aggressively
+    nil)	; Disable jumpy vertical scrolling.
+
+  (setq-default scroll-step
+    1)	; #lines to scroll by when point leaves the window.
+
+  (setq-default next-screen-context-lines
+    1)	; #lines of continuity when scrolling by screenfuls.
+
+  (put 'scroll-left 'disabled nil)
+
+  (setq auto-hscroll-mode  ;; only scroll the current line,
+    'current-line)  ;; not the whole frame so I can see Ivy choices
+#+END_SRC
+
+** Among Windows/Frames
+** Across Content: [[https://www.emacswiki.org/emacs/BookMarks][bookmarks]] and links
+
+*** Org-Mode Bookmarks
+- create a header for accumulating unclassified bookmarks
+
+Z
+
+**** Want to Bookmark Stuff within Emacs
+**** Want to Bookmark Stuff from My Web Browser
+**** Want to Bookmark Stuff from My Android Phone
+
+*** Emacs Bookmarks
+
+https://www.emacswiki.org/emacs/BookmarkPlus#BookmarkBasics
+
+Emacs bookmarking makes use of three things that are related but different:
+
+1. a bookmark *list*
+2. a bookmark *file*
+3. a bookmark-list *display* (buffer '*Bookmark List*')
+
+- C-x r m			:: set a bookmark at the current location
+- C-x r b			:: jump to a bookmark
+- C-x r l			:: list your bookmarks
+- M-x bookmark-delete	:: delete a bookmark by name
+
+** Among Org-Mode Headers
+
+Don’t let me accidentally delete text without realizing it in .org ie: point
+is buried in a subtree, but you only see the heading and you accidentally kill
+a line without knowing it.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-catch-invisible-edits 'show-and-error)
+#+END_SRC
+
+** Among Indented Text Like Python and YAML Specifically
+
+The https://gitlab.com/emacs-stuff/indent-tools/ Elisp package is focused on
+making life easier with indented forms of text, specifically Python and YAML.
+
+#+BEGIN_SRC emacs-lisp
+  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/indent-tools")
+  ;;; (require 'indent-tools)
+  (use-package indent-tools)
+
+  ;;;(use-package indent-tools
+  ;;;  :load-path "~/.emacs.d/lisp/indent-tools/" ;; use my Git checkout
+  ;;;  ;;; :bind (
+  ;;;  ;;;   :map python-mode-map
+  ;;;  ;;;     ("C-c >" . indent-tools-hydra/body)
+  ;;;  )
+  ;;;)
+  ;;;(global-set-key (kbd "C-c >") 'indent-tools-hydra/body)
+#+END_SRC
+
+** Back to a Previous Position
+
+#+BEGIN_SRC emacs-lisp
+  (define-key org-mode-map (kbd "C-c &")
+    'org-mark-ring-goto)
+#+END_SRC
+
+* Planning for the System76 Launch Keyboard
+** switch the following to a more convenient key
+
+  (global-set-key		[f2]
+    'delete-trailing-whitespace)	; Remove all trailing whitespace
+** select a better key for the ALT key so I can use it more often
+
+- remove left SUPER key as its too easy to hit SUPER-q (close app) when typing
+  ALT-q (org-fill-paragraph)
+
+remove CAPSLOCK key!
+what to do with 2nd space bar key?
+  - remove left spacebar and see if I miss it
+
+- [X] change left CAPSLOCK to LEFT-CTRL
+- [X] change LEFT-SPACEBAR to LEFT-ALT
+- [ ] change ? to SUPER
+
+where to put DEL key?
+where to put SUPER key?
+where to put CTRL key?
+where to put ALT key?
+where to put FN key? (and what is it for?)
+what to do with each of the FUNCTION keys?
+
+Emacs internal modifiers:
+ * CTRL   (C-)
+ * META   (M-)    ALT key on keyboards issues the META modifier
+ * SHIFT  (S-)
+ * SUPER  (s-)    No one uses in standard Emacs    C-x @ s   adds the SUPER modifier to the next character
+ * HYPER  (H-)    No one uses in standard Emacs    C-x @ h   adds the HYPER modifier to the next character
+ * ALT    (A-)
+
+The ~xnodmap~ command can map physical keys to something that Emacs knows about.
+
+keycast package
+
+Action: "Reuse" versus "None"?
+way to emit a hyper or super key into Emacs?
+way to use layer 3 to send everything with SHIFT, so ALT-: doesn't require a SHIFT modifier too?
+
+** Desktop Keys
+- SUPER               :: pop up laucher panel to launch new and switch among existing apps
+  - ?                   :: display help
+  - file <filename>     :: search filesystem for this file
+  - /                   :: search filesystem starting at the root
+  - ~                   :: search filesystem starting at $HOME
+  - t:                  :: execute a command in a terminal
+  - :                   :: execute a command in sh
+  - =                   :: calculate an equation
+  - ESC                 :: exit launcher panel
+
+- SUPER TAB               :: switch among running apps
+- SUPER SHIFT TAB         :: switch aomng running apps, in reverse order
+- SUPER `                 :: switch among windows of current app
+- SUPER SHIFT `           :: switch among windows of current app, in reverse order
+
+- SUPER d            :: toggle workspace picker
+- SUPER a            :: toggle apps picker
+- SUPER v            :: toggle notifications picker
+- SUPER t            :: open a terminal
+- SUPER f            :: open files
+- SUPER p            :: cycle display layout
+- SUPER SPACE        :: cycle between configured input sources (languages)
+- ALT-F2             :: run command
+- CTRL-ALT-DEL       :: log out
+- SUPER ALT 8        :: toggle magnifier
+  - SUPER ALT +         :: zoom in
+  - SUPER ALT -         :: zoom out
+
+- SUPER + LF CLICK + drag :: *move* window without using title bar drag
+- SUPER + RT CLICK + drag :: *resize* window without using border drag
+
+- SUPER UP/DN/LF/RT   :: switch among desktop windows
+- SUPER ENTER         :: enter window adjustment mode
+  - UP/DN/LF/RT          :: *move* window (while in adjustment mode)
+  - SHIFT RT/DN          :: *increase* window size (while in adjustment mode)
+  - SHIFT LF/UP          :: *decrease* window size (while in adjustment mode)
+  - CTL UP/DN/LF/RT      :: *swap* windows (while in adjustment mode)
+  - ENTER                :: *apply* changes (exit adjustment mode)
+  - ESC                  :: cancel changes (exit adjustment moode)
+- SUPER HOME          :: jump to first workspace
+- SUPER END           :: jump to last workspace
+- SUPER ESC           :: lock the screen
+- SUPER SHIFT UP      :: move window up one =workspace=
+- SUPER SHIFT DN      :: move window down one =workspace=
+- SUPER CTRL UP       :: shift focus up one =workspace=
+- SUPER CTRL DN       :: shift focus down one =workspace=
+- SUPER SHIFT LF      :: move window to leftward monitor
+- SUPER SHIFT RT      :: move window to righward monitor
+- SUPER SHIFT CTRL UP :: move window to upper monitor
+- SUPER SHIFT CTRL DN :: move window to lower monitor
+- SUPER o             :: change window orientation (while stacking) ?????????????????????????
+- SUPER g             :: toggle floating mode (while stacking) ??????????????????????????????
+- SUPER y             :: toggle auto-tiling    ??????????????????????????????????????????????
+- SUPER s             :: toggle stacking mode  ??????????????????????????????????????????????
+- SUPER q             :: close window
+- SUPER m             :: toggle maximize
+
+- ???                 :: start terminal shell
+- ???                 :: start LibreOffice
+- ???                 :: start Firefox/Chrome
+
+- ESC SHIFT >         :: goto beginning of buffer =STOP USING THIS=
+- C-HOME              :: goto beginning of buffer
+
+- ESC SHIFT <         :: goto end of buffer       =STOP USING THIS=
+- C-END               :: goto end of buffer
+
+* Of Automatic Texts (abbreviations and templates)
+"abbreviations, templates, and other ways to expand or transform text"
+http://sachachua.com/blog/2015/01/developing-emacs-micro-habits-text-automation/
+
+Emacs has a separate manual for [[http://www.gnu.org/software/emacs/manual/html_mono/autotype.html][autotyping]], which I had never read before. The
+short manual covers:
+
+- abbrev
+- skeleton
+- auto-insert
+- copyright messages
+- timestamps
+- temp
+
+** Templates
+*** About the YASnippet Package
+
+[[http://capitaomorte.github.com/yasnippet/][YASnippet]] is a template system for Emacs, an Emacs package for easily
+inserting textual templates for any emacs-mode (programming language).  It
+allows you to type an abbreviation, followed by a trigger key and have it
+automatically expand into a block of text.  It comes bundled with templates
+for languages like C, C++, Python, SQL, LaTeX, HTML, CSS and more.  You do not
+need to know Emacs ELisp to create your own.
+
+YASnippet supports templates with parameters and the ability to place the
+cursor within the inserted text for quick filling in of the template.  If all
+you want is inserting static text, without parameters or moving cursor, then
+use Emacs package "abbrev".
+
+*** Activating YASnippet
+
+YASnippet can be activated globally or for specific Emacs modes.  I choose to
+activate it for individual modes.
+
+#+BEGIN_SRC emacs-lisp
+;;;  (require 'yasnippet)
+;;;;;  (use-package yasnippet)
+;;; (require 'yasnippet-snippets)   ;; a rich collection of pre-written snippets
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+;;;;;  (yas-global-mode 0)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+;;; (yas-recompile-all)
+;;;;;  (yas-reload-all)   ;; rescan snippet definitions into memory
+;;;;;  (add-hook 'text-mode-hook #'yas-minor-mode)
+;;;;;  (add-hook 'python-mode-hook #'yas-minor-mode)
+;;;;;  (add-hook 'org-mode-hook #'yas-minor-mode)
+;;;;;  (add-hook #'org-mode-hook #'org-special-block-extras-mode)
+#+END_SRC
+
+*** My Catalog of Template Definitions
+
+Some of the useful snippets I have created are:
+
+**** for Org-Mode (in directory [[~/.emacs.d/snippets/org-mode/]])
+- block    :: block
+- el       :: elisp block
+- email    :: #+email
+- title    :: #+title
+- sourceblock :: source block
+- options  :: #+OPTIONS ${0}
+- figure   :: captioned figure
+
+**** for Python-Mode (in directory [[~/.emacs.d/snippets/python-mode/]])
+
+***** Group: statements
+****** def<TAB>		Function Definition, with prompted fields
+****** defm<TAB>		Method Definition, with prompted fields
+
+****** class<TAB>	Class Definition, with prompted fields
+
+****** for<TAB>		For-Loop, with prompted fields
+****** ifmain<TAB>	If-Main Conditional
+****** while<TAB>	While-Loop
+
+***** Code Fragments
+****** nspace<TAB>	__init__ for a Python Namespace
+****** pysetup<TAB>	setup.py Skeleton
+****** idir		Iterate over a Single Directory
+****** args		Args Parsing
+****** itree		Iterate over a Directory Tree
+****** prop		Property Descriptor
+****** iplace		Modifying Files In-Place
+
+***** Licenses
+****** GPL<TAB>		GPL-license comment
+****** ZPL<TAB>		Zope license comment
+****** ZEL<TAB>		ZeOmega license comment
+(add to the license files automatic insertion of the date)
+
+***** TO BE DEVELOPED
+****** pygame		PyGame Skeleton
+****** buildout		Buildout Skeleton
+
+***** ZCML
+****** ZCML<TAB>		expands into an empty ZCML configuration file
+
+*** Where I Store My Template Definitions
+
+There are snippets stored in a system directory that comes with the package,
+and there are snippets stored under my home directory in a naming hierarchy
+based on Emacs modenames.
+
+- ~/.emacs.d/snippets/
+- ~/.emacs.d/.cask/25.3/elpa/stan-snippets-9.2.0/snippets/
+
+#+BEGIN_SRC emacs-lisp
+;;;  (setq yas/root-directory "~/.emacs.d/snippets")
+;;;  (yas/load-directory yas/root-directory)
+#+END_SRC
+
+To have the menu show only the tables for the currently active mode, set
+=yas/use-menu= to =abbreviate=.
+
+#+BEGIN_SRC emacs-lisp
+;;;  '(yas/use-menu (quote abbreviate))
+#+END_SRC
+
+*** Developing New Template Definitions
+
+At the Emacs prompt, invoke "yas/new-snippet" to reload a snippet you are
+developing.  If you specify a name that is not yet defined, it will prompt
+you and guide you through creating it.
+
+Snippets hang off of various Emacs modes, like python-mode or html-mode.
+
+Snippets are inserted when the "trigger key" (TAB) is pressed after a textual
+key.
+
+Two commands are defined in this mode:
+
+    - =M-x yas/load-snippet-buffer=
+
+        When editing a snippet, this loads the snippet into the correct mode
+        and menu. Bound to *C-c C-c* by default while in snippet-mode.
+
+    - =M-x yas/tryout-snippet=
+
+        When editing a snippet, this opens a new empty buffer, sets it to the
+        appropriate major mode and inserts the snippet there, so you can see
+        what it looks like. This is bound to *C-c C-t* while in snippet-mode.
+
+[[http://capitaomorte.github.com/yasnippet/snippet-development.html][Snippet Development]]
+
+- =M-x yas/new-snipper=           (to create a new one)
+
+** Auto-Completion
+*** Emacs Completion Engines:
+- manual:[[https://www.gnu.org/software/emacs/manual/html_mono/ido.html][IDO]]
+
+ - iswitchb
+ - The package [[http://emacswiki.org/emacs/InteractivelyDoThings][InteractivelyDoThings]] (IDO) is part of Emacs, starting with release 22.
+   - ido + ido-ubiquitous + ido-vertical-mode
+   - matches anywhere, narrows down set, has fuzzy matching
+ - Helm
+   helm-descbinds
+   helm-show-kill-ring
+   helm-completing-read-handlers-alist
+ - Ivy    ivy + counsel
+ - projectile
+
+#+BEGIN_SRC emacs-lisp
+(use-package counsel
+  :config
+    (global-set-key (kbd "M-x") 'counsel-M-x)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    ;;; (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+    ;;; (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+    ;;; (global-set-key (kbd "<f1> l") 'counsel-find-library)
+    ;;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+    ;;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+
+    ;;; (global-set-key (kbd "C-c g") 'counsel-git)
+    ;;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
+    ;;; (global-set-key (kbd "C-c a") 'counsel-ag)
+    ;;; (global-set-key (kbd "C-x l") 'counsel-locate)
+
+    ;;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+
+    ;;; (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history))
+)
+(use-package counsel-tramp
+)
+#+END_SRC
+
+*** Places to Use Completion Engines:
+- open files   C-x C-f :: find-file -> ido-find-file
+   - can use bookmarks instead
+   - can open many files at once using wildcards
+   - open a directory using dired and then open files in it with C-o
+
+- switch buffers  C-x b :: switch-to-buffer -> ido-switch-buffer
+
+- navigate directories
+- C-h f
+- C-h v
+- M-x NAME
+- org-capture
+- org-file    browse all attachments
+
+*** Configuring Auto-Completion
+
+install package: Ivy
+install package: Swiper (alternative to isearch interface)
+install package: Counsel
+
+git-grep
+
+#+BEGIN_SRC emacs-lisp :exports code
+  (ivy-mode 1)
+
+;;; (setq ivy-use-virtual-buffers t)
+;;; (setq ivy-count-format "(%d/%d) ")
+
+  (global-set-key (kbd "C-s") 'swiper)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (setq org-completion-use-ido nil)
+
+  ;; Enable IDO Everywhere
+  (setq ido-enable-flex-matching t)
+  (setq ido-everywhere t)
+  (ido-mode 1)
+
+  (setq ido-use-filename-at-point 'guess)
+  (setq ido-file-extensions-order  ;; customize the display order of files
+    '(".org" ".txt" ".py" ".xml" ".el" ".ini" ".cfg"))
+
+  (autoload 'idomenu "idomenu" nil t)
+#+END_SRC
+
+*** IDO Auto-Completion Keys at a Prompt
+- C-f		:: revert to the old find-file completion engine
+- C-b		:: revert to the old switch-buffer completion engine
+- C-d		:: Opens a dired buffer in the current directory
+
+- C-a           :: toggles the showing of ignored files
+- C-c           :: toggles the ignoring of case in buffer and file names
+- C-p           :: toggles anchoring prefix matching at the beginning of a name
+
+- C-s		:: move to next item in list
+- C-r		:: move to previous item in list
+
+- C-SPC	:: restrict list of options to what I've typed so far
+
+- //		:: go to the root directory
+- ~/		:: go to your home directory
+
+- M-d           :: searches for the input in all subdirectories
+
+- C-k           :: kills the currently focused buffer or deletes the file
+
+- C-j		:: create a new file named with the text you entered
+- M-m		:: creates a new subdirectory to the directory you're in
+  
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '20-keybindings-global)
+  ;;; 20-keybindings-global.el ends here
+#+END_SRC
+#+END_SRC
+
+
+** Editor Behavior
+#+CAPTION: ~/.emacs.d/25-editor-behavior.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 25-editor-behavior
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 25-editor-behavior --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+Focused on: in-editor behavior e.g.undo, whitespace highlighting, cursor line, etc.
+
+* Managing Undo Operations                                             :UNDO:
+
+The ~undo-tree~ Emacs package is great for visualizing the undo tree.
+~undo-tree-mode~ replaces Emacs’ standard undo feature with a more powerful
+yet easier to use version, that treats the undo history as what it is: a tree.
+
+I use =C-x u= to run undo-tree-visualize.
+
+
+#+BEGIN_SRC emacs-lisp
+  (use-package undo-tree
+    :init
+      ;; Enable auto-save of undo history
+      (setq undo-tree-auto-save-history t
+        undo-tree-history-directory-alist
+        `((".*" . ,(expand-file-name "undo/" xan/cache-dir))))
+    :config
+      ;; Activate everywhere
+      (global-undo-tree-mode 1)
+  )
+
+
+  (global-undo-tree-mode 1)   ;; turn on everywhere
+  ;;; (diminish 'undo-tree-mode)  ;; but do not show its name on UI modeline
+
+  ;; Prevent undo tree files from polluting your git repo
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+#+END_SRC
+
+* Undo System Settings
+
+Undo system settings (the built-in undo-limit, or global undo-tree
+config) are really editor behavior—they control how you backtrack in
+the buffer.
+
+#+CAPTION: Undo-System Settings
+#+BEGIN_SRC emacs-lisp
+
+;;#AI ;; Tune the built-in undo limits
+;;#AI (setq undo-limit         800000
+;;#AI       undo-strong-limit 12000000
+;;#AI       undo-outer-limit  120000000)
+
+#+END_SRC
+
+#+CAPTION: Persistent undo
+#+BEGIN_SRC emacs-lisp
+  (setq undo-tree-auto-save-history t
+        undo-tree-history-directory-alist `((".*" . ,(expand-file-name "undo/" xan/cache-dir))))
+#+END_SRC
+
+* Whitespace Highlighting
+
+* Cursor Line
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '25-editor-behavior)
+  ;;; 25-editor-behavior.el ends here
+#+END_SRC
+#+END_SRC
+
+
+** Core Behavior Tweaks
+#+CAPTION: ~/.emacs.d/30-core-behavior-tweaks.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 30-core-behavior-tweaks
+#+DESCRIPTION: File-level persistence e.g. auto-save, backups, cache
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 30-core-behavior-tweaks.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+Focused on file-level persistence e.g. auto-save, backups, cache
+
+* Obscure Emacs Variables
+
+#+BEGIN_SRC emacs-lisp
+  ;; ----------------------------------------------------------------------
+  ;; Set various somewhat obscure Emacs variables, for efficient operation.
+
+  (setq
+
+    ;; I have some larger files and I don't want Emacs to complain about
+    ;; them so I raised the threshold from 9MB.
+
+    large-file-warning-threshold  20000000 ; 20MB
+
+    ;; Prevent stale byte-code issues in scripts, while saving startup
+    ;; I/O checks.  Especially relevant when not byte-compiling
+    ;; everything, to prioritize non-byte-compiled source files to
+    ;; prevent the use of stale byte-code.
+
+    load-prefer-newer  'noninteractive
+
+    ;; Maximum number of bytes to read from subprocess in a single chunk.
+    ;;
+    ;; Enlarge the value only if the subprocess generates very large
+    ;; (megabytes) amounts of data in one go.  Improves LSP and
+    ;; subprocess throughput.  Critical for lsp-mode, eglot, etc.
+
+    read-process-output-max  (* 1024 1024 4) ; 4 MB
+
+    ;; Do NOT compact (discard) cached fonts during garbage collection.
+    ;;
+    ;; Prevents GC-triggered font redisplay stutter with large fonts.
+    ;; Very useful for multilingual documents or UI-heavy configs.
+
+    ;; Some large fonts cause lots of consing and trigger GC.  If they
+    ;; are discarded from the font caches during garbage collection,
+    ;; they will need to be opened AGAIN during redisplay, which slows
+    ;; down redisplay.
+    ;;
+    ;; If you see font-related delays in displaying some special
+    ;; characters, and cannot switch to a smaller font for those
+    ;; characters, set this variable non-nil.  Disabling compaction of
+    ;; font caches might enlarge the Emacs memory footprint in sessions
+    ;; that use lots of different fonts.
+
+    inhibit-compacting-font-caches  t
+
+    ;; Maximum number of lines to keep in the *Messages* log buffer.
+    ;; Good practice that prevents runaway *Messages* buffer size while
+    ;; still allowing debugging.
+
+    message-log-max  16384
+
+    ;; This disables loading of `site-start.el`, which some distros (like
+    ;; Debian, Arch, etc.) use to inject site-wide behavior into all
+    ;; Emacs sessions.  Use it in personal configs aiming for
+    ;; reproducibility.
+
+    site-run-file  nil
+  )  
+#+END_SRC
+
+* Automate the Garbage-Collection Thresholds
+
+#+CAPTION: Automate Garbage-Collection Thresholds
+#+BEGIN_SRC emacs-lisp
+  (use-package gcmh
+    :demand t   ; load immediately during init
+    :commands (gcmh-mode)  ;; ← this line makes gcmh-mode an autoload
+    :config
+    ;; GCMH Mode will dynamically swap thresholds:
+    ;;   - `gcmh-high-cons-threshold` when idle
+    ;;   - `gcmh-low-cons-threshold` (default 20MB) when in use
+    (setq gcmh-idle-delay           5         ; seconds of idle before GC
+          gcmh-high-cons-threshold  most-positive-fixnum
+          gcmh-verbose              nil)      ; no echo messages
+    (gcmh-mode 1))
+#+END_SRC
+
+* Revised Layout
+
+In order to declutter my ~/.emacs.d/ directory I've adopted a layout
+of putting anything that is cache related under ~/.emacs.d/cache/ and
+anything that is dynamically generated data under ~/.emacs.d/data/.
+
+"Work Protection"
+
+** Auto-Saves
+
+#+CAPTION: Auto-save list
+#+BEGIN_SRC emacs-lisp
+  (dolist (sub '("auto-save/" "auto-save-list/"))
+    (make-directory (expand-file-name sub xan/cache-dir) t))
+
+  (setq auto-save-list-file-prefix (expand-file-name "auto-save-list/#" xan/cache-dir))
+  (setq auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" xan/cache-dir) t)))
+#+END_SRC
+
+* Backups
+
+#+CAPTION: File Backups
+#+BEGIN_SRC emacs-lisp
+  (dolist (sub '("backups/"))
+    (make-directory (expand-file-name sub xan/cache-dir) t))
+
+  (setq-default make-backup-files
+    t)                                  ;; Whether to make backup files at all or not.
+
+  (setq version-control t                ;; Use version numbers for backups
+        kept-new-versions 16             ;; Number of newest versions to keep
+        kept-old-versions 2              ;; Number of oldest versions to keep
+        delete-old-versions t            ;; Ask to delete excess backup versions?
+        backup-by-copying-when-linked t) ;; Copy linked files, don't rename.
+        ;;#AI  backup-by-copying      t)  ; don’t symlink
+
+  (setq
+    ;; Keep all backup files in one place
+    backup-directory-alist `((".*" . ,(expand-file-name "backups/" xan/cache-dir)))
+
+  )
+#+END_SRC
+
+Emacs offers two related variables to control whether it makes backups by
+renaming vs. copying:
+
+ 1. backup-by-copying (default nil):
+     - If non–nil, always copy the original file to the backup, then write your edits into a fresh file.
+     - Pros: never breaks hard links, preserves owner/group, safer for “precious” files.
+     - Cons: copying can be slightly slower and use more I/O.
+
+ 2. backup-by-copying-when-linked (default nil):
+     - Has effect only if backup-by-copying is nil.
+     - If non–nil and the file has multiple names (i.e. its link count > 1), then copy instead of rename.
+     - Otherwise (single link), Emacs will rename (the default) to save a bit of I/O.
+
+* Backups in a World of VC
+
+1. vc-make-backup-files
+
+    - What it does: by default, Emacs skips making file~ backups for files
+      under version control (Git, SVN, etc.).
+
+    - Setting vc-make-backup-files = t tells Emacs to treat VC-managed files
+      just like any other file and still create numbered backups.
+
+    - Concepts: version-controlled files, VC integration, backup policy.
+
+#+BEGIN_SRC emacs-lispDISABLED
+;; Even VC-managed files get backup~ files
+(setq vc-make-backup-files t)
+#+END_SRC
+
+2. file-precious-flag
+
+    - What it does: when non-nil, Emacs writes your changes to a fresh temp
+      file and only swaps it in place of the original if the write completes
+      successfully.
+
+    - This prevents data loss if Emacs crashes or the disk fills up mid-save.
+
+    - Concepts: atomic save, write-temp-file safety, precious files.
+
+;; In 30-core-behavior-tweaks.org
+#+BEGIN_SRC emacs-lisp
+;; Use atomic, “precious” saves to avoid corrupting the original
+(setq file-precious-flag t)
+#+END_SRC
+
+* Keeping Last N Editions of Files Edited
+
+#+BEGIN_SRC emacs-lisp
+
+   (defun force-backup-of-buffer ()
+     (let ((buffer-backed-up nil))
+       (backup-buffer)))
+
+   (add-hook 'before-save-hook  'force-backup-of-buffer)
+   (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  ;;; (add-hook 'before-save-hook 'time-stamp)
+#+END_SRC
+
+
+
+
+
+
+
+
+* Location Identifiers
+
+#+CAPTION: .org-id-locations and .org-generic-id-locations
+#+BEGIN_SRC emacs-lisp
+  (setq org-id-locations-file (expand-file-name "org-id-locations" xan/data-dir))
+
+  ;; Optional: if using org-generic-id (less common)
+  (setq org-generic-id-locations-file (expand-file-name "org-generic-id-locations" xan/data-dir))
+#+END_SRC
+
+* Cached or Small Items Persistence
+
+#+CAPTION: Org clock persistence
+#+BEGIN_SRC emacs-lisp
+  (setq org-clock-persist-file (expand-file-name "org-clock-save.el" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: eshell history and data
+#+BEGIN_SRC emacs-lisp
+  (setq eshell-directory-name (expand-file-name "eshell/" xan/cache-dir))
+#+END_SRC
+
+#+CAPTION: cookies/history
+#+BEGIN_SRC emacs-lisp
+  (setq url-cookie-file (expand-file-name "url/cookies" xan/data-dir)
+        url-history-file (expand-file-name "url/history" xan/data-dir))
+#+END_SRC
+
+* Redirect Individual Features
+
+To organize my ~/.emacs.d/ directory I group various little storage areas under data or cache.
+
+#+CAPTION: places.el (cursor locations)
+#+BEGIN_SRC emacs-lisp
+  (setq save-place-file (expand-file-name "places" xan/data-dir))
+  (save-place-mode 1)
+#+END_SRC
+
+#+CAPTION: bookmark.el
+#+BEGIN_SRC emacs-lisp
+  (setq bookmark-default-file (expand-file-name "bookmarks" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: recentf
+#+BEGIN_SRC emacs-lisp
+  (setq recentf-save-file (expand-file-name "recentf" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: transient (magic, etc.)
+#+BEGIN_SRC emacs-lisp
+(setq transient-history-file     (expand-file-name "transient/history.el" xan/data-dir)
+      transient-levels-file      (expand-file-name "transient/levels.el" xan/data-dir)
+      transient-values-file      (expand-file-name "transient/values.el" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: tramp
+#+BEGIN_SRC emacs-lisp
+  (setq tramp-persistency-file-name (expand-file-name "tramp" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: nov.el (ePub reader)
+#+BEGIN_SRC emacs-lisp
+(setq nov-save-place-file (expand-file-name "nov-places" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: org-babel library
+#+BEGIN_SRC emacs-lisp
+  (setq org-babel-library-of-babel-file (expand-file-name "org-babel-library.org" xan/data-dir))
+#+END_SRC
+
+#+CAPTION: Request.el
+#+BEGIN_SRC emacs-lisp
+  (setq request-storage-directory (expand-file-name "request/" xan/cache-dir))
+#+END_SRC
+
+#+CAPTION: yasnippet
+#+BEGIN_SRC emacs-lisp
+  (setq yas-snippet-dirs `(,(expand-file-name "snippets/" xan/data-dir)))
+#+END_SRC
+
+
+
+#+CAPTION: chatgpt/ and chatgpt-shell.el (from gpt.el or chatgpt-shell)
+#+BEGIN_SRC emacs-lisp
+  ;; GPT-related package paths
+  (setq chatgpt-shell-history-directory (expand-file-name "chatgpt/" xan/data-dir)
+        chatgpt-shell-configuration-file (expand-file-name "chatgpt-shell.el" xan/data-dir))
+
+  (make-directory chatgpt-shell-history-directory t)
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '30-core-behavior-tweaks)
+  ;;; 30-core-behavior-tweaks.el ends here
+#+END_SRC
+#+END_SRC
+
+- auto-saves
+- backups
+- location identifiers
+- cached or small items persistence
+- redirect stuff under cache/ or data/
+- `tramp` should probably get its own .org file.
+- `nov.el` as a major mode should get its own .org file.
+- `org-babel` has a LOT of configuration so should get its own .org file.
+- `yasnippet` has a LOT of configuration so should get its own .org file.
+- (should `request.el`, `url.el` and `tls.el` be together?
+
+* Phase 40 – Programming environment
+#+CAPTION: ~/.emacs.d/40-prog-python.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 40-prog-python
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 40-prog-python.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '40-prog-python)
+  ;;; 40-prog-python.el ends here
+#+END_SRC
+
+
+#+END_SRC
+
+#+CAPTION: ~/.emacs.d/45-prog-common.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 45-prog-common
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 45-prog-common.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '45-prog-common)
+  ;;; 45-prog-common.el ends here
+#+END_SRC
+
+
+#+END_SRC
+
+
+* Phase 50 – Org-mode environment
+
+### #+BEGIN_SRC emacs-lisp
+### (xan/load-org-if-exists "50-org-core.org")
+### (xan/load-org-if-exists "51-org-capture.org")
+### (xan/load-org-if-exists "52-org-refile-archive.org")
+### (xan/load-org-if-exists "53-org-links-export.org")
+### (xan/load-org-if-exists "54-org-tasks.org")
+### (xan/load-org-if-exists "55-org-ui.org")
+### (xan/load-org-if-exists "59-org-extensions.org")
+### #+END_SRC
+
+### - [ ] INCLUDE: "config/config-install-of-org-mode.org"
+### - [ ] INCLUDE: "config/config-note-capture-using-org-mode.org"
+### - [ ] INCLUDE: "config/config-note-refiling-using-org-mode.org"
+### - [ ] INCLUDE: "config/config-note-archiving-using-org-mode.org"
+### - [ ] INCLUDE: "config/config-scripting-via-org-babel.org"
+### - [ ] INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
+### - [ ] INCLUDE: "config/config-task-planning.org"
+### - [ ] INCLUDE: "config/config-task-reporting.org"
+### - [ ] INCLUDE: "config/config-content-publishing.org"
+
+
+* Phase 60 – Personal tooling
+
+### (xan/load-org-if-exists "60-ai-tools.org")
+### (xan/load-org-if-exists "65-writing-knowledge.org")
+### (xan/load-org-if-exists "70-communication-email.org")
+### (xan/load-org-if-exists "75-web-editing.org")
+#+CAPTION: ~/.emacs.d/80-project-vc.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 80-project-vc
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 80-project-vc.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '80-project-vc)
+  ;;; 80-projectg-vc.el ends here
+#+END_SRC
+
+
+#+END_SRC
+
+
+* Final – Private overrides
+#+CAPTION: ~/.emacs.d/99-local-overrides.org
+#+BEGIN_SRC emacs-lisp -n :tangle yes
+#+TITLE: 99-local-overrides.org
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 99-local-overrides.el --- ??Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* Additional Small Configuration File `M-x customize` Changes
+
+Emacs users like to write small tidbits of manual configuration into an .el file so
+I use a small file that I never look into, to keep it separate from my
+=config.org=.
+
+#+CAPTION: Custom Ad-Hoc Settings
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (expand-file-name "custom-settings.el" xan/data-dir))
+  (when (file-exists-p custom-file)
+    (load custom-file 'noerror))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '99-local-overrides)
+  ;;; 99-local-overrides.el ends here
+#+END_SRC
+#+END_SRC
+
+
+
+### - [ ] proper indentation in org-mode
+### - [ ] faces for TODOs
+### - [ ] org-element-at-point: Symbol’s function definition is void: org-element--cache-active-p
+### - [ ] ability to mark TODOs done
+### - [ ] a config file just for org-babel stuff
+
+
+### COMMENT PROPERTY:	header-args:emacs-lisp+ :comments link
+### 
+### 
+### ;; After `early-init.el` completes its work, this file does the job of
+### ;; setting many somewhat obscure Emacs settings and frame/window
+### ;; settings, bootstrapping `straight.el` from the Internet and
+### ;; declaring which package repos that `straight.el` should pull from.
+### ;;
+### ;; It then finishes by loading further configuration from a collection
+### ;; of emacs-lisp source blocks tangled from config.org.  Using
+### ;; config.org makes it easier for me to document my settings,
+### ;; providing explanations and links to further learning material.
+### 
+### ;;;; (require 'init-audit)
+### 
+### ;;;; ;; Run my audit check Emacs is idle
+### ;;;; (run-with-idle-timer
+### ;;;;  10 nil
+### ;;;;  (lambda ()
+### ;;;;    (init-audit-use-package-missing (expand-file-name "lisp/" user-emacs-directory)
+### ;;;; "~/.emacs.d/config.el")))  ;; variable: init-tangle-output
+
+
+### #+BEGIN_ABSTRACT
+### 
+### *Abstract*
+### 
+### This is my Emacs configuration, expressed in the [[https://orgmode.org/][org-mode markup]] so I can
+### explain how and why I did each configuration setting, and yet automatically
+### export it into emacs-lisp format for loading into Emacs at start-up time.
+### This style of documenting is called [[https://en.wikipedia.org/wiki/Literate_programming][Literate Programming]].
+### 
+### I maintain my Emacs configuration https://github.com/xanalogica/.emacs.d/ and
+### automatically publish the polished documentation at ??? using a CI pipeline.
+### 
+### https://github.com/xanalogica/.emacs.d/  (not on gitlab.com/xanalogica)
+### 
+### #+END_ABSTRACT
+### #+TOC: headlines 2
+### 
+### * Web Sites that Offer Quality Guidance on Emacs Configuration
+### - https://git.sr.ht/~ashton314/emacs-bedrock/tree   GOOD!
+### - https://rossabaker.com/configs/emacs/   =VERY GOOD ADDITIONS I NEED TO INTEGRATE AND IT IS EMACS 29!=
+### 
+### * My Publishing System
+### - https://github.com/JamesIves/github-pages-deploy-action
+### 
+### My personal ~/.emacs.d/ directory is versioned under
+### https://github.com/xanalogica/emacs.d.  Upon commit, GitHub Actions
+###  1. check out
+###  2. install emacs
+###  3. invoke ./publi.sh to build the site
+###  4. publish generate content to GitHub Pages from branch gh-pages
+### 
+### cause it to be published into a GitHub Page at
+### https://xanalogica.github.io/emacs.d/.  I have an extensive .gitignore
+### that omits the transient, cached or personal content.
+### 
+### The published content on the gh-pages branch looks like:
+###   - config.html  <- config.org
+###   - webstyling/
+###   - NEEDS index.html <- README.html
+### 
+### .github/workflows
+### site-publisher/
+###   publi.sh          invoked from .github/workflows/publish.yml
+###   build-site.el
+###   webstyling/
+###     src/
+###     local.css                         REMOVE?
+###     paval.css                         REMOVE?
+###     paval.js                          REMOVE?
+###     theme-readtheorg.html
+
+### 
+### Org includes a publishing management system that allows you to
+### configure automatic HTML conversion of projects composed of
+### interlinked Org files. You can also configure Org to automatically
+### upload your exported HTML pages and related attachments, such as
+### images and source code files, to a web server.
+### 
+### You can also use Org to convert files into PDF, or even combine HTML
+### and PDF conversion so that files are available in both formats on the
+### server.
+### 
+### config.org => index.org => index.html
+### 
+### .emacs.d/.github/workflows/publish.yml
+### 
+### https://xanalogica.github.io/.emacs.d/
+### http://www.thoughtamps.info/.emacs.d/
+### https://{userid}.github.io/{reponame}
+### 
+### I put it into the form of ReadTheDocs with index along left-side.
+### 
+### cache/        eshell, eln-cache, backups, auto-save
+### data/         places, bookmarks, recentf, tramp, nov-places, transient, eshell, library.org
+### 
+### 
+### * Bootstrap the `straight.el` package system
+
+### * The Big Picture
+### :PROPERTIES:
+### :ID:       87baf222-7172-4202-ac71-f36b30dafc9a
+### :END:
+### 
+### My Emacs configuration is spread out across several files, for ease of
+### understanding, sharing and using a feature without dragging everything else
+### in.  I try to fully configuration and document each feature I make use of in
+### *one* place and avoid sprinkling it around.
+### 
+### - ~/.emacs.d/early-init.el
+### - ~/.emacs.d/init.el
+### - ~/.emacs.d/config.org -> ???
+### 
+### - GONE ~/.emacs.d/config/config-emacs-display-presentation.org
+### - GONE ~/.emacs.d/config/config-emacs-global-keyboard-setup.org
+### - GONE ~/.emacs.d/config/config-printing-from-emacs.org
+### - GONE ~/.emacs.d/config/config-research.org
+### - GONE ~/.emacs.d/config/config-emacs-email-usage.org     UNUSED
+### - FAIL ~/.emacs.d/config/config-content-mobile-sync.org   UNUSED
+### 
+### - ~/.emacs.d/config/config-emacs-use-of-ai.org
+### 
+### - ~/.emacs.d/config/config-install-of-org-mode.org
+### - ~/.emacs.d/config/config-note-capture-using-org-mode.org
+### - ~/.emacs.d/config/config-note-refiling-using-org-mode.org
+### - ~/.emacs.d/config/config-note-archiving-using-org-mode.org
+### - ~/.emacs.d/config/config-scripting-via-org-babel.org
+### - ~/.emacs.d/config/config-emacs-new-links-for-org-mode.org
+### 
+### - ~/.emacs.d/config/config-task-planning.org
+### - ~/.emacs.d/config/config-task-reporting.org
+### 
+### - ~/.emacs.d/config/config-emacs-work-protection.org
+### - ~/.emacs.d/config/config-global-syntax-checking.org
+### - ~/.emacs.d/config/config-python-development.org
+### - ~/.emacs.d/config/config-content-publishing.org
+### - ~/.emacs.d/config/config-filetype-epub.org
+### - ~/.emacs.d/config/config-emacs-to-be-merged.org
+### - ~/.emacs.d/config/config-emacs-use-of-cloning.org  UNUSED
+### - ~/.emacs.d/config/config-helpful-notes.org         UNUSED
+### 
+### backups
+### undo
+### encrypting ENTIRE Files
+### encryption org headings only
+### is gptel a mode or a global key configuration?
+### is magit a mode to itself and deserving of its own environment configuration?
+### is epub a mode to itself and deserving of its own environment configuration?
+
+
+### * PHASE 10: UI and input system
+### 
+### - [ ] "10-ui-frame-appearance.org"
+### 
+### 10-ui-frame-appearance.org
+###     default-frame-alist, initial-frame-alist
+###     Scroll bars, tool bars, menu-bar toggles
+### 
+### - [ ] "12-ui-font-face.org"
+### 
+### 12-ui-font-face.org
+###     (set-frame-font ...) guards, fallback logic, dynamic DPI/font lists
+### 
+### MAKE THIS PULL DOWN OFFICIAL RELEASE USING STRAIGHT
+### Loading /home/jrush/.emacs.d/lisp/pragmatapro-prettify-symbols-v0.829.el (source)...done
+### 
+### - [ ] "15-ui-modeline-input.org"
+### 
+### 15-ui-modeline-input.org
+###     Modeline packages (doom-modeline, powerline)
+###     which-key setup, key-chord
+###     Cursor style, synthetic input tweaks
+
+### * PHASE 20: Global behavior and editing
+### - [ ] "20-keybindings-global.org"
+### 
+###     Your universal keymaps (general.el, C-c prefixes, SPC)
+### 
+###     Where would GPTel go?
+###     AI: GPTel is a minor-mode, enabled globally—so its (use-package
+###     gptel :bind ("C-c g" . gptel-open)) belongs here, not in
+###     60-ai-tools.org.
+### 
+### - [ ] "22-printing.org"
+### 
+###   Region-to-printer commands, ps-print-buffer-with-faces, margins,
+###   headers/footers
+### 
+###     AI: Yes—any “print this region” or PostScript settings live here.
+### 
+### - [ ] "25-editor-behavior.org"
+### 
+###     Visual tweaks:
+###      - [ ]  =hl-line-mode=
+###      - [ ]  =show-paren-mode=
+###      - [ ] =whitespace-mode=
+### 
+###     =Trailing-whitespace coloring=, ruler columns, indent guides
+### 
+###     AI: Exactly—this is where “highlight current line” and “show me
+###     trailing spaces” belong.
+### 
+### - [ ] "30-core-behavior-tweaks.org"
+###   - [ ] backup policy
+###     (setq backup-directory-alist `(("." . ,(expand-file-name "cache/backups/" user-emacs-directory)))
+###           delete-old-versions t
+###           kept-new-versions 5
+###           kept-old-versions 2
+###           version-control t)
+###   - [ ] auto-save policy
+###         (setq auto-save-file-name-transforms `((".*" ,(expand-file-name "cache/auto-save/" user-emacs-directory) t)))
+###   - [ ] undo policy
+###     (setq undo-tree-history-directory-alist `(("." . ,(expand-file-name "cache/undo/" user-emacs-directory)))
+###           undo-tree-auto-save-history t)
+###   - [ ] lockfile policy
+### 
+### 
+###     (setq max-lisp-eval-depth 1000
+###           max-specpdl-size 1000)
+### 
+###     Session persistence: save-place-mode, recentf, bookmark-default-file
+### 
+###     AI: Put backups, max-versions, undo-tree, and lockfile/places
+###     files here—they’re core Emacs behaviors, not UI or mode-specific.
+
+### * PHASE 40: Programming environment
+### - [ ] "40-prog-python.org"
+### 
+###   40-prog-python.org — all your Python-specific bits: elpy, blacken, pyenv, flycheck
+### 
+### - [ ] "45-prog-common.org"
+### 
+### 45-prog-common.org — multi-language tooling: smartparens, lsp-mode, indentation rules, company-mode
+### 
+### * PHASE 50: Org-mode environment
+### - [ ] "50-org-core.org"
+### - [ ] "51-org-capture.org"
+### - [ ] "52-org-refile-archive.org"
+### - [ ] "53-org-links-export.org"
+### - [ ] "54-org-tasks.org"
+### - [ ] "55-org-ui.org"
+### - [ ] "59-org-extensions.org"
+### 
+### * PHASE 60 – Personal tooling
+### 
+### Yes: Magit in 80-project-vc.org. EPUB in 65-writing-knowledge.org. They’re big enough ecosystems to merit their own spots.
+### 
+### - [ ] "60-ai-tools.org"
+### 
+### Only AI-package setup: ChatGPT integrations, ob-chatgpt-shell tangles, etc.
+### 
+### - [ ] "65-writing-knowledge.org"
+### 
+###     nov.el, epub-mode, markdown-mode, pandoc, denote
+### 
+###     AI: EPUB readers deserve their own file here—65-writing-knowledge.org.
+### 
+### - [ ] "70-communication-email.org"
+### 
+### 70-communication-email.org — mu4e, gnus, SMTP, org-mime
+### 
+### - [ ] "75-web-editing.org"
+### 
+### 75-web-editing.org — edit-server, eww, web-mode snippets
+### 
+### 
+### - [ ] "80-project-vc.org"
+### 
+### 80-project-vc.org — project.el, magit, forge, git-auto-commit-mode
+### 
+### * PHASE 99: Final – Private overrides
+### - [ ] xan/load-org-if-exists "99-local-overrides.org")
+
+
+### File: 99-local-overrides.org
+### Contents:
+### 
+###     Machine-specific tweaks: exec-path additions, local-only API keys (wrapped :noexport:)
+### 
+###     Per-host theme overrides, font size tweaks on the laptop vs desktop
+### 
+###     Any hacks you don’t want versioned across all machines
+### 
+###     AI: This is your “scratchpad” for local site-specific config.
+
+
+

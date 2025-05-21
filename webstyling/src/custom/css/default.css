@@ -1,0 +1,35 @@
+div.figure {
+  float:right;
+}
+
+.DOCMETA table {
+  background-color: lightblue;
+  margin-top: 0px;
+  margin-bottom: 20px;
+}
+
+.DOCMETA tr:nth-child(even) td {
+  background-color: white;
+}
+
+.DOCMETA tr:nth-child(odd) td {
+  background: white;
+}
+
+.ABSTRACT {
+  font-family: monospace;
+  font-style: italic;
+  color: black;
+
+  margin-top: 2em;
+  margin-right: 5em;
+  margin-bottom: 5em;
+  margin-left: 2em;
+
+  padding-top: 2em;
+  padding-right: 5em;
+  padding-left: 5em;
+  padding-bottom: 2em;
+
+  background-color: lightgrey;
+}
