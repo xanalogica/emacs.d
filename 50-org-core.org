@@ -1,0 +1,218 @@
+#+TITLE: 50-org-core
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 50-org-core.el --- Foundational Org-mode setup -*- lexical-binding: t -*-
+#+END_SRC
+
+* Org Attach
+
+org-attach is really part of Org’s core attachment subsystem, not an
+external download‐helper. So I’d keep your use-package/org-attach (and
+any settings of org-attach-id-dir) in 50-org-core.org, alongside your
+org-directory and org-modules.
+
+#+BEGIN_SRC emacs-lisp
+;; ——————— Org Attach ————————————————
+;; obsolete: (setq org-attach-directory "~/Dropbox/Documents/")
+;; new in Org 9.3+: use org-attach-id-dir instead :contentReference[oaicite:0]{index=0}
+(use-package org
+  :straight (:type built-in)
+  :after org-attach
+  :custom
+  ;; store all attachments under ~/Dropbox/Documents/attachments/
+  (org-attach-id-dir (expand-file-name "attachments/" "~/Dropbox/Documents/"))
+  ;; ensure the attach subsystem is loaded before we set it
+  :config
+  (require 'org-attach))
+#+END_SRC
+
+* Locations/Directories
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-directory  ;; *default* directory of .org files
+      "~/Dropbox/Documents")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-modules
+   '(
+      ol-bbdb
+      ol-bibtex
+      ol-docview
+      ol-gnus
+      org-habit
+      ol-info
+      ol-irc
+      ol-mhe
+      ol-rmail
+      ol-w3m
+    )
+  )
+#+END_SRC
+
+** Common Org-Mode Modules I Enable
+
+#+BEGIN_SRC emacs-lisp :results silent
+  (require 'org-tempo)
+
+  (setq org-structure-template-alist
+        '(("a" . "EXPORT ASCII")
+          ("c" . "CENTER")
+          ("C" . "COMMENT")
+          ("e" . "EXAMPLE")
+          ("E" . "EXPORT")
+          ("h" . "EXPORT HTML")
+          ("l" . "EXPORT LATEX")
+          ("q" . "QUOTE")
+          ("s" . "SRC")
+          ("v" . "VERSE")
+         )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-startup-indented   t          ;; YES
+    org-pretty-entities    t          ;; YES
+    org-image-actual-width nil        ;; YES
+    org-ellipsis           " ▼")      ;; YES
+#+END_SRC
+
+When set to nil, try to get the width from an #+ATTR.* keyword
+and fall back on the original width if none is found.
+
+- blogpost: [[http://endlessparentheses.com/changing-the-org-mode-ellipsis.html][Changing the org-mode Ellipsis]]
+
+** In-Buffer Completion and Templates
+
+Org has in-buffer completions. Unlike minibuffer completions, which
+are useful for quick command interactions, Org’s in-buffer completions
+are more suitable for content creation in Org documents. Type one or
+more letters and invoke the hot key to complete the text
+in-place. Depending on the context and the keys, Org offers different
+types of completions. No minibuffer is involved. Such mode-specific
+hot keys have become an integral part of Emacs and Org provides
+several shortcuts.
+
+M-TAB
+
+    Complete word at point.
+
+- At the beginning of an empty headline, complete TODO keywords.
+- After ‘\’, complete TeX symbols supported by the exporter.
+- After ‘:’ in a headline, complete tags. Org deduces the list of tags from the ‘TAGS’ in-buffer option (see Setting Tags), the variable org-tag-alist, or from all tags used in the current buffer.
+- After ‘:’ and not in a headline, complete property keys. The list of keys is constructed dynamically from all keys used in the current buffer.
+- After ‘[[’, complete link abbreviations (see Link Abbreviations).
+- After XXX‘[[*’, complete headlines in the current buffer so that they can be used in search links like: ‘[[*find this headline]
+- After ‘#+’, complete the special keywords like ‘TYP_TODO’ or file-specific ‘OPTIONS’. After option keyword is complete, pressing M-TAB again inserts example settings for this keyword.
+- After ‘STARTUP’ keyword, complete startup items.
+- When point is anywhere else, complete dictionary words using Ispell. 
+
+16.2 Structure Templates
+
+With just a few keystrokes, it is possible to insert empty structural blocks, such as ‘#+BEGIN_SRC’ … ‘#+END_SRC’, or to wrap existing text in such a block.
+
+C-c C-, (org-insert-structure-template)
+
+    Prompt for a type of block structure, and insert the block at point. If the region is active, it is wrapped in the block. First prompts the user for keys, which are used to look up a structure type from the variable below. If the key is TAB, RET, or SPC, the user is prompted to enter a block type. 
+
+Available structure types are defined in org-structure-template-alist, see the docstring for adding or changing values.
+
+Org Tempo expands snippets to structures defined in
+org-structure-template-alist and org-tempo-keywords-alist. For example, < s
+TAB creates a code block. Enable it by customizing org-modules or add
+‘(require 'org-tempo)’ to your Emacs init file148.
+
+
+a	‘#+BEGIN_EXPORT ascii’ … ‘#+END_EXPORT’
+c	‘#+BEGIN_CENTER’ … ‘#+END_CENTER’
+C	‘#+BEGIN_COMMENT’ … ‘#+END_COMMENT’
+e	‘#+BEGIN_EXAMPLE’ … ‘#+END_EXAMPLE’
+E	‘#+BEGIN_EXPORT’ … ‘#+END_EXPORT’
+h	‘#+BEGIN_EXPORT html’ … ‘#+END_EXPORT’
+l	‘#+BEGIN_EXPORT latex’ … ‘#+END_EXPORT’
+q	‘#+BEGIN_QUOTE’ … ‘#+END_QUOTE’
+s	‘#+BEGIN_SRC’ … ‘#+END_SRC’
+v	‘#+BEGIN_VERSE’ … ‘#+END_VERSE’
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+  ;; enable in-buffer M-TAB completion in org
+  (setq org-completion-use-ido nil)        ; or your preferred completion UI
+  (setq completion-at-point-functions
+        (cons #'org-complete-at-point
+              completion-at-point-functions))
+
+  (require 'org-tempo)                     ; C-c C-, / <s<TAB> templates
+  (setq org-structure-template-alist
+        '(("s" . "SRC") ("e" . "EXAMPLE") ("h" . "EXPORT HTML") ...))
+#+END_SRC
+
+** Speed Keys
+
+*** TODO Warning (bytecomp): ‘org-speed-commands-user’ is an obsolete variable (as of 9.5); configure ‘org-speed-commands’ instead.
+
+Single keystrokes can execute custom commands in an Org file when
+point is on a headline. Without the extra burden of a meta or modifier
+key, Speed Keys can speed navigation or execute custom
+commands. Besides faster navigation, Speed Keys may come in handy on
+small mobile devices that do not have full keyboards. Speed Keys may
+also work on TTY devices known for their problems when entering Emacs
+key chords.
+
+By default, Org has Speed Keys disabled. To activate Speed Keys, set
+the variable org-use-speed-commands to a non-nil value. To trigger a
+Speed Key, point must be at the beginning of an Org headline, before
+any of the stars.
+
+Org comes with a pre-defined list of Speed Keys. To add or modify
+Speed Keys, customize the variable, org-speed-commands-user. For more
+details, see the variable’s docstring. With Speed Keys activated, M-x
+org-speed-command-help, or ? when point is at the beginning of an Org
+headline, shows currently active Speed Keys, including the
+user-defined ones.
+
+#+BEGIN_SRC emacs-lisp
+;; enable single-letter speed commands
+(setq org-use-speed-commands t
+      org-speed-commands
+      ;; prepend your custom keys to the built-in defaults:
+      (append
+       '(("n" . org-next-visible-heading)
+         ("p" . org-previous-visible-heading))
+       org-speed-commands))
+#+END_SRC
+
+** Dynamic Headline Numbering
+
+The Org Num minor mode, toggled with M-x org-num-mode, displays
+outline numbering on top of headlines. It also updates it
+automatically upon changes to the structure of the document.
+
+By default, all headlines are numbered. You can limit numbering to
+specific headlines according to their level, tags, ‘COMMENT’ keyword,
+or ‘UNNUMBERED’ property. Set org-num-max-level, org-num-skip-tags,
+org-num-skip-commented, org-num-skip-unnumbered, or
+org-num-skip-footnotes accordingly.
+
+If org-num-skip-footnotes is non-nil, footnotes sections (see Creating
+Footnotes) are not numbered either.
+
+You can control how the numbering is displayed by setting org-num-face
+and org-num-format-function.
+
+You can also turn this mode globally for all Org files by setting the
+option org-startup-numerated to ‘t’, or locally on a file by using
+‘#+startup: num’.
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+;; outline-style numbering on the fly
+(setq org-num-max-level 3
+      org-startup-numerated t)         ; or use #+startup: num in individual files
+(org-num-mode 1)                       ; enable globally
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '50-org-core)
+  ;;; 50-org-core.el ends here
+#+END_SRC

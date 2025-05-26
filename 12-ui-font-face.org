@@ -7,6 +7,22 @@
 #+END_SRC
 
 * Choice of Font for the Emacs Work Area
+https://fsd.it
+
+** Install PragmataPro Font onto Ubuntu Linux
+
+PragmataPro™ is a condensed monospaced font optimized for screen, designed by
+Fabrizio Schiavi to be the ideal font for coding, math and engineering
+
+PragmataPro™ has no interline spacing, so the lines are more compact in height
+not just in width. You can view a lot of windows at the same time!
+
+Designed for the best possible view at low sizes.
+
+More than 9000 characters optimized from 9pt to 48pt to guarantee the best
+possible readability
+
+Designed for every programming language and context.
 
 I purchased a nice font from https://fsd.it/shop/fonts/pragmatapro/ and then
 told Emacs to use it by doing the following.
@@ -43,70 +59,95 @@ In my case, the PragmataPro fonts are divided up into:
    - Style: Bold         PragmataPro Mono Liga Bold
    - Style: Bold Italic  PragmagaPro Mono Liga Bold Italic
 
+
+
+
+
+
+$ fc-list                  -- to see what fonts you have installed
+$ fc-list | grep -i pragmata
+$ cd ~/.local/share/fonts/
+$ unzip ~/Downloads/PragmataPro0.9-8svlok.zip
+$ rm -rf PragmataPro0.829
+$ fc-cache -fv             -- caches new ones, removes old ones
+$ fc-list | grep -i pragmata
+
+** Enable Emacs to Use It for Normal Text Display
+- [[https://www.reddit.com/r/emacs/comments/4sm6fa/how_to_enable_pragmatapro_ligatures/][How to enable PragmataPro ligatures : emacs]]
+- [[https://www.emacswiki.org/emacs/SetFonts][EmacsWiki: Set Fonts]]
+
+- [[https://github.com/pop-os/pop/issues/111][Trouble Installing Truetype Fonts · Issue #111 · pop-os/pop · GitHub]]
+
+You’ll want to stop calling your font‐picking code unconditionally at
+load time, and instead only run it once a graphical frame
+exists. Here’s a drop-in replacement for your 12-ui-font-face bits
+that:
+
+ 1. Wraps any call to xan/choose-frame-font in a check for a GUI frame
+ 2. Hooks it to both Emacs startup and any new frames (so it works for daemon + emacsclient)
+ 3. Never runs in -nw or headless daemon-start
+
+Why this code below fixes it
+ - display-graphic-p returns non-nil only when that frame is really on X/Wayland/macOS GUI.
+ - By using window-setup-hook you wait until Emacs has a GUI connection before trying x-list-fonts.
+ - By using after-make-frame-functions you cover frames created by emacsclient -c when running Emacs as a daemon.
+ - In -nw (or during early daemon start) neither hook nor body runs, so the x-list-fonts error goes away.
+
+With this in place, you’ll only try to pick and apply a GUI font when
+it actually makes sense, and both CLI (-nw) and headless (--daemon)
+launches will no longer blow up.
+
+
 #+BEGIN_SRC emacs-lisp
-;; 12-ui-font-face.org
+  (defun xan/choose-frame-font ()
+    "Pick the best installed non-bold, non-italic font from a preferred list and log the selection."
+    (let ((preferred '("PragmataPro Mono Liga-14"
+                       "PragmataPro Mono-14"
+                       "PragmataPro-14"
+                       "monospace-14"))
+          (chosen nil))
+      (catch 'found
+        (dolist (pattern preferred)
+          (let ((fonts (x-list-fonts pattern)))
+            (when fonts
+              (message "[font] Found matches for '%s':" pattern)
+              (dolist (f fonts)
+                (message "        %s" f))
+              ;; Look for a non-bold, non-italic variant
+              (setq chosen
+                    (seq-find
+                     (lambda (font)
+                       (and (not (string-match-p "-italic-" font))
+                            (not (string-match-p "-bold-" font))))
+                     fonts))
+              (when chosen
+                (message "[font] Selected: %s" chosen)
+                (throw 'found chosen))
+              ;; fallback to any match
+              (when (car fonts)
+                (message "[font] Fallback (no regular match): %s" (car fonts))
+                (throw 'found (car fonts)))))))
+      (unless chosen
+        (message "[font] ⚠ No preferred fonts matched."))))
 
-(defun xan/choose-frame-font ()
-  "Pick the best installed font from a preferred list."
-  (or
-   (car (x-list-fonts "PragmataPro Mono Liga-14"))
-   (car (x-list-fonts "PragmataPro Mono-14"))
-   (car (x-list-fonts "PragmataPro-14"))
-   (car (x-list-fonts "monospace-14"))
-   (face-attribute 'default :family)))
+    (defun xan/set-frame-font-if-graphic (&optional frame)
+      "If FRAME is graphical, run `xan/choose-frame-font` and apply it."
+      (let ((frame (or frame (selected-frame))))
+        (when (display-graphic-p frame)
+          (when-let ((font (xan/choose-frame-font)))
+            (with-selected-frame frame
+              (set-frame-font font nil t)
+              (message "[font] Using frame font: %s" font))))))
 
-(let ((font (xan/choose-frame-font)))
-  (when font
-    (set-frame-font font nil t)
-    (message "[font] Using frame font: %s" font)))
+    ;; 1) On initial Emacs GUI startup
+    (add-hook 'window-setup-hook #'xan/set-frame-font-if-graphic)
+
+    ;; 2) On every new frame (covers daemon + emacsclient -c)
+    (add-hook 'after-make-frame-functions #'xan/set-frame-font-if-graphic)
 #+END_SRC
 
-### #+BEGIN_SRC emacs-lispER
-###   (let* ((preferred '("PragmataPro Mono Liga" "PragmataPro Mono" "PragmataPro Liga" "PragmataPro"))
-###          (picked (seq-find (lambda (f) (member f (font-family-list))) preferred)))
-###     (if picked
-###         (progn
-###           (message "[font] Found font: %s" picked)
-###           (set-frame-font (format "%s-14" picked) nil t)
-###           ;; confirm what got applied
-###           (run-with-idle-timer
-###            0.5 nil
-###            (lambda ()
-###              (message "[font] Actual frame font: %s"
-###                       (frame-parameter nil 'font)))))
-###       (message "⚠ No preferred PragmataPro fonts found in font-family-list")))
-### #+END_SRC
 
-  (when (member "PragmataPro Mono Liga" (font-family-list))
-    (set-frame-font "PragmataPro Mono Liga-14" nil t))
-
-  (set-frame-font
-    "PragmataPro Mono Liga 14"    ;; FONT (namestring, object, entity or spec)
-    nil                      ;; KEEP-SIZE
-    t                        ;; FRAMES (t means to all frames)
-  )
-;;  (set-frame-font "PragmataPro Liga 14" nil t)
-
-
-
-
-In Emacs Lisp, fonts are represented using three different Lisp object types:
-
-  - font object :: a Lisp object that represents a font that Emacs has
-    opened.  Font objects cannot be modified in Lisp, but they can be
-    inspected.
-
-  - font spec  :: a font spec creating using font specifications args
-
-  - font entity :: a reference to a font that need not be open.  Its
-    properties are intermediate between a font object and a font spec: like a
-    font object, and unlike a font spec, it refers to a single, specific font.
-
-or just simply a string:
-
-  - font name :: a string in the *fontconfig* format
-
-To display the complete list of available fonts, execute the following in the
+To display the complete list of fonts known to Emacs, execute the following in the
 *Scratch Buffer*.
 
 ### #+BEGIN_SRC emacs-lispER
@@ -114,34 +155,88 @@ To display the complete list of available fonts, execute the following in the
 ###     (insert (format "%s\n" font)))-GOOG-Noto Sans CJK KR-normal-normal-normal-*-*-*-*-*
 ### #+END_SRC
 
+
+** Enable Linux Shell to Use It for Normal Text Display
+https://github.com/gabrielelana/awesome-terminal-fonts/blob/master/README.md#how-to-install-linux
+https://askubuntu.com/questions/1013201/cant-set-up-awesome-terminal-fonts
+
+https://gist.github.com/DeLaGuardo/fe1f3d9397d6ef7468460d54d5601156
+https://bastibe.de/2017-09-19-multi-font-themes.html
+
+** Enable LaTeX to Use It for Formatted Text
+
+** Enable PragmataPro Ligature  https://github.com/lumiknit/emacs-pragmatapro-ligatures
+=USE THIS ONE=
+
+both use prettify-symbols-mode
+
+
+This package:
+ - Provides a minor mode: pragmatapro-ligatures-mode.
+ - Uses prettify-symbols-mode to define ligatures as replacements for character sequences.
+ - Works without relying on Emacs-level font shaping support (i.e., independent of HarfBuzz or font-backend magic).
+ - Specifically tailored for PragmataPro font — it maps sequences like ==, !=, etc. to Unicode glyphs that are shaped as ligatures in PragmataPro.
+
+💡 Summary: A clean, Emacs-native way to enable synthetic ligatures via symbol substitution.
+
+if (x != y && a == b) { return x->b; }
+
+
 https://github.com/lumiknit/emacs-pragmatapro-ligatures
 
-### #+BEGIN_SRC emacs-lispER
-###   (use-package pragmatapro-lig
-###     :quelpa
-###       (pragmatapro-lig
-###         :fetcher url
-###         :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
-###       )
-###   )
-### #+END_SRC
-
 #+BEGIN_SRC emacs-lisp
-  ;; (quelpa
-  ;;   '(pragmatapro-lig
-  ;;      :fetcher url
-  ;;      :url "https://github.com/lumiknit/emacs-pragmatapro-ligatures/raw/master/pragmatapro-lig.el"
-  ;;    )
-  ;; )
+  (use-package pragmatapro-ligatures
+    :straight (:host github
+               :repo "lumiknit/emacs-pragmatapro-ligatures"
+               :local-repo "pragmatapro-ligatures"
+               :files ("*.el"))
+    :init
+      (load (expand-file-name "pragmatapro-lig.el"
+                              (straight--repos-dir "pragmatapro-ligatures"))
+            nil 'nomessage
+      )
+      (add-hook 'prog-mode-hook #'pragmatapro-lig-mode)
+      (add-hook 'text-mode-hook #'pragmatapro-lig-mode)
+      :no-require t
+  )
 
-  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/pragmatapro-lig")
-  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/")
-  ;;; (use-package pragmatapro-lig)
-  (require 'pragmatapro-lig)
+;  (use-package pragmatapro-ligatures
+;    :straight (:host github :repo "lumiknit/emacs-pragmatapro-ligatures")
+;    :commands pragmatapro-ligatures-mode
+;    :init
+;      ;; Enable in all prog-mode buffers, or restrict to others as needed
+;      (add-hook 'prog-mode-hook #'pragmatapro-ligatures-mode)
+;      (add-hook 'text-mode-hook 'pragmatapro-lig-mode)
+;    ;;; (pragmatapro-lig-global-mode)
+;  )
+;
+;  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/pragmatapro-lig")
+;;;;  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/")
+;  ;;; (use-package pragmatapro-lig)
+;;;;  (require 'pragmatapro-lig)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  (load-file "~/.emacs.d/lisp/pragmatapro-prettify-symbols-v0.829.el")
+** Enable Automatic Text Replacement with Symbols
+
+I am skipping this one because I only use the PragmataPro Ligature font:
+ - _Simulates_ ligatures using prettify-symbols-mode.
+ - Works even with fonts that don't support ligatures.
+ - Is unnecessary when you’re using a ligature-capable font like PragmataPro Ligature.
+
+#+BEGIN_SRC emacs-lispDISABLED
+  (use-package pragmatapro-prettify-symbols
+    :straight (:host github
+               :repo "fabrizioschiavi/pragmatapro"
+               :local-repo "pragmatapro-prettify-symbols"
+               :files ("emacs_snippets/*.el"))
+    :init
+    ;; Load the actual file manually
+    (let* ((dir (straight--repos-dir "pragmatapro-prettify-symbols"))
+           (file (expand-file-name "emacs_snippets/pragmatapro-prettify-symbols-v0.830.el" dir)))
+      (load file nil 'nomessage)
+      (when (fboundp 'pragmatapro-prettify-symbols-v0.830)
+        (add-hook 'prog-mode-hook #'pragmatapro-prettify-symbols-v0.830)))
+    :no-require t)  ;; prevents use-package from trying to `require`
 #+END_SRC
 
 * Colors

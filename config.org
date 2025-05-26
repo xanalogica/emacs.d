@@ -21,35 +21,6 @@
 ;;; config.el --- Tangled master config  -*- lexical-binding: t -*-
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  ;; Tell the byte-compiler these vars will exist at runtime:
-  ;;; (defvar straight-check-for-modifications)
-  ;;; (defvar straight-recipe-repositories)
-  ;;; (defvar straight-use-package-by-default)
-  ;;; (defvar use-package-enable-imenu-support)
-
-;  (defvar save-place-file)
-;  (defvar bookmark-default-file)
-;  (defvar recentf-save-file)
-;  (defvar tramp-persistency-file-name)
-;  (defvar nov-save-place-file)
-;  (defvar transient-history-file)
-;  (defvar transient-levels-file)
-;  (defvar transient-values-file)
-;  (defvar eshell-directory-name)
-;  (defvar org-babel-library-of-babel-file)
-;  (defvar org-clock-persist-file)
-;  (defvar request-storage-directory)
-;  (defvar yas-snippet-dirs)
-;  (defvar undo-tree-history-directory-alist)
-;  (defvar undo-tree-auto-save-history)
-;  (defvar chatgpt-shell-history-directory)
-;  (defvar chatgpt-shell-configuration-file)
-;  (defvar chatgpt-shell-history-directory)
-;  (defvar org-generic-id-locations-file)
-
-#+END_SRC
-
 #+INCLUDE_SRC: "early-init.el"       tangle="no"  caption="~/.emacs.d/early-init.el"
 #+INCLUDE_SRC: "init.el"             tangle="no"  caption="~/.emacs.d/init.el"
 #+INCLUDE_SRC: "lisp/init-tangle.el" tangle="no"  caption="~/.emacs.d/lisp/init-tangle.el"
@@ -99,8 +70,6 @@
 ### set up of my choice of package management, and then if =config.org= has been
 ### modified, tangle it into =config.el=, which is then loaded into Emacs by
 ### =init.el= to make those configuration settings take effect.
-
-### - [ ] INCLUDE: "config/config-emacs-work-protection.org"
 
 ### - [ ] INCLUDE: "config/config-global-syntax-checking.org"
 ### - [ ] INCLUDE: "config/config-emacs-use-of-ai.org"
@@ -377,7 +346,7 @@ interface and mode-specific configuration takes place.
 Anything that deals with authentication or secret-handling, such as
 GnuPG, password stores, auth-sources, .netrc, pinentry, tls-program.
 
-#+INCLUDE_SRC: "05-security-secrets.org"  tangle="yes" caption="~/.emacs.d/05-security-secrets.org"
+#+INCLUDE_SRC: "05-security-secrets.org"     tangle="yes" caption="~/.emacs.d/05-security-secrets.org"
 ###     GPG / epa-file settings: where to store .gpg temp files
 ### 
 ###     auth-sources (e.g. ~/.authinfo.gpg)
@@ -388,23 +357,22 @@ GnuPG, password stores, auth-sources, .netrc, pinentry, tls-program.
 ###     custom-file
 ### 
 
-#+INCLUDE_SRC: "07-security-network.org"  tangle="yes" caption="~/.emacs.d/07-security-network.org"
-
+#+INCLUDE_SRC: "07-security-network.org"     tangle="yes" caption="~/.emacs.d/07-security-network.org"
 
 * Phase 10 – UI and input system
 
 #+INCLUDE_SRC: "10-ui-frame-appearance.org"  tangle="yes" caption="~/.emacs.d/10-ui-frame-appearance.org"
-#+INCLUDE_SRC: "12-ui-font-face.org"  tangle="yes" caption="~/.emacs.d/12-ui-font-face.org"
-#+INCLUDE_SRC: "15-ui-modeline-input.org"  tangle="yes" caption="~/.emacs.d/15-ui-modeline-input.org"
-#+INCLUDE_SRC: "17-ui-mouse-inputs.org"  tangle="yes" caption="~/.emacs.d/17-ui-mouse-inputs.org"
+#+INCLUDE_SRC: "12-ui-font-face.org"         tangle="yes" caption="~/.emacs.d/12-ui-font-face.org"
+#+INCLUDE_SRC: "15-ui-modeline-input.org"    tangle="yes" caption="~/.emacs.d/15-ui-modeline-input.org"
+#+INCLUDE_SRC: "17-ui-mouse-inputs.org"      tangle="yes" caption="~/.emacs.d/17-ui-mouse-inputs.org"
 
 * Phase 20 – Global behavior and editing
 
 ** Keybindings - Global
-#+INCLUDE_SRC: "20-keybindings-global.org"  tangle="yes" caption="~/.emacs.d/20-keybindings-global.org"
+#+INCLUDE_SRC: "20-keybindings-global.org"   tangle="yes" caption="~/.emacs.d/20-keybindings-global.org"
 
 ** Editor Behavior
-#+INCLUDE_SRC: "25-editor-behavior.org"  tangle="yes" caption="~/.emacs.d/25-editor-behavior.org"
+#+INCLUDE_SRC: "25-editor-behavior.org"      tangle="yes" caption="~/.emacs.d/25-editor-behavior.org"
 
 ** Core Behavior Tweaks
 #+INCLUDE_SRC: "30-core-behavior-tweaks.org" tangle="yes" caption="~/.emacs.d/30-core-behavior-tweaks.org"
@@ -425,17 +393,49 @@ GnuPG, password stores, auth-sources, .netrc, pinentry, tls-program.
 
 * Phase 50 – Org-mode environment
 
-### #+BEGIN_SRC emacs-lisp
-### (xan/load-org-if-exists "50-org-core.org")
-### (xan/load-org-if-exists "51-org-capture.org")
-### (xan/load-org-if-exists "52-org-refile-archive.org")
-### (xan/load-org-if-exists "53-org-links-export.org")
-### (xan/load-org-if-exists "54-org-tasks.org")
-### (xan/load-org-if-exists "55-org-ui.org")
-### (xan/load-org-if-exists "59-org-extensions.org")
-### #+END_SRC
+Why this split?
 
-### - [ ] INCLUDE: "config/config-install-of-org-mode.org"
+ - Core vs. capture vs. refile vs. export vs. tasks vs. UI each have very
+   distinct responsibilities.
+
+ - You can load/tangle only the phases you need at a given time—helpful for
+   testing or when you want to e.g. rebuild just your agenda setup.
+
+ - It aligns with the flow:
+
+   1. Open/write files (core)
+   2. Capture new items
+   3. Refile & archive processed items
+   4. Export/sharing your Org docs
+   5. Task tracking & habits
+   6. Presentation & modeline polish
+
+Feel free to tweak which packages live in which file—but generally, things
+that change where Org reads your files go in 50; things that change how you
+capture go in 51; where you file/archive go in 52; export and link behavior in
+53; task/agenda flow in 54; and purely visual/UI tweaks in 55.
+
+
+#+INCLUDE_SRC: "50-org-core.org"            tangle="yes" caption="~/.emacs.d/50-org-core.org"
+- org-directory, org-attach-directory
+- org-modules (which contrib libraries to load)
+- org-temp + org-structure-template-alist (inline block/snippet templates)
+– Startup behaviors: org-startup-indented, org-pretty-entities, org-image-actual-width, org-ellipsis
+– Core export backends: (setq org-export-backends ’(html latex odt ...))
+
+#+INCLUDE_SRC: "51-org-capture.org"         tangle="yes" caption="~/.emacs.d/51-org-capture.org"
+– org-capture-templates
+– org-default-notes-file / org-note-...
+#+INCLUDE_SRC: "52-org-refile-archive.org"  tangle="yes" caption="~/.emacs.d/52-org-refile-archive.org"
+– org-refile-targets
+– org-archive-location
+#+INCLUDE_SRC: "53-org-links-export.org"    tangle="yes" caption="~/.emacs.d/53-org-links-export.org"
+– org-file-apps (how to open PDFs, DOCs, etc.)
+– org-download for drag-and-drop images (https://github.com/remyhonig/org-download)
+– org-export-… customizations
+#+INCLUDE_SRC: "54-org-tasks.org"           tangle="yes" caption="~/.emacs.d/54-org-tasks.org"
+#+INCLUDE_SRC: "55-org-ui.org"              tangle="yes" caption="~/.emacs.d/55-org-ui.org"
+
 ### - [ ] INCLUDE: "config/config-note-capture-using-org-mode.org"
 ### - [ ] INCLUDE: "config/config-note-refiling-using-org-mode.org"
 ### - [ ] INCLUDE: "config/config-note-archiving-using-org-mode.org"
