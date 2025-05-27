@@ -361,8 +361,32 @@ GnuPG, password stores, auth-sources, .netrc, pinentry, tls-program.
 
 * Phase 10 – UI and input system
 
-#+INCLUDE_SRC: "10-ui-frame-appearance.org"  tangle="yes" caption="~/.emacs.d/10-ui-frame-appearance.org"
-#+INCLUDE_SRC: "12-ui-font-face.org"         tangle="yes" caption="~/.emacs.d/12-ui-font-face.org"
+A very solid and important question is how to build a clean, layered visual
+design for Emacs, especially when mixing a base theme (like modus-vivendi), a
+preferred font (PragmataPro), and targeted overrides (e.g. org-mode styling).
+
+To get a beautiful, deterministic Emacs:
+
+ 1. Set fonts (default, fixed-pitch, variable-pitch) first (10-ui-font-face.org)
+
+ 2. Load your base theme (modus-vivendi) second (12-ui-frame-appearance.org)
+
+ 3. Apply mode-specific overrides (e.g., Org faces) after theme (later in 53-org-links-export.org)
+
+ 4. Use UI packages (e.g., org-modern, org-appear) last (later in 55-org-ui.org)
+
+Here’s a recommended layering order and how to organize your
+10-ui-font-face.org and related files for long-term maintainability.
+
+;;; CONFIG SEQUENCE OVERVIEW
+;; 00-core-boot.org            --> Environment, dirs, sanity guards
+;; 10-ui-font-face.org        --> Font selection + fallback (MUST come before theme)
+;; 12-ui-frame-appearance.org --> Theme + Frame sizing/UI (AFTER font)
+;; 53-org-links-export.org    --> Org export and links setup
+;; 55-org-ui.org              --> All Org UI (faces, bullets, agenda tweaks)
+
+#+INCLUDE_SRC: "10-ui-font-face.org"         tangle="yes" caption="~/.emacs.d/10-ui-font-face.org"
+#+INCLUDE_SRC: "12-ui-frame-appearance.org"  tangle="yes" caption="~/.emacs.d/12-ui-frame-appearance.org"
 #+INCLUDE_SRC: "15-ui-modeline-input.org"    tangle="yes" caption="~/.emacs.d/15-ui-modeline-input.org"
 #+INCLUDE_SRC: "17-ui-mouse-inputs.org"      tangle="yes" caption="~/.emacs.d/17-ui-mouse-inputs.org"
 
