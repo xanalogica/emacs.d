@@ -1,0 +1,148 @@
+#+TITLE: 59-org-extensions
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 59-org-extensions.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+#+END_SRC
+
+* org-auto-expand
+
+This is a third-party extension on top of Org (auto-wrap into blocks,
+etc.), so it belongs in 59-org-extensions.org alongside things like
+org-collector and org-ql:
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-auto-expand
+    ;;; :quelpa (org-auto-expand :fetcher github :repo "alphapapa/org-auto-expand")
+    :straight (:host github :repo "alphapapa/org-auto-expand")
+  )
+#+END_SRC
+
+* 59 – Org Extensions
+
+** org-auto-expand: automatic block wrapping
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+(use-package org-auto-expand
+  :straight (:host github :repo "alphapapa/org-auto-expand")
+  :after org
+  :config
+  ;; any further tweaks here
+  )
+#+END_SRC
+
+
+
+
+
+* org-collector and org-ql
+Both org-collector and org-ql live outside of Org’s “core → capture →
+export → task” flow and are really extensions on top of Org-mode, so
+the best place for them is your Phase 59
+file—i.e. 59-org-extensions.org.
+
+That way 59-org-extensions.org remains your “grab-bag” for all of
+those extra Org-mode packages that don’t fit under capture, refile,
+export or agenda phases.
+
+
+
+** Generating Tables from Org-Properties ([[https://orgmode.org/worg/org-contrib/org-collector.html][org-collector]] for columnview tables)
+- [[https://github.com/yyr/org-mode/blob/master/contrib/lisp/org-collector.el][org-mode/org-collector.el at master · yyr/org-mode · GitHub]] (8-years old)
+
+~org-collector~ collects headline properties into tables, with optional
+pre-processing.  The ~org-collector~ package provides an extended
+functionality over the ~column view~ feature of Org-Mode.  It allows query
+expressions to filter out the information you want to see.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-collector
+    :straight (:host github
+               :repo "yyr/org-mode"
+               :files ("contrib/lisp/org-collector.el"))
+    :after org
+    :commands (org-collector)   ; autoload the main entry point
+    :init
+    ;; if you want the column-view binder right away:
+    (autoload 'org-collector "org-collector" nil t)
+    :config
+    ;; any post-load tweaks go here
+    (setq org-collector-default-columns '("ITEM" "AMOUNT"))
+    )
+
+  ;;;MINE (use-package org-collector
+  ;;;MINE   :straight nil  ;; Ensure straight.el does not manage this package
+  ;;;MINE   :load-path "~/.emacs.d/lisp/org-collector/" ;; use my Git checkout
+  ;;;MINE )
+#+END_SRC
+
+*** Blah 12
+:PROPERTIES:
+:amount:   2.35
+:END:
+
+#+BEGIN: propview :cols (ITEM AMOUNT)
+| ITEM        | AMOUNT |
+|-------------+--------|
+| "Blah 12"   |   2.35 |
+| "Foobar 56" |      0 |
+|-------------+--------|
+|             |        |
+#+END:
+
+**** Foobar 56
+
+** The Org Query Language (org-ql)
+- [[https://github.com/alphapapa/org-ql#installation][GitHub - alphapapa/org-ql: An Org-mode query language, including search comma...]]
+
+NOTE: I'm patching the org-ql to sort items in agenda views, until sorting is
+      officially supported.
+
+#+CAPTION: How I Installed My Locally-Modified Version
+#+BEGIN_SRC ZZZemacs-lisp :tangle no
+  (use-package org-ql
+    :load-path "~/.emacs.d/lisp/org-ql/" ;; use my modified Git checkout
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-ql
+    :straight (:host github :repo "alphapapa/org-ql")
+    :after org
+    :commands (org-ql-search org-ql-view))
+#+END_SRC
+
+
+
+#+CAPTION: Example of How to Install the Official Version
+#+BEGIN_SRC ZZZemacs-lisp
+  (use-package org-ql
+    :quelpa (
+      org-ql
+        :fetcher github
+        :repo "alphapapa/org-ql"
+        :files (
+          :defaults (
+            :exclude "helm-org-ql.el"
+          )
+        )
+    )
+  )
+#+END_SRC
+
+#+BEGIN_SRC ZZZemacs-lisp :tangle no
+  (use-package helm-org-ql
+    :quelpa (helm-org-ql :fetcher github :repo "alphapapa/org-ql"
+                       :files ("helm-org-ql.el")))
+#+END_SRC
+
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '59-org-extensions)
+  ;;; 59-org-extensions.el ends here
+#+END_SRC

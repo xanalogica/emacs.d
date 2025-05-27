@@ -1,0 +1,213 @@
+#+TITLE: 55-org-ui
+#+DESCRIPTION: Org Mode Visuals, Agenda UI Enhancements
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 55-org-ui.el --- Org Mode Visuals, Agenda UI Enhancements -*- lexical-binding: t -*-
+#+END_SRC
+
+– org-bullets (fancier bullets) https://github.com/jmjones/org-bullets
+– org-indent-mode vs. native org-startup-indented
+– org-superstar as an alternative, org-ellipsis face tuning
+– keyboard bindings (org-defkey, org-speed-commands-user)
+
+* Visual Bullets for Org Headlines
+
+  ;; ;; org-bullets or org-modern for headline prettification
+  ;; (use-package org-modern
+  ;;   :hook ((org-mode . org-modern-mode)
+  ;;          (org-mode . (lambda ()
+  ;;                        (variable-pitch-mode -1)
+  ;;                        (pragmatapro-prettify-symbols-v0.830)
+  ;;                        (prettify-symbols-mode 1))))
+  ;;   :config
+  ;;     (global-prettify-symbols-mode 1)
+  ;;   :custom
+  ;;     (org-modern-star '("◉" "○" "✸" "✿"))
+  ;;     (org-modern-hide-block-start nil)  ;; Show full #+BEGIN_SRC again
+  ;; )
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-bullets
+    :hook (org-mode . org-bullets-mode)
+    :custom
+      (org-bullets-bullet-list '("●" "○" "●" "○" "●" "◉" "○" "◆"))
+  )
+#+END_SRC
+
+* Org face adjustments AFTER theme
+
+#+BEGIN_SRC emacs-lisp
+  (set-face-attribute 'org-code nil :foreground "Purple")
+  (set-face-attribute 'org-list-dt nil :foreground "Orange" :box "White" :inverse-video t)
+#+END_SRC
+
+* Agenda enhancements
+
+AI (use-package org-super-agenda
+AI   :after org
+AI   :config
+AI   (org-super-agenda-mode 1))
+
+* Inline entity rendering, structure template keys, numbering
+
+AI (setq org-pretty-entities t
+AI       org-num-mode t
+AI       org-use-speed-commands t
+AI       org-structure-template-alist
+AI       '(("a" . "EXPORT ASCII")
+AI         ("s" . "SRC")
+AI         ("c" . "CENTER")
+AI         ("v" . "VERSE")))
+
+* Optional: set faces for org-level headings
+** Testing
+*** Testing 2
+**** Testing 3
+***** Testing 5
+
+AI (dolist (face '((org-level-1 . 1.4)
+AI                 (org-level-2 . 1.3)
+AI                 (org-level-3 . 1.2)
+AI                 (org-level-4 . 1.1)))
+AI   (set-face-attribute (car face) nil :weight 'bold :height (cdr face)))
+
+* Org-Mode Keybindings & Yanking
+
+Fix org-mode's conflict with yasnippet over the TAB key.
+
+#+BEGIN_SRC emacs-lisp
+  ;;(add-hook 'org-mode-hook
+  ;;    (lambda ()
+  ;;        (org-set-local 'yas/trigger-key [tab])
+  ;;        (define-key yas/keymap [tab] 'yas/next-field-group)))
+
+  (add-hook 'org-mode-hook
+     (lambda ()
+        (org-defkey org-mode-map "\C-c&" 'org-mark-ring-goto)
+     )
+  )
+#+END_SRC
+
+Control how yanking unfolds subtrees:
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-yank-folded-subtrees nil)  ;; do NOT fold them afterward
+  (setq org-yank-adjusted-subtrees t)  ;; adjust trees into hierarchy during yank
+#+END_SRC
+
+
+
+* Make org-mode Checkboxes Work in Headlines, not just Bulleted Items
+#+BEGIN_SRC DISABLEDemacs-lisp
+  (defun wicked/org-update-checkbox-count (&optional all)
+    "Update the checkbox statistics in the current section.
+     This will find all statistic cookies like [57%] and [6/12] and update
+     them with the current numbers.  With optional prefix argument ALL,
+     do this for the whole buffer."
+
+    (interactive "P")
+    (save-excursion
+      (let* ((buffer-invisibility-spec (org-inhibit-invisibility))
+        (beg (condition-case nil
+          (progn (outline-back-to-heading) (point))
+          (error (point-min))))
+        (end (move-marker
+          (make-marker)
+          (progn (or (outline-get-next-sibling) ;; (1)
+            (goto-char (point-max)))
+                        (point))))
+            (re "\\(\\[[0-9]*%\\]\\)\\|\\(\\[[0-9]*/[0-9]*\\]\\)")
+            (re-box
+              "^[ \t]*\\(*+\\|[-+*]\\|[0-9]+[.)]\\) +\\(\\[[- X]\\]\\)")
+             b1 e1 f1 c-on c-off lim (cstat 0))
+        (when all
+          (goto-char (point-min))
+          (or (outline-get-next-sibling) (goto-char (point-max))) ;; (2)
+          (setq beg (point) end (point-max)))
+        (goto-char beg)
+        (while (re-search-forward re end t)
+          (setq cstat (1+ cstat)
+                b1 (match-beginning 0)
+                e1 (match-end 0)
+                f1 (match-beginning 1)
+                lim (cond
+                     ((org-on-heading-p)
+                      (or (outline-get-next-sibling) ;; (3)
+                          (goto-char (point-max)))
+                      (point))
+                     ((org-at-item-p) (org-end-of-item) (point))
+                     (t nil))
+                c-on 0 c-off 0)
+          (goto-char e1)
+          (when lim
+            (while (re-search-forward re-box lim t)
+              (if (member (match-string 2) '("[ ]" "[-]"))
+                  (setq c-off (1+ c-off))
+                (setq c-on (1+ c-on))))
+            (goto-char b1)
+            (insert (if f1
+                        (format "[%d%%]" (/ (* 100 c-on)
+                                            (max 1 (+ c-on c-off))))
+                        (format "[%d/%d]" c-on (+ c-on c-off))))
+            (and (looking-at "\\[.*?\\]")
+                 (replace-match ""))))
+        (when (interactive-p)
+          (message "Checkbox statistics updated %s (%d places)"
+                   (if all "in entire file" "in current outline entry")
+                   cstat)))))
+
+  (defadvice org-update-checkbox-count (around wicked activate)
+    "Fix the built-in checkbox count to understand headlines."
+    (setq ad-return-value
+          (wicked/org-update-checkbox-count (ad-get-arg 1))))
+#+END_SRC
+
+3. Fixing checkbox counts in headlines
+
+This is a behavior/UI tweak for org-update-checkbox-count, so I’d put
+it in 55-org-ui.org under a “Checkboxes & Display” section:
+
+* 55 – Org UI
+
+** Checkboxes in Headlines
+
+By default Org only updates [n/m] counts on list items. This advice
+lets headline statistic cookies also work:
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+(defun wicked/org-update-checkbox-count (&optional all)
+  "Update [3/5] or [60%] cookies in headings as well as items."
+  (interactive "P")
+  (save-excursion
+    (let* ((inhibit-invisibility  t)
+           (beg (or (and (org-at-heading-p)
+                         (point))
+                    (progn (outline-back-to-heading) (point))))
+           (end (progn (or (outline-get-next-sibling) (goto-char (point-max)))
+                       (point)))
+           (stat-re "\\(\\[[0-9]*/[0-9]*\\]\\)\\|\\(\\[[0-9]*%\\]\\)")
+           (box-re   "^[ \t]*\\(*+\\|[-+*]\\|[0-9]+[.)]\\) +\\(\\[[- X]\\]\\)"))
+      (when all (setq beg (point-min) end (point-max)))
+      (goto-char beg)
+      (while (re-search-forward stat-re end t)
+        (let ((count-on 0) (count-off 0) (start (match-beginning 0)))
+          (save-excursion
+            (goto-char start)
+            (while (re-search-forward box-re end t)
+              (if (equal (match-string 2) "[X]") (cl-incf count-on) (cl-incf count-off))))
+          (let ((new (if (match-beginning 1)
+                         (format "[%d/%d]" count-on (+ count-on count-off))
+                       (format "[%d%%]" (/ (* 100 count-on)
+                                          (max 1 (+ count-on count-off)))))))
+            (goto-char start)
+            (delete-region (match-beginning 0) (match-end 0))
+            (insert new))))))
+(advice-add 'org-update-checkbox-count :around #'wicked/org-update-checkbox-count)
+#+END_SRC
+
+* Package Footer                                                    :COMMENT:
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '55-org-ui)
+  ;;; 55-org-ui.el ends here
+#+END_SRC

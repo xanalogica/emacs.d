@@ -1,9 +1,20 @@
-#+TITLE: 10-ui-frame-appearance
-#+DESCRIPTION: ???
+#+TITLE: 12-ui-frame-appearance
+#+DESCRIPTION: Theme + Frame sizing/UI (AFTER font)
 #+STARTUP: overview
 
 #+BEGIN_SRC emacs-lisp :exports none
-;;; 10-ui-frame-appearance.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+;;; 12-ui-frame-appearance.el --- Theme + Frame sizing/UI (AFTER font) -*- lexical-binding: t -*-
+#+END_SRC
+
+* Themes
+
+#+BEGIN_SRC emacs-lisp
+  (use-package modus-themes
+    :init
+      (load-theme 'modus-vivendi t)
+    :custom
+      (modus-themes-italic-constructs t)
+      (modus-themes-bold-constructs nil))
 #+END_SRC
 
 * UI Performance Tweaks
@@ -147,9 +158,6 @@
 #+END_SRC
 
 * Preferred UI Behavior
-:PROPERTIES:
-:VISIBILITY: children
-:END:
 
 ** Make the "Active Region" Visible
 
@@ -306,9 +314,7 @@ used to get an audible one as well.
 
 
 
-
-
 #+BEGIN_SRC emacs-lisp :exports none
-  (provide '10-ui-frame-appearance)
-  ;;; 10-ui-frame-appearance.el ends here
+  (provide '12-ui-frame-appearance)
+  ;;; 12-ui-frame-appearance.el ends here
 #+END_SRC

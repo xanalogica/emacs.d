@@ -56,7 +56,11 @@
 
   (add-hook 'emacs-startup-hook
     (lambda ()
-      (xan/check-org-local-variable-blocks user-emacs-directory)))
+      (xan/check-org-local-variable-blocks user-emacs-directory)
+      ;;; (xan/check-org-local-variable-blocks
+      ;;;   (expand-file-name "cache/tangled/" user-emacs-directory))
+    )
+  )
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :exports none

@@ -1,0 +1,956 @@
+#+TITLE: 51-org-capture
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 51-org-capture.el --- Capture templates & default note files -*- lexical-binding: t -*-
+#+END_SRC
+
+  ;;;UNUSED (setq org-default-notes-file  ;; *default* .org file for org-capture.el
+  ;;;UNUSED    "~/Dropbox/Documents/tosort.org")
+
+* 51 – Org Capture
+
+#+BEGIN_SRC emacs-lisp
+;AI (setq org-default-notes-file (expand-file-name "inbox.org" org-directory))
+;AI (setq org-capture-templates
+;AI       '(("t" "Todo" entry (file+headline org-default-notes-file "Tasks")
+;AI         "* TODO %?\n  %i\n  %a")
+;AI        ("n" "Note" entry (file org-default-notes-file)
+;AI         "* %? :NOTE:\n  %i\n  %U")))
+#+END_SRC
+
+* Bringing In a URL With Its Title
+
+Takes a URL from the clipboard and inserts an org-mode link with the title of
+a page found by the URL into the current buffer.
+
+Cannot load org-cliplink: (file-missing "Cannot open load file" "No such file or directory" "org-cliplink")
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-cliplink
+    :after org
+    ;;; :bind ("C-c l" . org-cliplink)
+  )
+
+  ;; use curl instead of url-retrieve, which sometimes handles redirections better.
+  (setq org-cliplink-transport-implementation 'curl)
+
+  (global-set-key (kbd "C-c P") 'org-cliplink)
+#+END_SRC
+
+** Forms for *Capturing* Information (predefined templates)
+
+Capturing is primarily about defining:
+
+  1) places to quickly write things
+  2) templates to help structure what you write
+
+Sometimes you want to place things in specific locations, but this quickly
+breaks down when something can go into more than one place.  For that reason,
+I rely more on tags than locations.
+
+In my approach, capture should be used for ??? and not for things that are
+better handled with tags where they can be distributed throughout .org files.
+Sometimes information should be in one place and other times it belongs
+scattered throughout your information structure.
+
+Things that should be scattered about and associated by location with
+~specific topics~ are:
+
+  - l   general link to remember  (located within relevant project and tagged)
+  - ze  Email Item to Address     (tagged, not located)
+        =FIGURE OUT HOW TO COLLECT USING EMACS EMAILS NEEDING ATTENTION=
+  - za  Action Item to Address    (tagged, not located)
+  - b   a book to read            (tagged, not located because any project may have suggested books)
+  - v   a video to watch          (tagged, not located because any project may have suggested videos)
+  - w   website to visit          (tagged, not located because any project may have suggested websites)
+
+Things that should be in one place are:
+
+  - zm ::	Meeting Notes (documented understandings, action items, questions)
+    (may be refiled into a relevant project)
+    =BE SURE TO TURN ON REFILING HISTORY COLLECTION SO WE CAN SEE WHICH MEETING IT CAME FROM=
+
+  - Things to Study Further (websites, books, videos)
+    (may be refiled into a relevant project)
+    - r   research to undertake
+
+  - personal major projects
+    mathematics
+      conceptual tools
+        differential calculus
+        integral calculus
+      laws
+      people
+      philosophies
+        rationalism
+        logic philosophy
+        analytic philosophy
+        scholastic tradition
+    principles of debate
+    office decor
+    riverhood
+
+  - meeting notes
+    - non-regular arbitrary meeting
+    - zd  DevOps
+    - zs  Sentinel
+    - ABI??
+    - zh  ETL/Java
+    - zi  Murthy, Mohan, Raju (interdepartmental)
+    - zp  Product Planning Meeting
+    - zm  All Management Meeting
+    - zt  Sr. Mgmt client focused
+
+Things to Drop:
+  - zc  (C-Suite Mgmt Meeting)
+  - j   a dated journale entry
+  - j   personal journal of my day
+
+- z :: ZeOmega-related
+
+  I want to produce an agenda view for meeting with Sam, where I show my
+  questions, my action items and collect notes on our discussion, and have a
+  set of links to relevant information sources like Karmic dashboards.
+
+  zb  (boss)                  represent as a tag, not place
+
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-id-link-to-org-use-id
+    'create-if-interactive-and-no-custom-id)
+#+END_SRC
+
+#+RESULTS:
+: create-if-interactive-and-no-custom-id
+
+;; Update ID file on startup
+(org-id-update-id-locations)
+
+org-id-prefix
+org-id-method    currently set to uuid of (org, uuid, ts)
+
+
+#+BEGIN_SRC emacs-lisp
+  ;;; (require 'org-id)
+  ;;; (use-package org-id)   NOW BUILT INTO EMACS v27.1
+
+  (defun org-id-new (&optional prefix)
+    (interactive)
+    "Create a new globally unique ID.
+
+  An ID consists of two parts separated by a colon:
+  - a prefix
+  - a unique part that will be created according to `org-id-method'.
+
+  PREFIX can specify the prefix, the default is given by the variable
+  `org-id-prefix'.  However, if PREFIX is the symbol `none', don't use any
+  prefix even if `org-id-prefix' specifies one.
+
+  So a typical ID could look like \"Org-4nd91V40HI\"."
+    (let* ((prefix (if (eq prefix 'none)
+                       ""
+                     (concat (or prefix org-id-prefix) "-")))
+           unique)
+      (if (equal prefix "-") (setq prefix ""))
+      (cond
+       ((memq org-id-method '(uuidgen uuid))
+        (setq unique (org-trim (shell-command-to-string org-id-uuid-program)))
+        (unless (org-uuidgen-p unique)
+          (setq unique (org-id-uuid))))
+       ((eq org-id-method 'org)
+        (let* ((etime (org-reverse-string (org-id-time-to-b36)))
+               (postfix (if org-id-include-domain
+                            (progn
+                              (require 'message)
+                              (concat "@" (message-make-fqdn))))))
+          (setq unique (concat etime postfix))))
+       (t (error "Invalid `org-id-method'")))
+      (concat prefix unique)))
+#+END_SRC
+
+#+RESULTS:
+: org-id-new
+
+*** TODO Bookmarks
+- [[https://orgmode.org/manual/Template-expansion.html#Template-expansion][The Org Manual: Template expansion]]
+
+- %(org-cliplink-capture)  :: insert a capture link w/description
+- %^G                      :: prompt for tags to add, from tags in all agenda files
+- %U                       :: inactive timestamp w/time
+- %i                       :: selected content when capturing
+- %?                       :: finally position cursor here
+- %a                       :: annotation, normally the link created with ~org-store-link~
+- %x                       :: content of the X clipboard
+- %^{Note Title}           :: prompt for value and insert where the tag is
+- %^{Task Title}           :: prompt for value and insert where the tag is
+
+*** Merge Capture Templates All Together
+
+http://kdr2.com/tech/emacs/1805-approach-org-ref-code-to-text.html
+
+NOTE: Prefix with C-u to jump to the target of a capture template.
+Prefix with C-0 to insert new item at point.
+
+- [ ]  C-c c B  :: capture--health-bloodpressure-measurements
+- [ ]  C-c c F  :: capture--finance-creditscore-measurements
+- [ ]  C-c c q  :: capture--cool-quote
+;;- [ ]  C-c c z  :: "ZeOmega Capture Templates"
+
+Possible Keys from within the Capture Buffer:
+
+-     C-c C-c :: finalize the capture
+- C-u C-c C-c :: finalize the capture and jump to the new item
+-     C-c C-w :: finalize and refile the note to a different place
+-     C-c C-k :: abort the capture process
+
+
+org-refile-targets
+
+- C-c C-w  :: org-refile
+- C-u C-c C-w  :: jump to a heading
+
+**** My Capture Templates and Targets for Org-Mode
+:PROPERTIES:
+:ID:       8a2df261-1ac0-48fd-9e0d-dfa3aa8628ef
+:END:
+
+Note that capture templates can be used:
+
+  1. allowed to be placed where the capture declaration shows below
+  2. placed using the "refiling" mechanism immediately after entry
+  3. left in-place, by preceding a capture invocation keystroke with a C-0
+
+Define the categories of capture keys, on which later declarations will hang
+their capture templates.  There are groups and non-grouped templates.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates nil)
+  (if (not (boundp 'org-capture-templates))
+    (setq org-capture-templates nil)  ;;; should already be defined!
+  )
+
+
+
+
+  (add-to-list 'org-capture-templates `("f" "<f>inance") t)
+  (add-to-list 'org-capture-templates `("t" "<t>echnology") t)
+  (add-to-list 'org-capture-templates `("h" "<h>ealth") t)
+  (add-to-list 'org-capture-templates `("p" "<p>ersonal") t)
+  (add-to-list 'org-capture-templates `("z" "<z>eOmega") t)
+#+END_SRC
+
+***** Paste a Link into a New Headline for Later Consideration
+
+(defun my/expense-template ()
+  (format "Hello world %s" (org-capture-get :account)))
+
+(defun my/expense-template ()
+  (format "Hello world %s" (plist-get org-capture-plist :account)))
+(setq org-capture-templates '(("x" "Test entry 1" plain
+                               (file "~/tmp/test.txt")
+                               (function my/expense-template)
+                               :account "Account:Bank")
+                              ("y" "Test entry 2" plain
+                               (file "~/tmp/test.txt")
+                               (function my/expense-template)
+                               :account "Account:AnotherBank")))
+
+#+BEGIN_SRC emacs-lisp :results value
+  ;; (format "Hello world %s" (org-capture-get "Template-Link"))
+  (format "Hello world %s" (cadr (org-babel-lob--src-info "Template-Link")))
+
+  (defun my/insert-template ()
+    (interactive)
+    (setq body
+      (cadr (org-babel-lob--src-info "Template-Link")))
+    (message "body: %s" body)
+    ;; (message (org-capture-get :template))
+    ;; (format "Hello world %s" (org-capture-get :template))
+    (format "* %s" body)
+  )
+  (my/insert-template)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    `("l" "a URL/Link" entry
+       (file+headline "~/Dropbox/Documents/index.org" "Unclassified Entries - Index")
+       ;;; (file "~/.emacs.d/templates/generic-link.org")
+
+       ,(my/insert-template)
+       ;; (function my/insert-template)
+
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 1 ;; enforce count of blank lines before
+       :empty-lines-after  0 ;; enforce count of blank lines after
+
+       :template Template-Link
+     ) t
+  )
+#+END_SRC
+
+***** Paste a Note into a New Headline for Later Consideration
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("zn" "(zeomega) Note (non-TODO)" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Unclassified Entries - ZeOmega")
+       (file "~/.emacs.d/templates/generic-note.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("pn" "(personal) Note (non-TODO)" entry
+       (file+headline "~/Dropbox/Documents/Personal.org" "Unclassified Entries - Personal")
+       (file "~/.emacs.d/templates/generic-note.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("fn" "(finance) Note (non-TODO)" entry
+       (file+headline "~/Dropbox/Documents/Finance.org" "Unclassified Entries - Finance")
+       (file "~/.emacs.d/templates/generic-note.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("tn" "(technology) Note (non-TODO)" entry
+       (file+headline "~/Dropbox/Documents/Technology.org" "Unclassified Entries - Technology")
+       (file "~/.emacs.d/templates/generic-note.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("hn" "(health) Note (non-TODO)" entry
+       (file+headline "~/Dropbox/Documents/Health.org" "Unclassified Entries - Health")
+       (file "~/.emacs.d/templates/generic-note.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+***** Paste an Annotated Link into a New Headline for Later Consideration
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("za" "(zeomega) link+notes (annotation)" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Unclassified Entries - ZeOmega")
+       (file "~/.emacs.d/templates/generic-annotation.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("pa" "(personal) link+notes (annotation)" entry
+       (file+headline "~/Dropbox/Documents/Personal.org" "Unclassified Entries - Personal")
+       (file "~/.emacs.d/templates/generic-annotation.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("fa" "(finance) link+notes (annotation)" entry
+       (file+headline "~/Dropbox/Documents/Finance.org" "Unclassified Entries - Finance")
+       (file "~/.emacs.d/templates/generic-annotation.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("ta" "(Technology) link+notes (annotation)" entry
+       (file+headline "~/Dropbox/Documents/Technology.org" "Unclassified Entries - Technology")
+       (file "~/.emacs.d/templates/generic-annotation.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+***** Create a New Task into a New Headline for Later Consideration
+
+#+BEGIN_SRC emacs-lisp :results none
+  (add-to-list 'org-capture-templates
+    '("ft" "(finance) Task" entry
+       (file+headline "~/Dropbox/Documents/Finance.org" "Unclassified Entries - Finance")
+       (file "~/.emacs.d/templates/generic-task.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :results none
+  (add-to-list 'org-capture-templates
+    '("zt" "(zeomega) Task" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Unclassified Entries - ZeOmega")
+       (file "~/.emacs.d/templates/generic-task.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :results none
+  (add-to-list 'org-capture-templates
+    '("pt" "(personal) Task" entry
+       (file+headline "~/Dropbox/Documents/Personal.org" "Unclassified Entries - Personal")
+       (file "~/.emacs.d/templates/generic-task.org")
+       :prepend nil          ;; put newest entry at the bottom of the section
+       :kill-buffer t        ;; if file was opened just to collect data, close the buffer after
+       :empty-lines-before 0 ;; enforce count of blank lines before
+       :empty-lines-after  1 ;; enforce count of blank lines after
+     )
+  )
+#+END_SRC
+
+***** Create a New Blog Post into a New Headline for Later Consideration
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("b" "a Blog Post" entry
+       (file+headline "~/Dropbox/Documents/Blog/content.org" "My Blog Posts")
+       (file "~/Dropbox/Documents/Blog/blog-entry-template.org")
+       :prepend t         ;; put newest quote at the top of the section
+       :kill-buffer t     ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1     ;; enforce count of blank lines before and after
+     )
+  )
+#+END_SRC
+
+***** Capture a Periodic Blood Pressure Measurement
+
+As part of self-measurement, I periodically take my blood pressure and keep it
+in a table to identify long-term trends.
+
+This capture template is a =table-line= or a new line in a table at a specific
+place.  It uses the following replaceable parameters.
+
+  - %u           :: inactive date/time stamp
+  - %^{High}     :: prompt "High" and insert a value for high pressure
+  - %^{Low}      :: prompt "Low" and insert a value for low pressure
+  - %^{Pulse}    :: prompt "Pulse" and insert a value for pulse rate
+  - %^{Comment}  :: prompt "Comment" and insert a value for comment, if any
+
+org-babel-load-file() doesn't seem to respect the =:tangle no= srcblock header option
+  uses: =org-babel-tangle()= to extract elisp and then load using =load-file=.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("hB"
+       "(health) Bloodpressure measurement" table-line
+       (file+headline "~/Dropbox/Documents/Health.org" "Jeff's Blood Pressure History")
+       "| %u | %^{High} | %^{Low} | %^{Pulse} | %^{Comment} |"
+       :prepend t         ;; put newest measurements at the top of the table
+       :unnarrowed t      ;; don't narrow to just the new entry; I want to see my history
+       :kill-buffer t     ;; if file was opened just to collect data, close the buffer after
+     )
+  )
+#+END_SRC
+
+***** Capture a FICO Credit Score Monthly Update
+
+Each month my bank sends me my current FICO credit score, which I collect in a
+table to identify long-term trends.
+
+This capture template is a =table-line= or a new line in a table at a specific
+place.  It uses the following replaceable parameters.
+
+  - %^{Date}u  :: prompt "Date" and insert a value for Report Date
+  - %^{Score}  :: prompt "Score" and insert a value for FICO score
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("fF"
+       "(finance) FICO Monthly Score" table-line
+       (file+headline "~/Dropbox/Documents/Finance.org" "Jeff's FICO Credit Score History")
+       "| %^{Date}u | %^{Score} | | |"
+       :prepend t         ;; put newest measurements at the top of the table
+       :unnarrowed t      ;; don't narrow to just the new entry; I want to see my history
+       :kill-buffer t     ;; if file was opened just to collect data, close the buffer after
+     )
+  )
+#+END_SRC
+
+***** Capture a Catchy Quote
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("q" "a Catchy Quote" entry
+       (file+headline "~/Dropbox/Documents/quotes.org" "Quotes and Sayings (should be spread about, not centralized)")
+       (file "~/Dropbox/Documents/Blog/generic-quote.org")
+       :prepend t         ;; put newest quote at the top of the section
+       :kill-buffer t     ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1     ;; enforce count of blank lines before and after
+     )
+  )
+#+END_SRC
+
+***** Capture a Meeting
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("zM" "ZeOmega Meeting" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings")
+       (file "~/.emacs.d/templates/zeomega-meeting.org")
+       :prepend t         ;; put newest quote at the top of the section
+       :kill-buffer t     ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1     ;; enforce count of blank lines before and after
+       :clock-in t        ;; begin tracking the time to fill in this entry
+       :clock-resume t    ;; and end tracking upon returning to what I was doing
+       :clock-keep nil    ;; be sure the clock does not keep running after I return
+       :unnarrowed t      ;; do not narrow the target buffer
+     )
+  )
+#+END_SRC
+
+****** TODO consider dropping specific meetings and use a common template that I refile afterward
+
+***** Capture a Specific 1:1 Meeting w/Doug
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("zmd" "1:1 Meeting with Doug" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings: 1:1 w/Doug")
+       (file "~/.emacs.d/templates/zeomega-meeting.org")
+       :prepend t       ;; put newest quote at the top of the section
+       :kill-buffer t   ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1   ;; enforce count of blank lines before and after
+       :clock-in t      ;; begin tracking the time to fill in this entry
+       :clock-resume t  ;; and end tracking upon returning to what I was doing
+       :unnarrowed t    ;; do not narrow the target buffer
+       :clock-keep nil  ;; be sure the clock does not keep running after I return
+     )
+  )
+#+END_SRC
+
+***** Capture a Specific 1:1 Meeting w/Harshad
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("zmh" "1:1 Meeting with Harshad" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings: 1:1 w/Harshad")
+       (file "~/.emacs.d/templates/zeomega-meeting.org")
+       :prepend t       ;; put newest quote at the top of the section
+       :kill-buffer t   ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1   ;; enforce count of blank lines before and after
+       :clock-in t      ;; begin tracking the time to fill in this entry
+       :clock-resume t  ;; and end tracking upon returning to what I was doing
+       :unnarrowed t    ;; do not narrow the target buffer
+       :clock-keep nil  ;; be sure the clock does not keep running after I return
+     )
+  )
+#+END_SRC
+
+***** Capture a Specific 1:1 Meeting w/Eddie
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("zme" "1:1 Meeting with Eddie" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings: 1:1 w/Eddie")
+       (file "~/.emacs.d/templates/zeomega-meeting.org")
+       :prepend t       ;; put newest quote at the top of the section
+       :kill-buffer t   ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1   ;; enforce count of blank lines before and after
+       :clock-in t      ;; begin tracking the time to fill in this entry
+       :clock-resume t  ;; and end tracking upon returning to what I was doing
+       :unnarrowed t    ;; do not narrow the target buffer
+       :clock-keep nil  ;; be sure the clock does not keep running after I return
+     )
+  )
+#+END_SRC
+
+***** Capture a Specific 1:1 Meeting w/Pavan
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-capture-templates
+    '("zmp" "1:1 Meeting with Pavan" entry
+       (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings: 1:1 w/Pavan")
+       (file "~/.emacs.d/templates/zeomega-meeting.org")
+       :prepend t       ;; put newest quote at the top of the section
+       :kill-buffer t   ;; if file was opened just to collect data, close the buffer after
+       :empty-lines 1   ;; enforce count of blank lines before and after
+       :clock-in t      ;; begin tracking the time to fill in this entry
+       :clock-resume t  ;; and end tracking upon returning to what I was doing
+       :unnarrowed t    ;; do not narrow the target buffer
+       :clock-keep nil  ;; be sure the clock does not keep running after I return
+     )
+  )
+#+END_SRC
+
+****** OLD WAY
+#+BEGIN_SRC emacs-lispXXX :noweb yes
+  (setq org-capture-templates
+       ("z"
+          "ZeOmega Capture Templates"
+       )
+       ("zm"
+          "Specific Meetings"
+       )
+     )
+  )
+#+END_SRC
+
+       ;; %a  the place in Emacs I was when I initiated the capture command
+
+       ;; %i  initial content (what is selected)
+       ;; %U  inactive date/time stamp
+       ;; %^G prompt for tags to assign
+       ;; %?  where to place the cursor after laying out the template
+
+;;;; ZEOMEGA AND MYSELF
+;;;; unordered actions (people to reach out to, a sudden phone call, a TODO to be classified)
+;;  e   an event to attend, ordered by date (I HAVE A SECTION ALREADY FOR THIS)
+;;      (may be refiled into a relevant project like C18)
+
+;;;; producing ideas for writing, presentations FOR MYSELF
+;;;; producing ideas for writing, presentations FOR ZEOMEGA
+
+;;;; consuming ideas for consumption  music idea
+;; music to listen to, places to eat, books to read, movies to watch, places to visit
+
+;;;;  - Collected Quote (for ZeOmega or personal)
+
+;;       ("zb" "Touchbase w/Boss Sam (Weekly on Tue)" entry
+;;         (file+headline "~/Clients/ZeOmega/notes/zeomega.org" "Minutes - Meetings w/Sam")
+;;         (file "~/Clients/ZeOmega/notes/templates/minutes-sam.org")
+;;         :prepend t
+;;         :unnarrowed t
+;;         :clock-in t            ;; begin tracking the time to fill in this entry
+;;         :clock-resume t        ;; and end tracking upon returning to what I was doing
+;;         :clock-keep nil        ;; be sure the clock does not keep running after I return
+;;         :empty-lines 1         ;; count of blank lines before and after
+;;       )
+;;       ("zc" "C-Suite Management Meeting (Monthly on 3rd Wed)" entry
+;;         (file+headline "~/Clients/ZeOmega/notes/zeomega.org" "Minutes - Meetings w/C-Suite Team")
+;;         (file "~/Clients/ZeOmega/notes/templates/minutes-csuite.org")
+;;         :prepend t
+;;         :unnarrowed t
+;;         :clock-in t            ;; begin tracking the time to fill in this entry
+;;         :clock-resume t        ;; and end tracking upon returning to what I was doing
+;;         :clock-keep nil        ;; be sure the clock does not keep running after I return
+;;         :empty-lines 1         ;; count of blank lines before and after
+;;       )
+;;;;;       ("zd" "DevOps Status Meeting (Weekly on Tue)" entry
+;;;;;         (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings w/DevOps Team")
+;;;;;         (file "~/Dropbox/Documents/TEMPLATES/minutes-devops.org")
+;;;;;         :prepend t
+;;;;;         :unnarrowed t
+;;;;;         :empty-lines 1         ;; count of blank lines before and after
+;;;;;       )
+
+;;;;;       ("zs" "Sentinel Status Meeting (Weekly on Tue)" entry
+;;;;;         (file+headline "~/Dropbox/Documents/ZeOmega.org" "Meetings w/Sentinel-Core Team")
+;;;;;         (file "~/Dropbox/Documents/TEMPLATES/minutes-sentinelcore.org")
+;;;;;         :prepend t
+;;;;;         :unnarrowed t
+;;;;;         :empty-lines 1         ;; count of blank lines before and after
+;;;;;       )
+
+;;;;;       ("zi" "Interdepartmental Meeting re Murthy, Raju, Mohan, etc. (Weekly on Thu)" entry
+;;;;;         (file+headline "~/Clients/ZeOmega/notes/zeomega.org" "Minutes - Meetings w/Department Heads")
+;;;;;         (file "~/Clients/ZeOmega/notes/templates/minutes-interdepartmental.org")
+;;;;;         :prepend t
+;;;;;         :unnarrowed t
+;;;;;         :clock-in t            ;; begin tracking the time to fill in this entry
+;;;;;         :clock-resume t        ;; and end tracking upon returning to what I was doing
+;;;;;         :clock-keep nil        ;; be sure the clock does not keep running after I return
+;;;;;         :empty-lines 1         ;; count of blank lines before and after
+;;;;;       )
+
+;;       ("zk" "PMG Key Stakeholders Meeting (Monthly on 2nd Wed)" entry
+;;         (file+headline "~/Clients/ZeOmega/notes/zeomega.org" "Minutes - Meetings w/PMG Stakeholders")
+;;         (file "~/Clients/ZeOmega/notes/templates/minutes-stakeholders.org")
+;;         :prepend t
+;;         :unnarrowed t
+;;         :clock-in t            ;; begin tracking the time to fill in this entry
+;;         :clock-resume t        ;; and end tracking upon returning to what I was doing
+;;         :clock-keep nil        ;; be sure the clock does not keep running after I return
+;;         :empty-lines 1         ;; count of blank lines before and after
+;;       )
+
+;;;;;       ("j" "a dated [J]ournal entry" entry
+;;;;;         (file+datetree "~/notes/journal.org")
+;;;;;         "* %?\n\n%i"
+;;;;;         :clock-in t            ;; begin tracking the time to fill in this entry
+;;;;;         :clock-resume t        ;; and end tracking upon returning to what I was doing
+;;;;;         :clock-keep nil        ;; be sure the clock does not keep running after I return
+;;;;;         :empty-lines 1         ;; count of blank lines before and after
+;;;;;       )
+
+;;       ("j" "Journal" entry
+;;         (file+headline "~/dump/journal.org" "")
+;;         "\n %^{topic} %T \n%i%?\n"
+;;         :prepend t
+;;       )
+
+  ;;;(setq org-capture-templates
+  ;;;  '(
+  ;;;     ("j" "a personal [J]ournal entry about my day" entry
+  ;;;       (file+datetree "~/notes/journal.org")
+  ;;;       "* %?\nEntered on %U\n  %i\n  %a"
+  ;;;       :clock-in t         ;; begin tracking the time to fill in this entry
+  ;;;       :clock-resume t             ;; and end tracking upon returning to what I was doing
+  ;;;     )
+  ;;;     ("w" "org-protocol" entry
+  ;;;       (file+headlline "~/notes/resources.org" "Websites to Check Out")
+  ;;;       "* %^{Title}  :REFILE:\n\n  Link: %u, %c\n  Captured: %U\n  %i"
+  ;;;       :immediate-finish t ;; skip edit phase - just collect automatic info and return
+  ;;;       :clock-in t         ;; begin tracking the time to fill in this entry
+  ;;;       :clock-resume t             ;; and end tracking upon returning to what I was doing
+  ;;;     )
+  ;;;   )
+  ;;;)
+* org-protocol
+
+Intercepts calls from emacsclient to trigger custom actions without external
+dependencies.  Only one protocol has to be configured with your external
+applications or the operating system, to trigger an arbitrary number of custom
+actions.  Just register your custom sub-protocol and handler with the variable
+`org-protocol-protocol-alist'.
+
+#+BEGIN_SRC emacs-lisp
+;;  (require 'org-protocol)
+;;  (use-package org-protocol)   NOW PART OF EMACS v27
+#+END_SRC
+
+** *pushing* URL/title links from Firefox into the Emacs kill-buffer
+
+The actual command that pushes a link into Emacs is:
+
+$ /usr/bin/emacsclient org-protocol:/store-link:/URL/TITLE
+
+and we want to provide a button in Firefox that causes it to issue this
+command.  We do this by defining a 'bookmarklet', which is a Firefox bookmark
+with the location field containing a bit of JavaScript instead of a URL.
+
+  Name: PushLink
+  Location: (as one long line)
+    javascript:location.href='org-protocol://store-link://'+
+          encodeURIComponent(location.href)+'/'+
+          encodeURIComponent(document.title)+'/'+
+          encodeURIComponent(window.getSelection())
+
+We also have to teach Firefox which program to run to handle the URL protocol
+of 'org-protocol', which in my case is =/usr/bin/emacsclient=.
+
+A protocol is a method that is used to send, receive, and handle information
+over a connection.  Common protocols viewed from the browser include http,
+https, ftp, and mailto.  In order for you to view information sent over a
+specific protocol, it must be registered.  If you enter a URL for an unknown
+protocol (foo) in the Location Bar, you will receive a message such as,
+Firefox doesn't know how to open this address, because the protocol (foo)
+isn't associated with any program or, in Mozilla Suite/SeaMonkey, foo not a
+registered protocol.
+
+Once registered, the protocol can then be handled by the program you specify,
+such as your browser or a third party viewer.  This means that a hyperlink (
+e.g. foo://fred) can use the handler for protocol foo to open the file named
+fred.
+
+    Type about:config into the Location Bar (address bar) and press Enter.
+    Right-click -> New -> Boolean -> Name: network.protocol-handler.expose.foo -> Value -> false (Replace foo with the protocol you're specifying)
+    Next time you click a link of protocol-type foo you will be asked which application to open it with.
+
+In the firefox address box type this simple but weird-looking URL about:config
+and open it.  Then right-click on any entry in the long list that comes up.
+Right-clicking brings up the menu we will use to create a new entry.  Select
+new and of type boolean.  Carefully type in the name of the new preference as
+
+    network.protocol-handler.expose.mms
+
+and then select for its value false.  We are finished with this window, so you
+can close it.
+
+
+network.protocol-handler.external.mms   boolean  true
+
+
+Apparently they changed the way this works. You need to add a
+org-protocol.desktop file to ~/.local/share/applications
+
+  [Desktop Entry]
+  Name=org-protocol
+  Exec=emacsclient %u
+  Type=Application
+  Terminal=false
+  Categories=System;
+  MimeType=x-scheme-handler/org-protocol;
+
+Then run:
+
+  $ update-desktop-database .local/share/applications/
+
+For some reason I cannot get the bookmarklets to work, however. But
+opening an org-protocol:/ URL directly works.
+
+
+network.protocol-handler.app.org-protocol string /usr/bin/emacsclient
+
+
+For some reason, it is needed create a mime type on ~/.local/share/applications/mimeapps.list
+
+So I add:
+application/x-tivion=tivion.desktop;
+application/tivion=tivion.desktop;
+x-scheme-handler/tivion=tivion.desktop;
+
+
+
+I never had the window asking for which application to launch when clicking on
+a `org-protocol://' link...
+
+until I re-did the manipulation with:
+
+--8<---------------cut here---------------start------------->8---
+gconftool-2 -s /desktop/gnome/url-handlers/org-protocol/command '/usr/bin/emacsclient %s'
+--type String
+gconftool-2 -s /desktop/gnome/url-handlers/org-protocol/enabled --type Boolean true
+--8<---------------cut here---------------end--------------->8---
+
+(described on http://kb.mozillazine.org/Register_protocol#All_Firefox_versions_.28requires_certain_Gnome_libraries_to_be_installed.29)
+
+"Next time you click a link of protocol-type foo you will be asked which
+application to open it with." : for me, after the above step (`gconftool-2'),
+just entering `org-protocol://' in a new tab was sufficient to ask, this time,
+for which application to run. Finally...
+
+Not that intuitive...
+
+(Linux and Mac) If the path or name is incorrect when setting the
+network.protocol-handler.app.(protocol) preference , Firefox will display an
+error saying "protocol (foo) isn't associated with any program". (bug 312953)
+
+
+And here's what some snippets of a 'foobar' scheme registration looks like stored in Firefox's mimeTypes.rdf file:
+
+<RDF:li RDF:resource="urn:scheme:foobar"/>
+<RDF:Description RDF:about="urn:handler:web:http://www.lookout.net/foobar=%s"
+                 NC:prettyName="The foobar scheme"
+                 NC:uriTemplate="http://www.lookout.net/foobar=%s" />
+<RDF:Description RDF:about="urn:scheme:foobar"
+                 NC:value="foobar">
+<NC:handlerProp RDF:resource="urn:scheme:handler:foobar"/>
+<RDF:Description RDF:about="urn:scheme:handler:foobar"
+                 NC:alwaysAsk="true">
+<NC:possibleApplication RDF:resource="urn:handler:web:http://www.lookout.net/foobar=%s"/>
+
+** org-protocol (intercept calls from emacsclient to trigger custom actions)
+
+gconftool-2 -s /desktop/gnome/url-handlers/org-protocol/command '/usr/local/bin/emacsclient %s' --type String
+gconftool-2 -s /desktop/gnome/url-handlers/org-protocol/enabled --type Boolean true
+
+Make a bookmarklet button for:
+
+    javascript:location.href='org-protocol://sub-protocol://'+
+          encodeURIComponent(location.href)+'/'+
+          encodeURIComponent(document.title)+'/'+
+          encodeURIComponent(window.getSelection())
+
+store-link uses only the URL and page title
+
+#+BEGIN_SRC sh
+  $ emacsclient org-protocol:/store-link:/URL/TITLE
+#+END_SRC
+
+Pushes the given URL/title onto the kill-ring for yanking (C-y).
+
+org-protocol-store-link (links and bookmarks)
+
+org-protocol-capture (note taking and citations)
+
+  emacsclient org-protocol:/capture:/URL/TITLE/BODY
+
+will pop up an *Capture* buffer and fill the template with the data submitted.
+
+javascript:location.href='org-protocol://capture://'+
+      encodeURIComponent(location.href)+'/'+
+      encodeURIComponent(document.title)+'/'+
+      encodeURIComponent(window.getSelection())
+
+Controlling _which_ capture template will be used:
+
+You don't need to set up a capture template to use org-protocol-capture, since
+Org-mode provides a default template for those cases.  Newer versions provide
+an interactive interface for choosing a template.  You may provide a template
+to be used by customizing the variable org-capture-default-template.  The
+problem with this solution would be, that only one template can be used with
+the function.
+
+Luckily, org-protocol-capture understands a slightly extended syntax to choose
+between several templates: If the first field of the data submitted is exactly
+one character in length, this character will be used to select the template.
+
+$ emacsclient org-protocol:/capture:/x/URL/TITLE/BODY
+
+javascript:location.href='org-protocol://capture://x/'+
+      encodeURIComponent(location.href)+'/'+
+      encodeURIComponent(document.title)+'/'+
+      encodeURIComponent(window.getSelection())
+
+Edit published content: org-protocol-open-source
+
+This one was designed to help with opening sources for editing when browsing
+in the first place. org-protocol-open-source uses the custom variable
+org-protocol-project-alist to map URLs to (local) filenames.
+
+These bookmarklets enable your Firefox to talk to emacsclient via a new
+protocol (org-protocol://); emacsclient then parses the request and tells
+Emacs to capture or store stuff at the relevant places in your Org files.
+
+
+* Package End
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '51-org-capture)
+  ;;; 51-org-capture.el ends here
+#+END_SRC

@@ -338,24 +338,17 @@ interface and mode-specific configuration takes place.
 - verify I'm running a good version of Org
 - audit if my variables blocks in *.org files are properly terminated
 
-- mouse wheel setup ???
-
-
 ** Foundational Security for Emacs
 
 Anything that deals with authentication or secret-handling, such as
 GnuPG, password stores, auth-sources, .netrc, pinentry, tls-program.
 
 #+INCLUDE_SRC: "05-security-secrets.org"     tangle="yes" caption="~/.emacs.d/05-security-secrets.org"
-###     GPG / epa-file settings: where to store .gpg temp files
-### 
-###     auth-sources (e.g. ~/.authinfo.gpg)
-### 
-###     Pinentry/pinentry-curses vs GUI pinentry config
-### 
-###     TLS cert dirs, API-key variables marked :noexport: or via
-###     custom-file
-### 
+- GPG / epa-file settings: where to store .gpg temp files
+- auth-sources (e.g. ~/.authinfo.gpg)
+- Pinentry/pinentry-curses vs GUI pinentry config
+- TLS cert dirs, API-key variables marked :noexport: or via
+- custom-file
 
 #+INCLUDE_SRC: "07-security-network.org"     tangle="yes" caption="~/.emacs.d/07-security-network.org"
 
@@ -368,11 +361,8 @@ preferred font (PragmataPro), and targeted overrides (e.g. org-mode styling).
 To get a beautiful, deterministic Emacs:
 
  1. Set fonts (default, fixed-pitch, variable-pitch) first (10-ui-font-face.org)
-
  2. Load your base theme (modus-vivendi) second (12-ui-frame-appearance.org)
-
  3. Apply mode-specific overrides (e.g., Org faces) after theme (later in 53-org-links-export.org)
-
  4. Use UI packages (e.g., org-modern, org-appear) last (later in 55-org-ui.org)
 
 Here’s a recommended layering order and how to organize your
@@ -412,7 +402,9 @@ Here’s a recommended layering order and how to organize your
 - (should `request.el`, `url.el` and `tls.el` be together?
 
 * Phase 40 – Programming environment
+
 #+INCLUDE_SRC: "40-prog-python.org" tangle="yes" caption="~/.emacs.d/40-prog-python.org"
+
 #+INCLUDE_SRC: "45-prog-common.org" tangle="yes" caption="~/.emacs.d/45-prog-common.org"
 
 * Phase 50 – Org-mode environment
@@ -450,24 +442,27 @@ capture go in 51; where you file/archive go in 52; export and link behavior in
 #+INCLUDE_SRC: "51-org-capture.org"         tangle="yes" caption="~/.emacs.d/51-org-capture.org"
 – org-capture-templates
 – org-default-notes-file / org-note-...
+
 #+INCLUDE_SRC: "52-org-refile-archive.org"  tangle="yes" caption="~/.emacs.d/52-org-refile-archive.org"
 – org-refile-targets
 – org-archive-location
+
+### - [ ] INCLUDE: "config/config-note-refiling-using-org-mode.org"
+### - [ ] INCLUDE: "config/config-note-archiving-using-org-mode.org"
+
 #+INCLUDE_SRC: "53-org-links-export.org"    tangle="yes" caption="~/.emacs.d/53-org-links-export.org"
 – org-file-apps (how to open PDFs, DOCs, etc.)
 – org-download for drag-and-drop images (https://github.com/remyhonig/org-download)
 – org-export-… customizations
-#+INCLUDE_SRC: "54-org-tasks.org"           tangle="yes" caption="~/.emacs.d/54-org-tasks.org"
-#+INCLUDE_SRC: "55-org-ui.org"              tangle="yes" caption="~/.emacs.d/55-org-ui.org"
 
-### - [ ] INCLUDE: "config/config-note-capture-using-org-mode.org"
-### - [ ] INCLUDE: "config/config-note-refiling-using-org-mode.org"
-### - [ ] INCLUDE: "config/config-note-archiving-using-org-mode.org"
-### - [ ] INCLUDE: "config/config-scripting-via-org-babel.org"
-### - [ ] INCLUDE: "config/config-emacs-new-links-for-org-mode.org"
+#+INCLUDE_SRC: "54-org-tasks.org"           tangle="yes" caption="~/.emacs.d/54-org-tasks.org"
 ### - [ ] INCLUDE: "config/config-task-planning.org"
 ### - [ ] INCLUDE: "config/config-task-reporting.org"
 ### - [ ] INCLUDE: "config/config-content-publishing.org"
+
+#+INCLUDE_SRC: "55-org-ui.org"              tangle="yes" caption="~/.emacs.d/55-org-ui.org"
+
+### - [ ] INCLUDE: "config/config-scripting-via-org-babel.org"
 
 
 * Phase 60 – Personal tooling

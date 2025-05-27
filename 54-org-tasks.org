@@ -1,0 +1,317 @@
+#+TITLE: 54-org-tasks
+#+DESCRIPTION: ???
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 54-org-tasks.el --- Agenda, TODOs & habits -*- lexical-binding: t -*-
+#+END_SRC
+
+Agenda, TODOs & habits
+– org-todo-keywords, org-todo-keyword-faces
+– org-agenda-custom-commands
+– org-habit setup
+– org-super-agenda (https://github.com/alphapapa/org-super-agenda)
+
+* Periodic org-save-all-org-buffers
+
+This is a scheduling/timing tweak—saving Org buffers automatically on
+a timer—so it fits under your 54-org-tasks.org (Agenda & Scheduling)
+file, in a “Timing-Related” subsection:
+
+* 54 – Org Tasks & Agenda
+
+** Timing-Related Autosave for Org
+
+At one minute before the hour, save all org-mode buffers to disk, so that a
+CRON job can auto-commit all changes at the top of the hour.
+
+#+BEGIN_SRC emacs-lispER
+  ;;;DISABLED (run-at-time "00:59" 3600 'org-save-all-org-buffers)
+#+END_SRC
+
+At one minute before the hour, save all Org buffers so an external
+cron/git job can pick up the latest.
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+;; save all Org buffers at :59 every hour
+(run-at-time "00:59" 3600 #'org-save-all-org-buffers)
+#+END_SRC
+
+
+
+
+
+
+** Org-Super-Agenda for Post-Processing the Agenda Item list
+
+All of org-super-agenda’s configuration belongs with your agenda/task
+setup in 54-org-tasks.org. It isn’t part of core Org, capture, or
+export—it sits squarely in the “post-processing of agenda views”
+phase.
+
+The primary use of the [[https://github.com/alphapapa/org-super-agenda][org-super-agenda]]^{github} package is to post-process the
+list of items, usually for the daily/weekly agenda, made by the
+~org-agenda-list~ command, but it also works for other agenda views, like
+~org-tags-view~, ~org-todo-list~, ~org-search-view~, etc.
+
+https://melpa.org/#/ht
+https://github.com/alphapapa/ts.el
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ht)  ;; imported by org-super-agenda
+  (use-package ts)  ;; imported by org-super-agenda
+  (use-package org-super-agenda
+    :straight t
+    :after org
+
+    :requires (dash ht s ts)
+    :defines org-super-agenda-group-types
+    :functions org-super-agenda-mode
+
+    ;;; :init   ;; code executed BEFORE package is loaded
+
+    :config ;; code executed AFTER package is loaded
+      (org-super-agenda-mode t)  ;; enable it globally   DID NOT RUN!
+
+      (set-face-attribute 'org-super-agenda-header nil
+        :foreground "green"
+        :weight 'bold
+        :overline "green"
+      )
+
+      ;; wire in my new :auto-multiproperty grouping
+      (setq org-super-agenda-group-types
+        (plist-put org-super-agenda-group-types
+          ':auto-multiproperty
+          'jeff--auto-group-by-multiprop
+        )
+      )
+
+      (add-to-list    ;; DID NOT RUN!
+        'org-super-agenda-auto-selector-keywords ':auto-multiproperty)
+  )
+  ;;;  (require 'org-super-agenda)
+  ;;;  (org-super-agenda-mode t)
+
+  ;;;  (set-face-attribute 'org-super-agenda-header nil
+  ;;;    :foreground "green"
+  ;;;    :weight 'bold
+  ;;;    :overline "green"
+  ;;;  )
+
+  ;;;  ;; wire in my new :auto-multiproperty grouping
+  ;;;  (setq org-super-agenda-group-types
+  ;;;    (plist-put org-super-agenda-group-types
+  ;;;      ':auto-multiproperty
+  ;;;      'jeff--auto-group-by-multiprop
+  ;;;    )
+  ;;;  )
+
+  ;;;  (add-to-list    ;; DID NOT RUN!
+  ;;;    'org-super-agenda-auto-selector-keywords ':auto-multiproperty)
+#+END_SRC
+
+To see the expansion, place your cursor immediately after the (use-package
+...) expression and then enter: M-x pp-macroexpand-last-sexp
+
+*** Define My Custom Group Function First
+
+Define a new auto-grouping keyword/function for Org-Super-Agenda called
+:auto-direction, that examines the multi-valued property DIRECTION of each
+agenda item and *copies* that item under each distinct agenda heading
+named for each DIRECTION value.  Yes, this means an item can appear under
+multiple DIRECTIONs in an agenda, which is what I want.
+
+#+BEGIN_SRC emacs-lisp
+  (defun jeff--auto-group-by-multiprop (all-items propname &rest args)
+    "Divide ALL-ITEMS into groups based on their DIRECTION property, if present."
+
+    (setq non-matching nil)
+    (setq groups (ht-create))
+
+    (dolist (item all-items)
+      (setq marker
+       (or (get-text-property 0 'org-marker item)
+           (get-text-property 0 'org-hd-marker item)))
+
+      (setq propvalue (org-entry-get marker propname))
+      (if propvalue
+        (let*
+          (
+            (directions
+              (and propvalue
+                (split-string propvalue
+                  ";"        ;; separator
+                  t          ;; omit empty strings
+                  "[ ]+"     ;; trim leading/trailing whitespace
+                )
+              )
+            )
+          )
+
+          (dolist (direction directions)
+            (ht-set! groups direction
+              (cons item (ht-get groups direction)))
+          )
+        )
+        (push item non-matching)  ;; else no PROPNAME property
+      )
+    )
+
+    (setq ngroups nil)
+    (setq directions (sort (ht-keys groups) 'string<))
+    (dolist (direction directions)
+      (push
+        (list :name (format "Direction: %s" direction)
+         :items (nreverse (ht-get groups direction))
+        )
+        ngroups
+      )
+    )
+
+    (list ':auto-multiproperty non-matching ngroups)
+  )
+#+END_SRC
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+(setq org-todo-keywords
+      '((sequence "TODO" "IN-PROGRESS" "|" "DONE" "CANCELLED")))
+(setq org-agenda-custom-commands
+      '(("c" "Simple agenda" todo "TODO")))
+(require 'org-habit)
+(add-to-list 'org-modules 'org-habit)
+(setq org-habit-graph-column 50)
+(use-package org-super-agenda
+  :straight t
+  :after org
+  :config
+  (org-super-agenda-mode 1)
+  (setq org-super-agenda-groups
+        '((:name "Today"   :time-grid t)
+          (:name "Overdue" :deadline past))))
+#+END_SRC
+
+
+
+* 54 – Org Tasks & Scheduling
+
+** Holiday Diary & Easter Calculations
+
+#+BEGIN_SRC emacs-lisp
+;; Calculate Easter‐relative dates for Org/diary integration
+
+(defun da-easter (year)
+  "Return the absolute day number of Easter Sunday in YEAR."
+  (let* ((century (1+ (/ year 100)))
+         (shifted-epact (% (+ 14 (* 11 (% year 19))
+                              (- (/ (* 3 century) 4))
+                              (/ (+ 5 (* 8 century)) 25)
+                              (* 30 century))
+                           30))
+         (adjusted-epact
+          (if (or (= shifted-epact 0)
+                  (and (= shifted-epact 1) (< 10 (% year 19))))
+              (1+ shifted-epact)
+            shifted-epact))
+         (paschal-moon
+          (- (calendar-absolute-from-gregorian (list 4 19 year))
+             adjusted-epact)))
+    (calendar-dayname-on-or-before 0 (+ paschal-moon 7))))
+
+(defun da-easter-gregorian (year)
+  "Convert Easter’s absolute day to Gregorian date list for YEAR."
+  (calendar-gregorian-from-absolute (da-easter year)))
+
+(defun calendar-days-from-easter ()
+  "In a diary SEXP, produce days distance from Easter for current DATE."
+  (- (calendar-absolute-from-gregorian date)
+     (da-easter (calendar-extract-year date))))
+#+END_SRC
+
+Now you can sprinkle these diary‐style entries into your Org file:
+
+```org
+***** Good Friday
+<%%(= -2 (calendar-days-from-easter))>
+
+***** Easter Sunday
+<%%(= 0  (calendar-days-from-easter))>
+
+***** Easter Monday
+<%%(= 1  (calendar-days-from-easter))>
+
+
+
+
+
+*** Providing a Function to Calculate Easter for Org-Mode Events
+
+The calculation for Easter is complex, but the following Elisp code will
+calculate it.  The code come from:
+
+   http://github.com/soren/elisp/blob/master/da-kalender.el
+
+#+BEGIN_SRC emacs-lisp
+  (defun da-easter (year)
+    "Calculate the date for Easter Sunday in YEAR. Returns the date in the
+  Gregorian calendar, ie (MM DD YY) format."
+    (let* ((century (1+ (/ year 100)))
+           (shifted-epact (% (+ 14 (* 11 (% year 19))
+                                (- (/ (* 3 century) 4))
+                                (/ (+ 5 (* 8 century)) 25)
+                                (* 30 century))
+                             30))
+           (adjusted-epact (if (or (= shifted-epact 0)
+                                   (and (= shifted-epact 1)
+                                        (< 10 (% year 19))))
+                               (1+ shifted-epact)
+                             shifted-epact))
+           (paschal-moon (- (calendar-absolute-from-gregorian
+                             (list 4 19 year))
+                            adjusted-epact)))
+      (calendar-dayname-on-or-before 0 (+ paschal-moon 7))))
+
+  (defun da-easter-gregorian (year)
+    (calendar-gregorian-from-absolute (da-easter year)))
+
+  (defun calendar-days-from-easter ()
+    "When used in a diary sexp, this function will calculate how many days
+  are between the current date (DATE) and Easter Sunday."
+    (- (calendar-absolute-from-gregorian date)
+       (da-easter (calendar-extract-year date))))
+#+END_SRC
+
+Now we can schedule the public holidays associated with Easter as recurring
+events.  Good Friday is 2 days before "Easter", Easter Monday is one day
+after.
+
+***** Good Friday
+<%%(= -2 (calendar-days-from-easter))>
+
+***** Easter Sunday
+<%%(= 0 (calendar-days-from-easter))>
+
+***** Easter Monday
+<%%(= 1 (calendar-days-from-easter))>
+
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '54-org-tasks)
+  ;;; 54-org-tasks.el ends here
+#+END_SRC

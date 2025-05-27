@@ -2,17 +2,53 @@
 #+DESCRIPTION: ???
 #+STARTUP: overview
 
+* Package Header                                                    :COMMENT:
+
 #+BEGIN_SRC emacs-lisp :exports none
 ;;; 80-project-vc.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
 #+END_SRC
 
+* Versioning Files
 
+Documentation for Git can be installed into Emacs, by installing the ~gitman~
+info manual.  First, make sure you don't already have it available by doing ???.
 
+Git’s manpages can be exported as an info manual called gitman. Magit’s own
+info manual links to nodes in that manual instead of the actual manpages
+because Info doesn’t support linking to manpages.
 
+(setq magit-view-git-manual-method 'man)
+
+#+BEGIN_SRC emacs-lispDISABLED
+
+  ;; needed due to a bug in magit 2025-04-05
+  (straight-register-package
+   '(magit-section
+     :type git :host github :repo "magit/magit"
+     :files ("lisp/magit-section.el")))
+
+  (use-package magit
+    :defer t
+    :straight (magit :type git :host github :repo "magit/magit")
+    :commands (magit-status magit-log)
+    :config
+    (setq magit-display-buffer-function
+          #'magit-display-buffer-fullframe-status-v1))
+
+  ;; https://magit.vc/manual/magit/How-to-install-the-gitman-info-manual_003f.html#How-to-install-the-gitman-info-manual_003f
+  (setq magit-view-git-manual-method 'man)
+#+END_SRC
+
+https://stackoverflow.com/questions/39337586/how-do-git-lfs-and-git-annex-differ
+
+Git Annex works only through SSH, whereas Git LFS works both with SSH and
+HTTPS (SSH support was added in GitLab 8.12). Annex files are stored in a
+sub-directory of the normal repositories, whereas LFS files are stored outside
+of the repositories in a place you can define.
+
+* Package End                                                       :COMMENT:
 
 #+BEGIN_SRC emacs-lisp :exports none
   (provide '80-project-vc)
   ;;; 80-projectg-vc.el ends here
 #+END_SRC
-
-

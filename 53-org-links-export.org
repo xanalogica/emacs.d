@@ -1,0 +1,252 @@
+#+TITLE: 53-org-links-export
+#+DESCRIPTION: Links, downloads & export settings
+#+STARTUP: overview
+
+#+BEGIN_SRC emacs-lisp :exports none
+;;; 53-org-links-export.el --- Org Links, downloads & export settings -*- lexical-binding: t -*-
+#+END_SRC
+
+* Declare Which App Should Handle Links to Certain File Types
+
+#+BEGIN_SRC emacs-lisp
+  ;; Configure how Org opens various file types
+  (setq org-file-apps
+    '(("\\.pdf\\'" . "evince %s")
+      ("\\.doc\\'" . "libreoffice %s")
+      ;; fall back to default for anything else:
+      ("\\.\\(?:xls\\|xlsx\\)\\'" . default)
+      (auto-mode . emacs)))
+
+  ;; ;; If you really need to tweak per-buffer, you can still use a hook:
+  ;; (add-hook 'org-mode-hook
+  ;;           (lambda ()
+  ;;             ;; override just DOC for this buffer:
+  ;;             (delete '("\\.doc\\'" . default) org-file-apps)
+  ;;             (add-to-list 'org-file-apps
+  ;;                          '("\\.doc\\'" . "libreoffice %s"))))
+#+END_SRC
+
+* Control How Drag-and-Drop works to Download into an Org Document and Create a Link to That Content
+
+Meanwhile, 53-org-links-export.org is the right home for the extra
+helper package org-download (and any org-file-apps tweaks), since it
+lives “on top” of the core attach/link system and only concerns
+exporting or inserting external files.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-download
+    :after org
+    ;; enable drag-and-drop or C-c C-l insert for screenshots
+    :hook ((dired-mode . org-download-enable))
+    :custom
+      ;; per-buffer ‘images/’ subdirectory
+      (org-download-image-dir (lambda ()
+                               (concat (file-name-directory (or buffer-file-name default-directory)) "images/"))))
+#+END_SRC
+
+* Exporting
+** Exporting to HTML
+
+#+BEGIN_SRC emacs-lispDISABLED-AI
+(setq org-html-validation-link nil
+      org-html-head-include-scripts nil)
+#+END_SRC
+
+
+
+
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '53-org-links-export)
+  ;;; 53-org-links-export.el ends here
+#+END_SRC
+
+* My Link Abbreviations
+
+Link abbreviations can be used like this:
+
+:  [[linkword:tag][description]]
+
+The below elisp structure defines the linkword and the URL it represents.
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-link-abbrev-alist
+    '(
+       ("google"    . "http://www.google.com/search?q=")
+       ("gmap"      . "http://maps.google.com/maps?q=%s")
+       ("omap"      . "http://nominatim.openstreetmap.org/search?q=%s&polygon=1")
+       ("wikipedia" . "https://en.wikipedia.org/wiki/")
+
+       ;;; Links to Types of Karmic Tickets at ZeOmega
+
+       ("karmic"    . "https://karmic.zeomega.com/browse/%s")
+       ("story"     . "https://karmic.zeomega.com/browse/%s")
+       ("task"      . "https://karmic.zeomega.com/browse/%s")
+       ("subtask"   . "https://karmic.zeomega.com/browse/%s")
+       ("epic"      . "https://karmic.zeomega.com/browse/%s")
+
+       ("zeconnect" . "https://zeconnect.zeomega.com/display/%u")
+
+       ("github"    . "https://github.com/zeomega/%u")
+       ("zegit"     . "https://git.zeomega.com/zeomega/%u")
+     )
+  )
+#+END_SRC
+
+Document-specific link abbreviations can also be given using the following:
+
+    #+LINK: karmic http:xxxxxxxxxxxxx
+
+* Define a New Type of Link that Greps Files
+
+[[grep:some-regexp][description]\]
+
+Show matches across all files in the current directory.
+
+NEED: Show matches only in THIS file.
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "agenda"
+      (lambda (keyseq)
+       "Display a list of TODO headlines with tag TAG.
+        With prefix argument, also display headlines without a TODO keyword."
+        (org-agenda nil keyseq)
+      )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "grep"
+      (lambda (regexp)
+       "Run `rgrep' with REGEXP as argument."
+       (grep-compute-defaults)
+       (rgrep regexp "*" (expand-file-name "./"))
+      )
+  )
+#+END_SRC
+
+* Define a New Type of Link that Searches Tag Match Expressions
+
+: [[tag:work+phonenumber-boss][description]]
+
+Show headlines for all agenda files.
+
+NEED: Show matching headlines in THIS file.
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "tags"
+      (lambda (tag)
+       "Display a list of TODO headlines with tag TAG, regardless of TODO or non-TODO."
+        (org-tags-view (null 1) tag)
+      )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "todos"
+      (lambda (tag)
+        "Display a list of TODO headlines with tag TAG."
+        (let
+          (
+            ;; (org-agenda-sorting-strategy '(tsia-down))
+          )
+          (org-tags-view (null nil) tag)
+        )
+      )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "tags-in-file"
+      (lambda (tag)
+       "Display a list of TODO headlines in the current file with tag TAG, regardless of TODO or non-TODO."
+        (let
+          (
+            (org-agenda-files (list (buffer-file-name) ))
+            (org-agenda-remove-tags t)
+          )
+          (org-tags-view (null 1) tag)
+        )
+      )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "todos-in-file"
+      (lambda (tag)
+       "Display a list of TODO headlines with tag TAG."
+        (let
+          (
+            (org-agenda-files (list (buffer-file-name) ))
+            (org-agenda-remove-tags t)
+          )
+          (org-tags-view (null nil) tag)
+        )
+      )
+  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (org-add-link-type
+    "meetings"
+      (lambda (tag)
+        "Display a list of TODO headlines with tag TAG."
+        (let
+          (
+            (org-agenda-sorting-strategy '(tsia-down))
+          )
+          (org-tags-view (null nil) tag)
+        )
+      )
+  )
+#+END_SRC
+
+** MISC TO CONSIDER
+
+(setq org-agenda-custom-commands
+      '(("b" "Buffer summary"
+     ((todo "TODO" ((org-agenda-files (list (buffer-file-name)))))))))
+
+* Embedding YouTube Videos with org-mode Links
+blogpost: [[http://endlessparentheses.com/embedding-youtube-videos-with-org-mode-links.html][Embedding YouTube Videos with org-mode Links]]
+
+1. remains simple, clickable links in .org files
+2. turns into an IFrame when exported to HTML
+3. turns into Latex href when exported to LaTex
+
+Example: [[yt:A3JAlWM8qRM]]
+
+#+BEGIN_SRC emacs-lisp
+  (defvar yt-iframe-format
+    ;; You may want to change your width and height.
+    (concat "<iframe width=\"440\""
+            " height=\"335\""
+            " src=\"https://www.youtube.com/embed/%s\""
+            " frameborder=\"0\""
+            " allowfullscreen>%s</iframe>"))
+
+  (org-add-link-type
+   "yt"
+   (lambda (handle)
+     (browse-url
+      (concat "https://www.youtube.com/embed/"
+              handle)))
+   (lambda (path desc backend)
+     (cl-case backend
+       (html (format yt-iframe-format
+                     path (or desc "")))
+       (latex (format "\href{%s}{%s}"
+                      path (or desc "video"))))))
+#+END_SRC
+
+
+* Package Footer                                                    :COMMENT:
+#+BEGIN_SRC emacs-lisp :exports none
+  (provide '53-org-links-export)
+  ;;; 53-org-links-export.el ends here
+#+END_SRC

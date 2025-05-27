@@ -1,9 +1,9 @@
-#+TITLE: 12-ui-font-face
-#+DESCRIPTION: ???
+#+TITLE: 10-ui-font-face
+#+DESCRIPTION: Font selection + fallback (MUST come before theme)
 #+STARTUP: overview
 
 #+BEGIN_SRC emacs-lisp :exports none
-;;; 12-ui-font-face.el --- ???Foundational Emacs config -*- lexical-binding: t -*-
+;;; 10-ui-font-face.el --- Font selection + fallback (MUST come before theme) -*- lexical-binding: t -*-
 #+END_SRC
 
 * Choice of Font for the Emacs Work Area
@@ -97,55 +97,86 @@ With this in place, you’ll only try to pick and apply a GUI font when
 it actually makes sense, and both CLI (-nw) and headless (--daemon)
 launches will no longer blow up.
 
+Select and record the chosen font early.
 
+Apply it both at startup and per frame creation.
+
+Reassert it after any theme is loaded.
+
+Use only a single point of truth (xan/selected-font) to avoid mismatched font declarations.
+
+#+CAPTION: Select Best Available Font
 #+BEGIN_SRC emacs-lisp
+  (defvar xan/selected-font nil
+    "Font selected by `xan/choose-frame-font`, to be reasserted after theme load.")
+
   (defun xan/choose-frame-font ()
-    "Pick the best installed non-bold, non-italic font from a preferred list and log the selection."
-    (let ((preferred '("PragmataPro Mono Liga-14"
-                       "PragmataPro Mono-14"
-                       "PragmataPro-14"
-                       "monospace-14"))
-          (chosen nil))
-      (catch 'found
-        (dolist (pattern preferred)
-          (let ((fonts (x-list-fonts pattern)))
-            (when fonts
-              (message "[font] Found matches for '%s':" pattern)
-              (dolist (f fonts)
-                (message "        %s" f))
-              ;; Look for a non-bold, non-italic variant
-              (setq chosen
-                    (seq-find
-                     (lambda (font)
-                       (and (not (string-match-p "-italic-" font))
-                            (not (string-match-p "-bold-" font))))
-                     fonts))
-              (when chosen
-                (message "[font] Selected: %s" chosen)
-                (throw 'found chosen))
-              ;; fallback to any match
-              (when (car fonts)
-                (message "[font] Fallback (no regular match): %s" (car fonts))
-                (throw 'found (car fonts)))))))
-      (unless chosen
-        (message "[font] ⚠ No preferred fonts matched."))))
-
-    (defun xan/set-frame-font-if-graphic (&optional frame)
-      "If FRAME is graphical, run `xan/choose-frame-font` and apply it."
-      (let ((frame (or frame (selected-frame))))
-        (when (display-graphic-p frame)
-          (when-let ((font (xan/choose-frame-font)))
-            (with-selected-frame frame
-              (set-frame-font font nil t)
-              (message "[font] Using frame font: %s" font))))))
-
-    ;; 1) On initial Emacs GUI startup
-    (add-hook 'window-setup-hook #'xan/set-frame-font-if-graphic)
-
-    ;; 2) On every new frame (covers daemon + emacsclient -c)
-    (add-hook 'after-make-frame-functions #'xan/set-frame-font-if-graphic)
+    "Select font once and store in `xan/selected-font`."
+    (unless xan/selected-font
+      (let ((preferred '("PragmataPro Mono Liga-14"
+                         "PragmataPro Mono-14"
+                         "PragmataPro-14"
+                         "monospace-14")))
+        (catch 'found
+          (dolist (pattern preferred)
+            (let ((fonts (x-list-fonts pattern)))
+              (when fonts
+                (message "[font] Found matches for '%s':" pattern)
+                (dolist (f fonts) (message "        %s" f))
+                (setq xan/selected-font
+                      (or (seq-find (lambda (f)
+                                      (and (not (string-match-p "-italic-" f))
+                                           (not (string-match-p "-bold-" f))))
+                                    fonts)
+                          (car fonts)))
+                (message "[font] Selected: %s" xan/selected-font)
+                (throw 'found xan/selected-font)))))))
+    (unless xan/selected-font
+      (message "[font] ⚠ No preferred fonts matched."))
+    xan/selected-font)
 #+END_SRC
 
+#+CAPTION: Apply Font Selection
+#+BEGIN_SRC emacs-lisp
+  (defun xan/set-frame-font-if-graphic (&optional frame)
+    "Apply cached `xan/selected-font` if graphical."
+    (let ((frame (or frame (selected-frame))))
+      (when (display-graphic-p frame)
+        (xan/choose-frame-font)  ;; Only runs once
+        (when xan/selected-font
+          (with-selected-frame frame
+            (set-frame-font xan/selected-font nil t)
+            (message "[font] Using frame font: %s" xan/selected-font))))))
+
+  ;; 1) On initial Emacs GUI startup
+  (unless (member #'xan/set-frame-font-if-graphic window-setup-hook)
+    (add-hook 'window-setup-hook #'xan/set-frame-font-if-graphic))
+
+  ;; 2) On every new frame (covers daemon + emacsclient -c)
+  (unless (member #'xan/set-frame-font-if-graphic after-make-frame-functions)
+    (add-hook 'after-make-frame-functions #'xan/set-frame-font-if-graphic))
+#+END_SRC
+
+#+CAPTION: Reassert Font After Theme Load
+#+BEGIN_SRC emacs-lisp
+  (defun xan/reassert-selected-font ()
+    "Reset default font after themes that might override it."
+    (when (and xan/selected-font (display-graphic-p))
+      (set-frame-font xan/selected-font nil t)
+      (message "[font] Reasserted frame font: %s" xan/selected-font)))
+
+  (advice-add 'load-theme :after
+              (lambda (&rest _)
+                (xan/reassert-selected-font)))
+#+END_SRC
+
+#+CAPTION: Debug Aid for Theme Behavior
+#+BEGIN_SRC emacs-lisp
+  (advice-add 'load-theme :after
+              (lambda (theme &rest _)
+                (message "[theme] %s loaded. Default face now: %S"
+                         theme (face-attribute 'default :family))))
+#+END_SRC
 
 To display the complete list of fonts known to Emacs, execute the following in the
 *Scratch Buffer*.
@@ -154,6 +185,8 @@ To display the complete list of fonts known to Emacs, execute the following in t
 ###   (dolist (font (x-list-fonts "*"))
 ###     (insert (format "%s\n" font)))-GOOG-Noto Sans CJK KR-normal-normal-normal-*-*-*-*-*
 ### #+END_SRC
+
+(face-attribute 'default :family)
 
 
 ** Enable Linux Shell to Use It for Normal Text Display
@@ -170,7 +203,6 @@ https://bastibe.de/2017-09-19-multi-font-themes.html
 
 both use prettify-symbols-mode
 
-
 This package:
  - Provides a minor mode: pragmatapro-ligatures-mode.
  - Uses prettify-symbols-mode to define ligatures as replacements for character sequences.
@@ -181,10 +213,20 @@ This package:
 
 if (x != y && a == b) { return x->b; }
 
+(message "Mode: %s" major-mode)
+(message "Font: %s" (face-attribute 'default :font))
+(message "Family: %s" (face-attribute 'default :family))
+(message "Symbols: %s" prettify-symbols-alist)
+(message "Prettify Mode: %s" prettify-symbols-mode)
+
+
+(insert "≠ ≥ ⇐ ⇒ ⇔ → ←")
 
 https://github.com/lumiknit/emacs-pragmatapro-ligatures
 
 #+BEGIN_SRC emacs-lisp
+  (declare-function pragmatapro-lig-mode "pragmatapro-prettify-symbols-v0.830")
+
   (use-package pragmatapro-ligatures
     :straight (:host github
                :repo "lumiknit/emacs-pragmatapro-ligatures"
@@ -197,33 +239,20 @@ https://github.com/lumiknit/emacs-pragmatapro-ligatures
       )
       (add-hook 'prog-mode-hook #'pragmatapro-lig-mode)
       (add-hook 'text-mode-hook #'pragmatapro-lig-mode)
+      (add-hook 'org-mode-hook #'pragmatapro-lig-mode)
+      ;;; (pragmatapro-lig-global-mode)
       :no-require t
   )
-
-;  (use-package pragmatapro-ligatures
-;    :straight (:host github :repo "lumiknit/emacs-pragmatapro-ligatures")
-;    :commands pragmatapro-ligatures-mode
-;    :init
-;      ;; Enable in all prog-mode buffers, or restrict to others as needed
-;      (add-hook 'prog-mode-hook #'pragmatapro-ligatures-mode)
-;      (add-hook 'text-mode-hook 'pragmatapro-lig-mode)
-;    ;;; (pragmatapro-lig-global-mode)
-;  )
-;
-;  ;;; (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/pragmatapro-lig")
-;;;;  (add-to-list 'load-path "~/.emacs.d/lisp/emacs-pragmatapro-ligatures/")
-;  ;;; (use-package pragmatapro-lig)
-;;;;  (require 'pragmatapro-lig)
 #+END_SRC
 
-** Enable Automatic Text Replacement with Symbols
+** Alternate Automatic Text Replacement with Symbols DISABLED
 
 I am skipping this one because I only use the PragmataPro Ligature font:
  - _Simulates_ ligatures using prettify-symbols-mode.
  - Works even with fonts that don't support ligatures.
  - Is unnecessary when you’re using a ligature-capable font like PragmataPro Ligature.
 
-#+BEGIN_SRC emacs-lispDISABLED
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package pragmatapro-prettify-symbols
     :straight (:host github
                :repo "fabrizioschiavi/pragmatapro"
@@ -237,23 +266,6 @@ I am skipping this one because I only use the PragmataPro Ligature font:
       (when (fboundp 'pragmatapro-prettify-symbols-v0.830)
         (add-hook 'prog-mode-hook #'pragmatapro-prettify-symbols-v0.830)))
     :no-require t)  ;; prevents use-package from trying to `require`
-#+END_SRC
-
-* Colors
-
-- M-x list-colors-display RET  :: display an annotated rainbox of colors
-
-To see the set of possible color names for X:
-    /usr/lib/X11/rgb.txt
-
-(distinguish btw colors for Emacs in X and colors for Emacs in an xterm)
-
-#+BEGIN_SRC emacs-lisp
-;;;NEEDED?  (set-background-color "White")
-;;;NEEDED?  (set-foreground-color "Black")  ;; don't these duplicate the below?
-;;;NEEDED?  (set-cursor-color     "Red")
-;;;NEEDED?  (set-mouse-color      "Black")
-;;;NEEDED?  (set-border-color     "Blue")
 #+END_SRC
 
 * Faces for Emacs Text            =faces vs colors vs themes=
@@ -271,39 +283,15 @@ To see the various faces:
     t)	; Enable colorized text everywhere.
 #+END_SRC
 
-** Default Face for Specific Kinds of Text
-https://www.gnu.org/software/emacs/manual/html_node/emacs/Standard-Faces.html
-
-- default :: This face is used for ordinary text that doesn’t specify any
-  face. Its background color is used as the frame’s background color.
-
-M-x customize-face mode-line RET
-#+BEGIN_SRC emacs-lisp :results none
-  (custom-set-faces
-    '(default
-      (
-        (t
-          (:stipple nil
-;;           :background "white"
-;;           :foreground "black"
-           :inverse-video nil
-           :box nil
-           :strike-through nil
-           :overline nil
-           :underline nil
-           :slant normal
-           :weight normal
-           :height 130
-           :width normal
-           :family "PragmataPro"
-          )
-        )
-      )
-    )
-  )
-#+END_SRC
-
 ** org-mode face elements
+
+(set-face-attribute 'default nil :family "PragmataPro" :height 130)
+
+(set-face-attribute 'default nil
+  :family "PragmataPro"
+  :height 130
+  :weight 'normal
+  :slant 'normal)
 
 *** Visual Test of Typefaces in Org-Mode
 
@@ -315,8 +303,6 @@ M-x customize-face mode-line RET
 - =Testing=   code
  - Testing :: description list
 
-??? (add-to-list 'custom-theme-load-path "<themefolder>")
-
 #+BEGIN_SRC emacs-lisp
   ; Text surrounded by =TEXT=
   ;;; (set-face-attribute 'org-verbatim nil :foreground "LightGrey" :box "Orange" :inverse-video t)
@@ -326,97 +312,13 @@ M-x customize-face mode-line RET
 
   ; Text representing the definition term in a description list   - TERM  :: DEFINITION
   (set-face-attribute 'org-list-dt nil :foreground "Orange" :box "White" :inverse-video t)
-
-  ;font-lock-builtin-face (dark blue on grey)
-  ;font-lock-comment-face (red on grey)
-  ;font-lock-constant-face (pink on grey)
-  ;font-lock-doc-face (black on green)
-  ;font-lock-function-name-face (bright blue on grey)
-  ;font-lock-keyword-face (bright cyan on grey)
-  ;font-lock-string-face (black on green)
-  ;font-lock-type-face (FAINT green on grey)
-  ;font-lock-variable-name-face (orange on grey HARD TO READ)
-  ;font-lock-warning-face red on grey)
-
-  ;(set-face-foreground 'font-lock-builtin-face "White")
-  ;(set-face-foreground 'font-lock-comment-face "White")
-  ;(set-face-foreground 'font-lock-function-name-face "White")
-  ;(set-face-foreground 'font-lock-string-face "White")
-  ;(set-face-foreground 'font-lock-variable-name-face "White")
-
-  ;bold (black on grey)
-  ;bold-italic (black on grey)
-  ;border (black on black UNREADABLE)
-  ;cursor (black on black UNREADABLE)
-  ;default (black on grey)
-  ;fixed-pitch (black on grey)
-  ;fringe (black on grey)
-  ;header-line (underlined black on grey)
-  ;highlight (black-on-green)
-  ;isearch (UNREADABLE cyan-on-purple)
-  ;isearch-lazy-highlight-face (black-on-cyan)
-  ;italic (black-on-grey)
-  ;menu  (grey-on-black)
-  ;mode-line  (grey-on-black)
-  ;mouse
-  ;region
-  ;scroll-bar
-  ;secondary-selection
-  ;show-paren-match-face
-  ;tool-bar
-  ;tooltip
-  ;underline
-  ;variable-pitch
 #+END_SRC
-
-** Themes
-
-A popular way of customizing Emacs colors is the use the #color-theme#
-package, of which a number of those these are aware of Org-mode.
-
-For my Gentoo Linux distribution I run, I had to emerge (install):
-
-   $ emerge app-emacs/color-theme
-
-There is also a newer approach called *custom themes* but custom themes do not
-replace color themes, as each approach has its advantages.
-
-#+BEGIN_SRC emacs-lisp
-  (use-package grandshell-theme)
-  (setq custom-enabled-themes '(grandshell))
-  (load-theme 'grandshell t)
-#+END_SRC
-
-#+RESULTS:
-: t
-
-#+BEGIN_SRC DISABLEDemacs-lisp
-;;;  (use-package color-theme)
-;;  (setq color-theme-is-global t)
-;;  (color-theme-initialize)
-
-;;  (load "org-beautify-theme")
-;;  (load "color-theme-github")
-;;  (load "color-theme-cobalt")  ;; looks normal
-;;  (load "color-theme-sanityinc-solarized")  ;; looks normal
-;;  (load "color-theme-sanityinc-tomorrow")  ;; looks normal
-
-;;  (load "grandshell-theme")  ;; on black but not bad
-
-;; cyberpunk          ;; on black but not bad
-;; grandshell-theme   ;; on black but not bad
-;; deeper-blue        ;; on black but not bad
-;; leuven             ;; on white but NICE!
-;; manoj-dark         ;; on black but VERY CLEAR
-
-#+END_SRC
-
 
 * SHOULD DISPLAY of BELL GO IN HERE ???  OR IN 10-ui-frame-appearance.org ???
 
 
 #+BEGIN_SRC emacs-lisp :exports none
-  (provide '12-ui-font-face)
-  ;;; 12-ui-font-face.el ends here
+  (provide '10-ui-font-face)
+  ;;; 10-ui-font-face.el ends here
 #+END_SRC
 
